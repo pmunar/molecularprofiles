@@ -1,4 +1,6 @@
 from builtins import str
+import numpy as np
+
 
 def angle2radians(deg, min, sec):
     """
@@ -13,6 +15,7 @@ def angle2radians(deg, min, sec):
         angle = deg - (min / 60.) - (sec / 3600.)
     return math.radians(angle)
 
+
 def get_observatory_coordinates(observatory):
     if observatory == 'north':
         latitude = angle2radians(28, 45, 42.462)
@@ -25,6 +28,7 @@ def get_observatory_coordinates(observatory):
         exit()
 
     return latitude, longitude
+
 
 def GetAltitudeFromGeopotentialHeight(geop_height, observatory):
     import numpy as np
@@ -70,6 +74,7 @@ def mjd2date(mjd):
     from astropy.time import Time
     time = Time(mjd, format='mjd')
     return int(time.datetime.year), int(time.datetime.month), int(time.datetime.day), int(time.datetime.hour)
+
 
 def compute_averages_std_simple(input_array):
     """
@@ -119,31 +124,28 @@ def compute_averages_std(input_array):
     peak_to_peak_m = np.asarray(peak_to_peak_m)
     return average, stand_dev, peak_to_peak_p, peak_to_peak_m
 
+
 def get_winter_months():
-    import numpy as np
     return np.array([1, 2, 3, 4, 12])
 
 
 def get_summer_months():
-    import numpy as np
     return np.array([7, 8, 9])
 
 
 def get_all_months():
-    import numpy as np
     return np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
 
 
 def get_intermediate_months():
-    import numpy as np
     return np.array([5, 6, 10, 11])
 
 
 def get_epoch(epoch):
-    valid_epochs = {'winter' : get_winter_months(),
-                  'summer' : get_summer_months(),
-                  'all' : get_all_months(),
-                  'intermediate' : get_intermediate_months()}
+    valid_epochs = {'winter': get_winter_months(),
+                    'summer': get_summer_months(),
+                    'all': get_all_months(),
+                    'intermediate': get_intermediate_months()}
     return valid_epochs[epoch]
 
 # def print_grib_to_txt(file_name, ):
@@ -155,9 +157,9 @@ def get_epoch(epoch):
 #               temperature[j].hour, temperature[j].level, temperature_gp, geopotential_gp, h, density, file=table_file)
 #     table_file.close()
 
+
 def get_closest_gridpoint(lat, lon):
     """
-
     :param lat: float
     :param lon: float
     :return: nearest ecmwf grid point
@@ -172,7 +174,6 @@ def get_closest_gridpoint(lat, lon):
     for i in range(len(lats_grid)):
         lats_grid[i] = -90 + step * i
 
-
     print('Latidude of interest is %5.2f deg' % lat)
     print('Longitude of interest is %5.2f deg' % (lon % 360))
     nearest_lat = find_nearest(lats_grid, lat)
@@ -180,6 +181,7 @@ def get_closest_gridpoint(lat, lon):
     nearest_lon = find_nearest(lons_grid, lon % 360)
     print('nearest longitude is: %5.1f deg' % nearest_lon )
     return nearest_lat, nearest_lon
+
 
 def find_nearest(a, value):  # Function to find the nearest grid position to a given latitude or longitude
     return a[np.abs(a-value).argmin()]
@@ -196,7 +198,6 @@ def readgribfile2text(file_name, year, observatory):
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
     import pygrib as pg
-    import numpy as np
 
     Ns = 2.546899E19  # [cm^-3] molecular number density for standard air conditions
     ps = 1013.25      # [hPa]   standard air pressure
@@ -224,13 +225,15 @@ def readgribfile2text(file_name, year, observatory):
 
     for j in np.arange(len(temperature)):
         if type(temperature[j].values) == float:
-            geopotential_gp = geop_height[j].values #[geop_height[j].year == year]
-            temperature_gp = temperature[j].values #[temperature[j].year == year]
+            geopotential_gp = geop_height[j].values  # [geop_height[j].year == year]
+            temperature_gp = temperature[j].values  # [temperature[j].year == year]
         else:
-            geopotential_gp = np.float(geop_height[j].values[(geop_height[j].data()[1] == lat_gridpoint) & (
-            geop_height[j].data()[2] == lon_gridpoint) & (geop_height[j].year == year)])
-            temperature_gp = np.float(temperature[j].values[(temperature[j].data()[1] == lat_gridpoint) & (
-            temperature[j].data()[2] == lon_gridpoint) & (temperature[j].year == year)])
+            geopotential_gp = np.float(geop_height[j].values[(geop_height[j].data()[1] == lat_gridpoint) &
+                                                             (geop_height[j].data()[2] == lon_gridpoint) &
+                                                             (geop_height[j].year == year)])
+            temperature_gp = np.float(temperature[j].values[(temperature[j].data()[1] == lat_gridpoint) &
+                                                            (temperature[j].data()[2] == lon_gridpoint) &
+                                                            (temperature[j].year == year)])
         h = GetAltitudeFromGeopotentialHeight(geopotential_gp, observatory)
         density = Ns * temperature[j].level / ps * Ts / temperature_gp
         print(temperature[j].dataDate, temperature[j].year, temperature[j].month, temperature[j].day,
