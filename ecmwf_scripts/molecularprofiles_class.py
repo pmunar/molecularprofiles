@@ -2,6 +2,8 @@ import os
 import os.path
 import sys
 import matplotlib.pyplot as plt
+import time
+from tqdm import *
 from matplotlib.ticker import MultipleLocator
 from scipy.interpolate import interp1d
 from grib_utils import *
@@ -110,15 +112,15 @@ class EcmwfMolecularProfile:
         diff_ecmwf_with_prod3 = []
         mjd = self.mjd_ecmwf[0]
         self.x = np.linspace(1000., 25000., num=15, endpoint=True)
-        steps = (np.max(self.mjd_ecmwf) - mjd) / 0.25
+        step_hours = self.mjd_ecmwf[37] - self.mjd_ecmwf[0]
+        steps = (np.max(self.mjd_ecmwf) - mjd) / step_hours
+
+        pbar = tqdm(total = steps + 1)
 
         print("Computing the extrapolation of the values of density for ECMWF:")
         while mjd < (np.max(self.mjd_ecmwf) + 0.25):
             # Percentage counter bar
-            sys.stdout.write('\r')
-            k = int((mjd - self.mjd_ecmwf[0])/0.25 * 100/steps)
-            sys.stdout.write("[%-100s] %d%%" % ('=' * k, k))
-            sys.stdout.flush()
+            pbar.update(1)
             # ---------------------------
             func_ecmwf = interp1d(self.h_ecmwf[self.mjd_ecmwf == mjd], self.n_ecmwf[self.mjd_ecmwf == mjd] / self.Ns *
                                   np.exp(self.h_ecmwf[self.mjd_ecmwf == mjd] / self.Hs), kind='cubic')
@@ -131,7 +133,8 @@ class EcmwfMolecularProfile:
             #diff_ecmwf_with_magic.append((int_dens_ecwmf - self.func_magic(self.x)) / int_dens_ecwmf)
             #diff_ecmwf_with_prod3.append((int_dens_ecwmf - self.func_prod3(self.x)) / int_dens_ecwmf)
 
-            mjd += 0.25
+            mjd += step_hours
+        pbar.close()
 
         print('\n')
         self.interpolated_density_ecmwf = np.asarray(interpolated_density_ecmwf)
@@ -156,12 +159,12 @@ class EcmwfMolecularProfile:
         self.x = np.linspace(1000., 25000., num=15, endpoint=True)
 
         print("Computing the differences of the values of density for ECMWF:")
-        for i in np.arange(len(self.interpolated_density_ecmwf)):
+        for i in tqdm(np.arange(len(self.interpolated_density_ecmwf))):
             # Percentage counter bar
-            sys.stdout.write('\r')
-            k = 100
-            sys.stdout.write("[%-100s] %d%%" % ('=' * k, k))
-            sys.stdout.flush()
+            #sys.stdout.write('\r')
+            #k = 100
+            #sys.stdout.write("[%-100s] %d%%" % ('=' * k, k))
+            #sys.stdout.flush()
             # ---------------------------
             diff_ecmwf_with_magic.append((self.interpolated_density_ecmwf[i] - self.func_magic(self.x))
                                          / self.interpolated_density_ecmwf[i])
