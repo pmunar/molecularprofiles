@@ -16,7 +16,7 @@ settings()
 
 
 class EcmwfMolecularProfile:
-    def __init__(self, file_ecmwf, year, tag_name='myplots', epoch_text='all',
+    def __init__(self, file_ecmwf, tag_name='myplots', epoch_text='all',
                  label_ecmwf='ECMWF', observatory='north'):
 
         """
@@ -24,7 +24,6 @@ class EcmwfMolecularProfile:
         CTA-North and CTA-South.
         
         :param file_ecmwf: txt file containing the ECMWF data (string) 
-        :param year: year or years to be analyzed (just to put into some titles) (string)
         :param tag_name: name to be given to the output files (string)
         :param epoch_text: season to be analyzed. Valid values are: "all", "winter", "summer", "intermediate" (string) 
         :param label_ecmwf: label to be put in some of the output plots (string)
@@ -43,7 +42,6 @@ class EcmwfMolecularProfile:
         """
 
         self.file_ecmwf = file_ecmwf
-        self.year = year
         self.epoch_text = epoch_text
         self.tag_name = tag_name
         self.label_ecmwf = label_ecmwf
