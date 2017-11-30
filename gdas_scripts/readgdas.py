@@ -1,3 +1,6 @@
+from tqdm import *
+
+
 def read_gdas(file_gdas, epoch_text):
     import numpy as np
     import sys
@@ -14,14 +17,7 @@ def read_gdas(file_gdas, epoch_text):
     month_gdas = []
     day_gdas = []
     hour_gdas = []
-    for i in np.arange(len(mjd_gdas)):
-        # Percentage counter bar
-        sys.stdout.write('\r')
-        # the exact output you're looking for:
-        k = int(i * 101/len(mjd_gdas))
-        sys.stdout.write("[%-100s] %d%%" % ('=' * k, k))
-        sys.stdout.flush()
-        # -------------------------------
+    for i in tqdm(np.arange(len(mjd_gdas))):
         date_gdas = mjd2date(mjd_gdas[i])
         year_gdas.append(date_gdas[0])
         month_gdas.append(date_gdas[1])
