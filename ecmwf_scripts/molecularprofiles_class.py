@@ -1,16 +1,15 @@
 import os
 import os.path
 import sys
-sys.path.append('/Volumes/Segon_HD/molecularprofiles/ecmwf/scripts_atca')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
-import numpy as np
 from scipy.interpolate import interp1d
 from grib_utils import *
 from readecmwf import *
 from plot_settings import settings
-from magic_winter_params import heightmw, rhomw
-from meteorological_params import *
+from magic_winter_profile import heightmw, rhomw
+from meteorological_constants import *
+
 settings()
 
 
@@ -65,15 +64,17 @@ class EcmwfMolecularProfile:
                                    kind='cubic')
 
     def _get_prod3sim_data(self):
-        os.environ['ECMWF_DIR'] = '/home/pmunar/feina/software/molecularprofiles/'
 
+        MOLECULARPROFILES_DIR = os.environ.get('MOLECULARPROFILES_DIR')
+        ECMWF_DIR = MOLECULARPROFILES_DIR + 'ecmwf_scipts/'
+        PROD3_DIR = MOLECULARPROFILES_DIR + 'Prod3b_simulations/'
         # Prod3 Simulations (based on NRLMSISE)
         if self.observatory == 'north':
-            prod3 = open(os.environ['ECMWF_DIR']+'/Prod3b_simulations/atmprof36_lapalma.dat')
+            prod3 = open(PROD3_DIR+'/atmprof36_lapalma.dat')
             self.hprod3, nprod3, thickprod3, n1prod3, tempprod3, pprod3 = np.loadtxt(prod3, usecols=(0,1,2,3,4,5),
                                                                                      unpack=True)
         elif self.observatory == 'shouth':
-            prod3 = open(os.environ['ECMWF_DIR']+'Prod3b/atmprof26_paranal.dat')
+            prod3 = open(PROD3_DIR+'/atmprof26_paranal.dat')
             self.hprod3, nprod3, thickprod3, n1prod3, tempprod3, pprod3 = np.loadtxt(prod3, usecols=(0, 1, 2, 3, 4, 5),
                                                                                      unpack=True)
         else:
@@ -96,18 +97,17 @@ class EcmwfMolecularProfile:
 
         if not os.path.exists((self.file_ecmwf).split('.')[0]+'.txt'):
             grib_file = self.file_ecmwf
-            readgribfile2text(grib_file, self.year, self.observatory)
+            readgribfile2text(grib_file, self.observatory)
 
         self.mjd_ecmwf, self.year_ecmwf, self.month_ecmwf, self.day_ecmwf, self.hour_ecmwf, self.h_ecmwf, self.p_ecmwf, \
         self.n_ecmwf = read_ecmwf(self.file_ecmwf.split('.')[0]+'.txt', self.epoch_text)
 
         interpolated_density_ecmwf = []
-        diff_ecmwf_with_magic = []
-        diff_ecmwf_with_prod3 = []
         ecmwf_density_at_15km = []
         mjd_at_15km = []
         month_at_15km = []
-
+        diff_ecmwf_with_magic = []
+        diff_ecmwf_with_prod3 = []
         mjd = self.mjd_ecmwf[0]
         self.x = np.linspace(1000., 25000., num=15, endpoint=True)
         steps = (np.max(self.mjd_ecmwf) - mjd) / 0.25
@@ -123,12 +123,13 @@ class EcmwfMolecularProfile:
             func_ecmwf = interp1d(self.h_ecmwf[self.mjd_ecmwf == mjd], self.n_ecmwf[self.mjd_ecmwf == mjd] / self.Ns *
                                   np.exp(self.h_ecmwf[self.mjd_ecmwf == mjd] / self.Hs), kind='cubic')
 
-            interpolated_density_ecmwf.append(func_ecmwf(self.x))
+            int_dens_ecwmf = func_ecmwf(self.x)
+            interpolated_density_ecmwf.append(int_dens_ecwmf)
             ecmwf_density_at_15km.append(func_ecmwf(self.x[8]))
             mjd_at_15km.append(mjd)
             month_at_15km.append(self.month_ecmwf[self.mjd_ecmwf == mjd])
-            diff_ecmwf_with_magic.append((func_ecmwf(self.x) - self.func_magic(self.x)) / func_ecmwf(self.x))
-            diff_ecmwf_with_prod3.append((func_ecmwf(self.x) - self.func_prod3(self.x)) / func_ecmwf(self.x))
+            #diff_ecmwf_with_magic.append((int_dens_ecwmf - self.func_magic(self.x)) / int_dens_ecwmf)
+            #diff_ecmwf_with_prod3.append((int_dens_ecwmf - self.func_prod3(self.x)) / int_dens_ecwmf)
 
             mjd += 0.25
 
@@ -136,12 +137,40 @@ class EcmwfMolecularProfile:
         self.interpolated_density_ecmwf = np.asarray(interpolated_density_ecmwf)
         self.ecmwf_density_at_15km = np.asarray(ecmwf_density_at_15km)
         self.mjd_at_15km_ecmwf = np.asarray(mjd_at_15km)
+        self.ecmwf_averages = compute_averages_std(self.interpolated_density_ecmwf)
+#        Differences w.r.t. MAGIC W model
+#        self.diff_ecmwf_with_magic = np.asarray(diff_ecmwf_with_magic)
+#        self.diff_ecmwf_MAGIC = compute_averages_std(self.diff_ecmwf_with_magic)
+#        Differences w.r.t. Prod3
+#        self.diff_ecmwf_with_prod3 = np.asarray(diff_ecmwf_with_prod3)
+#        self.diff_ecmwf_PROD3 = compute_averages_std(self.diff_ecmwf_with_prod3)
+
+    def compute_diff_wrt_model(self):
+
+        diff_ecmwf_with_magic = []
+        diff_ecmwf_with_prod3 = []
+
+        self._get_prod3sim_data()
+
+        mjd = self.mjd_ecmwf[0]
+        self.x = np.linspace(1000., 25000., num=15, endpoint=True)
+
+        print("Computing the differences of the values of density for ECMWF:")
+        for i in np.arange(len(self.interpolated_density_ecmwf)):
+            # Percentage counter bar
+            sys.stdout.write('\r')
+            k = 100
+            sys.stdout.write("[%-100s] %d%%" % ('=' * k, k))
+            sys.stdout.flush()
+            # ---------------------------
+            diff_ecmwf_with_magic.append((self.interpolated_density_ecmwf[i] - self.func_magic(self.x))
+                                         / self.interpolated_density_ecmwf[i])
+            diff_ecmwf_with_prod3.append((self.interpolated_density_ecmwf[i] - self.func_prod3(self.x))
+                                         / self.interpolated_density_ecmwf[i])
+
         self.diff_ecmwf_with_magic = np.asarray(diff_ecmwf_with_magic)
         self.diff_ecmwf_with_prod3 = np.asarray(diff_ecmwf_with_prod3)
-        self.ecmwf_averages = compute_averages_std(self.interpolated_density_ecmwf)
-        # Differences w.r.t. MAGIC W model
         self.diff_ecmwf_MAGIC = compute_averages_std(self.diff_ecmwf_with_magic)
-        # Differences w.r.t. Prod3
         self.diff_ecmwf_PROD3 = compute_averages_std(self.diff_ecmwf_with_prod3)
 
     # =======================================================================================================
@@ -229,7 +258,7 @@ class EcmwfMolecularProfile:
             ediff_ecmwf = self.diff_ecmwf_PROD3[1]
         else:
             print('Wrong model name')
-            exit()
+            sys.exit()
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -275,6 +304,9 @@ class EcmwfMolecularProfile:
                     label='MAGIC W')
             ax.plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
                     label='Prod3 ' + self.observatory)
+        else:
+            print('Wrong model. Exiting')
+            sys.exit()
 
         ax.set_title(self.label_ecmwf + ' ' + str(self.year) + ' ' + str(self.epoch_text))
         ax.set_xlabel('h a.s.l. [m]')
