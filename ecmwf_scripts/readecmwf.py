@@ -1,7 +1,8 @@
+from tqdm import *
+
+
 def read_ecmwf(file_ecmwf, epoch_text):
     import numpy as np
-    from time import sleep
-    import sys
     from grib_utils import date2mjd, get_epoch
     global months, month_ecmwf
     print("loading and selecting ecmwf data")
@@ -11,13 +12,7 @@ def read_ecmwf(file_ecmwf, epoch_text):
 
     mjd_ecmwf = []
 
-    for i in np.arange(len(date_ecmwf)):
-        # Percentage counter bar
-        sys.stdout.write('\r')
-        k = int(i * 101/len(date_ecmwf))
-        sys.stdout.write("[%-100s] %d%%" % ('=' * k, k))
-        sys.stdout.flush()
-        # ----------------------------
+    for i in tqdm(np.arange(len(date_ecmwf))):
         mjd_ecmwf.append(date2mjd(year_ecmwf[i], month_ecmwf[i], day_ecmwf[i], hour_ecmwf[i]))
     print('\n')
     mjd_ecmwf = np.asarray(mjd_ecmwf)
@@ -42,13 +37,13 @@ def read_ecmwf(file_ecmwf, epoch_text):
         p_ecmwf = p_ecmwf[(month_ecmwf == epoch[0]) | (month_ecmwf == epoch[1]) | (month_ecmwf == epoch[2]) |
                           (month_ecmwf == epoch[3]) | (month_ecmwf == epoch[4])]
 
-    if epoch_text == 'summer':
+    elif epoch_text == 'summer':
         mjd_ecmwf = mjd_ecmwf[(month_ecmwf == epoch[0]) | (month_ecmwf == epoch[1]) | (month_ecmwf == epoch[2])]
         h_ecmwf = h_ecmwf[(month_ecmwf == epoch[0]) | (month_ecmwf == epoch[1]) | (month_ecmwf == epoch[2])]
         n_ecmwf = n_ecmwf[(month_ecmwf == epoch[0]) | (month_ecmwf == epoch[1]) | (month_ecmwf == epoch[2])]
         p_ecmwf = p_ecmwf[(month_ecmwf == epoch[0]) | (month_ecmwf == epoch[1]) | (month_ecmwf == epoch[2])]
 
-    if epoch_text == 'intermediate':
+    elif epoch_text == 'intermediate':
         mjd_ecmwf = mjd_ecmwf[(month_ecmwf == epoch[0]) | (month_ecmwf == epoch[1]) | (month_ecmwf == epoch[2]) |
                               (month_ecmwf == epoch[3])]
         h_ecmwf = h_ecmwf[(month_ecmwf == epoch[0]) | (month_ecmwf == epoch[1]) | (month_ecmwf == epoch[2]) |
@@ -58,7 +53,7 @@ def read_ecmwf(file_ecmwf, epoch_text):
         p_ecmwf = p_ecmwf[(month_ecmwf == epoch[0]) | (month_ecmwf == epoch[1]) | (month_ecmwf == epoch[2]) |
                           (month_ecmwf == epoch[3])]
 
-    if epoch_text == 'all':
+    elif epoch_text == 'all':
         mjd_ecmwf = mjd_ecmwf
         h_ecmwf = h_ecmwf
         n_ecmwf = n_ecmwf
