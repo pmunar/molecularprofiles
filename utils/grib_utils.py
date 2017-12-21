@@ -197,13 +197,16 @@ def readgribfile2text(file_name, observatory):
 
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs)
 
-    print('opening grib file (this might take a while...)')
-    grb = pg.open(file_name)
+    print('indexing the file (this might take a while...)')
+    grb = pg.index(file_name, 'shortName', 'typeOfLevel')
     print('selecting temperature parameter...')
-    temperature = grb.select(name='Temperature')
+    temperature = grb.select(shortName='t', typeOfLevel='isobaricInhPa')
 
     print('selecting geopotential parameter...')
-    geop_height = grb.select(name='Geopotential')
+    try:
+        geop_height = grb.select(shortName='z', typeOfLevel='isobaricInhPa')
+    except:
+        geop_height = grb.select(shortName='gh', typeOfLevel='isobaricInhPa')
 
     # We create the table file and fill it with the information stored in the above variables, plus the height
     # and density computed form them.
@@ -214,9 +217,10 @@ def readgribfile2text(file_name, observatory):
     print('creating the txt file containing the selected data...')
 
     for j in np.arange(len(temperature)):
-        if type(temperature[j].values) == float:
+        if (type(temperature[j].values) == float) or (len(temperature[j].values) == 1) :
             geopotential_gp = geop_height[j].values  # [geop_height[j].year == year]
             temperature_gp = temperature[j].values  # [temperature[j].year == year]
+            print('THIS IS HAPPENING')
         else:
             # this is just in case the grib file contains more than one grid point
             geopotential_gp = np.float(geop_height[j].values[(geop_height[j].data()[1] == lat_gridpoint) &
