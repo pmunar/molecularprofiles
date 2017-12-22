@@ -1,7 +1,9 @@
 from builtins import str
 import numpy as np
+import pygrib as pg
 from tqdm import *
 from meteorological_constants import *
+import sys
 
 
 def ddmmss2deg(deg, min, sec):
@@ -17,14 +19,34 @@ def ddmmss2deg(deg, min, sec):
         angle = deg - (min / 60.) - (sec / 3600.)
     return angle
 
-
-def GetAltitudeFromGeopotentialHeight(geop_height, observatory):
-    import numpy as np
+def GetAltitudeFromGeopotential(geop_height, observatory):
+    """
+    Function to compute the real altitude from the geopotential value at a certain coordinates on Earth
+    :param geop_height:
+    :param observatory: possible values are 'north' or 'south'
+    :return: real altitude as fGeoidOffset (in m)
+    """
     latitude = np.radians(get_observatory_coordinates(observatory)[0])
     geop_heightkm = geop_height / 1000. / 9.80665  # dividing by the acceleration of gravity on Earth
     cos2lat = np.cos(2 * latitude)
     # convert from geopotential height to geometric altitude:
     z = (1. + 0.002644 * cos2lat) * geop_heightkm + (1 + 0.0089 * cos2lat) * geop_heightkm * geop_heightkm / 6245.
+    # convert Z to meter
+    return 1.0E3 * z  # This is fGeoidOffset
+
+
+def GetAltitudeFromGeopotentialHeight(geop, observatory):
+    """
+    Function to compute the real altitude from the geopotential value at a certain coordinates on Earth
+    :param geop_height:
+    :param observatory: possible values are 'north' or 'south'
+    :return: real altitude as fGeoidOffset (in m)
+    """
+    latitude = np.radians(get_observatory_coordinates(observatory)[0])
+    geop_km = geop / 1000.
+    cos2lat = np.cos(2 * latitude)
+    # convert from geopotential height to geometric altitude:
+    z = (1. + 0.002644 * cos2lat) * geop_km + (1 + 0.0089 * cos2lat) * geop_km * geop_km / 6245.
     # convert Z to meter
     return 1.0E3 * z  # This is fGeoidOffset
 
@@ -125,7 +147,7 @@ def get_observatory_coordinates(observatory):
         return latitude, longitude
     else:
         print('wrong observatory!')
-        exit()
+        sys.exit()
 
 
 def get_winter_months():
@@ -152,13 +174,15 @@ def get_epoch(epoch):
     return valid_epochs[epoch]
 
 
-def get_closest_gridpoint(lat, lon):
+def get_closest_gridpoint(lat, lon, gridstep):
     """
     :param lat: float
     :param lon: float
-    :return: nearest ecmwf grid point
+    :param gridstep: float. Step in which the grid is divided (0.75 degrees for ECMWF data
+    and 1.0 degrees for GDAS data)
+    :return: nearest grid point
     """
-    step = 0.75  # grid step in degrees
+    step = gridstep  # grid step in degrees
     lons_grid = np.zeros(int(360 / step) + 1)
     lats_grid = np.zeros(int(180 / step) + 1)
 
@@ -180,55 +204,217 @@ def get_closest_gridpoint(lat, lon):
 def find_nearest(a, value):  # Function to find the nearest grid position to a given latitude or longitude
     return a[np.abs(a-value).argmin()]
 
+def get_gribfile_variables(file_name):
+    """
+    Function that returns all the different variable names in a grib file
+    :param file_name:
+    :return: varname (list): variable names
+             varshortname (list): variable short names
+    """
+    grb = pg.open(file_name)
+    grb.rewind()
+    varshortname = []
+    varname = []
+    while True:
+        v = grb.read(1)[0]
+        vname = v.name
+        vshortname = v.shortName
+        if vname not in varname:
+            varname.append(vname.replace(" ", ""))
+            varshortname.append(vshortname)
+        else:
+            break
+    return varname, varshortname
 
-def readgribfile2text(file_name, observatory):
+def get_plevels(variable):
+    plevels = []
+    index = []
+    for i in range(len(variable)):
+        l = variable[i].level
+        if l not in plevels:
+            plevels.append(l)
+            index.append(i+1)
+        else:
+            break
+    return plevels, index
+
+def readgribfile2text(file_name, observatory, gridstep):
     """
     This function opens a grib file, selects the Temperature and Geopotential parameters,
     and finally creates a txt file where these parameters, together with date, year, month,
     day, hour, pressure level, real height and density, are written.
 
     Input: file_name (string)
+           observatory (string). Possible values are 'north' or 'south'
 
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
-    import pygrib as pg
-
-    latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
-
-    lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs)
-
+    print('getting all variable names...')
+    vn, vsn = get_gribfile_variables(file_name)
     print('indexing the file (this might take a while...)')
     grb = pg.index(file_name, 'shortName', 'typeOfLevel')
-    print('selecting temperature parameter...')
-    temperature = grb.select(shortName='t', typeOfLevel='isobaricInhPa')
+    print('selecting the parameters information...')
+    data = []
 
-    print('selecting geopotential parameter...')
-    try:
-        geop_height = grb.select(shortName='z', typeOfLevel='isobaricInhPa')
-    except:
-        geop_height = grb.select(shortName='gh', typeOfLevel='isobaricInhPa')
+    for sn in vsn:
+        var = grb.select(shortName=sn, typeOfLevel='isobaricInhPa')
+        data.append(var)
+
+    datadict = dict(zip(vn, data))
+
+    # print('selecting temperature parameter...')
+    # temperature = grb.select(shortName='t', typeOfLevel='isobaricInhPa')
+    # print('selecting geopotential parameter...')
+    # try:
+    #     geop_height = grb.select(shortName='z', typeOfLevel='isobaricInhPa')
+    # except:
+    #     geop_height = grb.select(shortName='gh', typeOfLevel='isobaricInhPa')
+
+    latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
+    lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
+
 
     # We create the table file and fill it with the information stored in the above variables, plus the height
     # and density computed form them.
 
-    table_file = open(file_name.split('.')[0] + '.txt', 'w')
-    print('# Date, year, month, day, hour, Plevel, T_average, geopotential_average, height, n', file=table_file)
-
     print('creating the txt file containing the selected data...')
 
-    for j in np.arange(len(temperature)):
-        if (type(temperature[j].values) == float) or (len(temperature[j].values) == 1) :
-            geopotential_gp = geop_height[j].values  # [geop_height[j].year == year]
-            temperature_gp = temperature[j].values  # [temperature[j].year == year]
-            print('THIS IS HAPPENING')
-        else:
-            # this is just in case the grib file contains more than one grid point
-            geopotential_gp = np.float(geop_height[j].values[(geop_height[j].data()[1] == lat_gridpoint) &
-                                                             (geop_height[j].data()[2] == lon_gridpoint)])
-            temperature_gp = np.float(temperature[j].values[(temperature[j].data()[1] == lat_gridpoint) &
-                                                            (temperature[j].data()[2] == lon_gridpoint)])
-        h = GetAltitudeFromGeopotentialHeight(geopotential_gp, observatory)
-        density = Ns * temperature[j].level / ps * Ts / temperature_gp
-        print(temperature[j].dataDate, temperature[j].year, temperature[j].month, temperature[j].day,
-              temperature[j].hour, temperature[j].level, temperature_gp, geopotential_gp, h, density, file=table_file)
+    table_file = open(file_name.split('.')[0] + '.txt', 'w')
+    print('# Date, year,     month, day, hour, Plevel, T_average, h,   n,       U,     V,     RH', file=table_file)
+    print('# YYYYMMDD, YYYY, MM,    DD,  HH,   (hPa),  (K),       (m), (cm^-3), (m/s), (m/s), (%)', file=table_file)
+
+    for j in np.arange(len(datadict['Temperature'])):
+        if (type(datadict['Temperature'][j].values) == float) or (len(datadict['Temperature'][j].values) == 1):
+            if 'GeopotentialHeight' in vn:
+                h = datadict['GeopotentialHeight'][j].values
+            else:
+                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
+            density = Ns * datadict['Temperature'][j].level / ps * Ts / datadict['Temperature'][j].values
+            print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
+                  datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
+                  datadict['Temperature'][j].values, h, density, datadict['Ucomponentofwind'][j].values,
+                  datadict['Vcomponentofwind'][j].values, datadict['Relativehumidity'][j].values, file=table_file)
+
+        else: # this is just in case the grib file contains more than one grid point
+            if 'GeopotentialHeight' in vn:
+                h = np.float(datadict['GeopotentialHeight'][j].values[
+                                 (datadict['GeopotentialHeight'][j].data()[1] == lat_gridpoint) &
+                                 (datadict['GeopotentialHeight'][j].data()[2] == lon_gridpoint)])
+            else:
+                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
+            temperature = np.float(datadict['Temperature'][j].values[
+                                       (datadict['Temperature'][j].data()[1] == lat_gridpoint) &
+                                       (datadict['Temperature'][j].data()[2] == lon_gridpoint)])
+
+            density = Ns * datadict['Temperature'][j].level / ps * Ts / temperature
+            print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
+                  datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
+                  temperature, h, density, datadict['Ucomponentofwind'][j].values,
+                  datadict['Vcomponentofwind'][j].values, datadict['Relativehumidity'][j].values, file=table_file)
     table_file.close()
+
+
+def readgribfile2magic(file_name, observatory, gridstep):
+    """
+    This function opens a grib file, selects the Temperature and Geopotential parameters,
+    and finally creates a txt file where these parameters, together with date, year, month,
+    day, hour, pressure level, real height and density, are written.
+    Input: file_name (string)
+           observatory (string). Possible values are 'north' or 'south'
+    Output: a txt file with the exact name as the input file name, but with .txt as extension
+    """
+
+    print('getting all variable names...')
+    vn, vsn = get_gribfile_variables(file_name)
+    print('indexing the file (this might take a while...)')
+    grb = pg.index(file_name, 'shortName', 'typeOfLevel')
+    print('selecting the parameters information...')
+    data = []
+
+    for sn in vsn:
+        var = grb.select(shortName=sn, typeOfLevel='isobaricInhPa')
+        data.append(var)
+
+    datadict = dict(zip(vn, data))
+    pl, pl_index = get_plevels(datadict['Temperature'])
+    new_pl_index = pl_index * int((len(datadict['Temperature'])/len(pl_index)))
+    latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
+    lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
+
+    # We create the table file and fill it with the information stored in the above variables, plus the height
+    # and density computed form them.
+
+    print('creating the txt file containing the selected data...')
+    table_file = open(file_name.split('.')[0] + 'MAGIC_format.txt', 'w')
+
+    for j in np.arange(len(datadict['Temperature'])):
+        if (type(datadict['Temperature'][j].values) == float) or (len(datadict['Temperature'][j].values) == 1):
+            if new_pl_index[j] == 1:
+                print(str([0.00] * 34)[1:-1].replace(",", " "), file=table_file)
+            if 'GeopotentialHeight' in vn:
+                h = datadict['GeopotentialHeight'][j].values
+            else:
+                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
+
+            fields = (datadict['Temperature'][j].year - 2000, datadict['Temperature'][j].month,
+                  datadict['Temperature'][j].day, datadict['Temperature'][j].hour, new_pl_index[j], h,
+                  datadict['Temperature'][j].values, datadict['Ucomponentofwind'][j].values,
+                  datadict['Vcomponentofwind'][j].values, datadict['Relativehumidity'][j].values)
+            row_str = '{: >6d}{: >6d}{: >6d}{: >6d}{: >6d}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}'
+            row_str = row_str.format(*fields)
+            table_file.write(row_str + '\n')
+        else:  # this is just in case the grib file contains more than one grid point
+            if new_pl_index[j] == 1:
+                print(str([0.00] * 34)[1:-1].replace(",", " "), file=table_file)
+            if 'GeopotentialHight' in vn:
+                h = np.float(datadict['GeopotentialHeight'][j].values[
+                                 (datadict['GeopotentialHeight'][j].data()[1] == lat_gridpoint) &
+                                 (datadict['GeopotentialHeight'][j].data()[2] == lon_gridpoint)])
+            else:
+                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
+            temperature = np.float(datadict['Temperature'][j].values[
+                                       (datadict['Temperature'][j].data()[1] == lat_gridpoint) &
+                                       (datadict['Temperature'][j].data()[2] == lon_gridpoint)])
+
+            fields = (datadict['Temperature'][j].year - 2000, datadict['Temperature'][j].month,
+                  datadict['Temperature'][j].day, datadict['Temperature'][j].hour, new_pl_index[j], h, temperature,
+                  datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values,
+                  datadict['Relativehumidity'][j].values)
+            row_str = '{: >6d}{: >6d}{: >6d}{: >6d}{: >6d}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}'
+            row_str = row_str.format(*fields)
+            table_file.write(row_str + '\n')
+    table_file.close()
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python grib_utils.py <options>")
+        print("Options are:")
+        print("            -r      <grib_file_name> <observatory> <gridstep>")
+        print("            -rmagic <grib_file_name> <observatory> <gridstep>")
+        print("            -mjd    <mjd>")
+        print("            -date   <yyyy-mm-dd-hh>")
+
+        sys.exit()
+    else:
+        if sys.argv[1] == '-r':
+            readgribfile2text(sys.argv[2], sys.argv[3], float(sys.argv[4]))
+        if sys.argv[1] == '-rmagic':
+            readgribfile2magic(sys.argv[2], sys.argv[3], float(sys.argv[4]))
+        elif sys.argv[1] == '-mjd':
+            print(mjd2date(float(sys.argv[2])))
+        elif sys.argv[1] == '-date':
+            date = sys.argv[2].split('-')
+            print(date2mjd(int(date[0]),int(date[1]),int(date[2]),int(date[3])))
+
+        else:
+            print('wrong option...')
+            print("Usage: python grib_utils.py <options>")
+            print("Options are:")
+            print("            -r      <grib_file_name> <observatory> <gridstep>")
+            print("            -rmagic <grib_file_name> <observatory> <gridstep>")
+            print("            -mjd    <mjd>")
+            print("            -date   <yyyy-mm-dd-hh>")
+
+            sys.exit()
+
