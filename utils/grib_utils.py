@@ -186,7 +186,7 @@ def get_closest_gridpoint(lat, lon, gridstep):
     lons_grid = np.zeros(int(360 / step) + 1)
     lats_grid = np.zeros(int(180 / step) + 1)
 
-    # getting the grid points for ecmwf data:
+    # getting the grid points:
     for i in range(len(lons_grid)):
         lons_grid[i] = step * i
     for i in range(len(lats_grid)):
@@ -321,6 +321,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
     day, hour, pressure level, real height and density, are written.
     Input: file_name (string)
            observatory (string). Possible values are 'north' or 'south'
+           gridstep (float): grid spacing (0.75 degrees for ECMWF and 1.0 degrees for GDAS)
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
 
@@ -412,7 +413,11 @@ if __name__ == "__main__":
             print("Usage: python grib_utils.py <options>")
             print("Options are:")
             print("            -r      <grib_file_name> <observatory> <gridstep>")
+            print("               note that <gridstep> is 0.75deg for ECMWF data")
+            print("               and 1.0 deg for GDAS data")
             print("            -rmagic <grib_file_name> <observatory> <gridstep>")
+            print("               note that <gridstep> is 0.75deg for ECMWF data")
+            print("               and 1.0 deg for GDAS data")
             print("            -mjd    <mjd>")
             print("            -date   <yyyy-mm-dd-hh>")
 
