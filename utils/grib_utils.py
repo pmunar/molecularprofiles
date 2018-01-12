@@ -1,8 +1,10 @@
+#!/home/pmunar/anaconda3/bin/python3.6
+
 from builtins import str
 import numpy as np
 import pygrib as pg
 from tqdm import *
-from meteorological_constants import *
+from molecularprofiles.utils.meteorological_constants import *
 import sys
 
 
@@ -211,19 +213,22 @@ def get_gribfile_variables(file_name):
     :return: varname (list): variable names
              varshortname (list): variable short names
     """
+    print('opening file...')
     grb = pg.open(file_name)
-    grb.rewind()
+    #grb.rewind()
     varshortname = []
     varname = []
     while True:
         v = grb.read(1)[0]
         vname = v.name
         vshortname = v.shortName
+        print(v, vshortname)
         if vname not in varname:
             varname.append(vname.replace(" ", ""))
             varshortname.append(vshortname)
         else:
             break
+    grb.close()
     return varname, varshortname
 
 def get_plevels(variable):
@@ -259,6 +264,7 @@ def readgribfile2text(file_name, observatory, gridstep):
     for sn in vsn:
         var = grb.select(shortName=sn, typeOfLevel='isobaricInhPa')
         data.append(var)
+        del var
 
     datadict = dict(zip(vn, data))
 
@@ -312,7 +318,7 @@ def readgribfile2text(file_name, observatory, gridstep):
                   temperature, h, density, datadict['Ucomponentofwind'][j].values,
                   datadict['Vcomponentofwind'][j].values, datadict['Relativehumidity'][j].values, file=table_file)
     table_file.close()
-
+    del datadict
 
 def readgribfile2magic(file_name, observatory, gridstep):
     """
@@ -392,7 +398,11 @@ if __name__ == "__main__":
         print("Usage: python grib_utils.py <options>")
         print("Options are:")
         print("            -r      <grib_file_name> <observatory> <gridstep>")
+        print("               note that <gridstep> is 0.75deg for ECMWF data")
+        print("               and 1.0 deg for GDAS data")
         print("            -rmagic <grib_file_name> <observatory> <gridstep>")
+        print("               note that <gridstep> is 0.75deg for ECMWF data")
+        print("               and 1.0 deg for GDAS data")
         print("            -mjd    <mjd>")
         print("            -date   <yyyy-mm-dd-hh>")
 
@@ -409,7 +419,7 @@ if __name__ == "__main__":
             print(date2mjd(int(date[0]),int(date[1]),int(date[2]),int(date[3])))
 
         else:
-            print('wrong option...')
+            print('Wrong option...')
             print("Usage: python grib_utils.py <options>")
             print("Options are:")
             print("            -r      <grib_file_name> <observatory> <gridstep>")

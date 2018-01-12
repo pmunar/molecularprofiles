@@ -2,15 +2,14 @@ import os
 import os.path
 import sys
 import matplotlib.pyplot as plt
-import time
 from tqdm import *
 from matplotlib.ticker import MultipleLocator
 from scipy.interpolate import interp1d
-from grib_utils import *
-from readecmwf import *
-from plot_settings import settings
-from magic_winter_profile import heightmw, rhomw
-from meteorological_constants import *
+from molecularprofiles.utils.grib_utils import *
+from molecularprofiles.utils.read_txtfile import *
+from molecularprofiles.plot_settings import settings
+from molecularprofiles.utils.magic_winter_profile import heightmw, rhomw
+from molecularprofiles.utils.meteorological_constants import *
 
 settings()
 
@@ -97,17 +96,15 @@ class EcmwfMolecularProfile:
 
         if not os.path.exists((self.file_ecmwf).split('.')[0]+'.txt'):
             grib_file = self.file_ecmwf
-            readgribfile2text(grib_file, self.observatory)
+            readgribfile2text(grib_file, self.observatory, gridstep=0.75)
 
-        self.mjd_ecmwf, self.year_ecmwf, self.month_ecmwf, self.day_ecmwf, self.hour_ecmwf, self.h_ecmwf, self.p_ecmwf, \
-        self.n_ecmwf = read_ecmwf(self.file_ecmwf.split('.')[0]+'.txt', self.epoch_text)
+        self.mjd_ecmwf, self.year_ecmwf, self.month_ecmwf, self.day_ecmwf, self.hour_ecmwf, self.p_ecmwf, self.h_ecmwf, \
+        self.n_ecmwf = read_file(self.file_ecmwf.split('.')[0]+'.txt', self.epoch_text)
 
         interpolated_density_ecmwf = []
         ecmwf_density_at_15km = []
         mjd_at_15km = []
         month_at_15km = []
-        diff_ecmwf_with_magic = []
-        diff_ecmwf_with_prod3 = []
         mjd = self.mjd_ecmwf[0]
         self.x = np.linspace(1000., 25000., num=15, endpoint=True)
         step_hours = self.mjd_ecmwf[37] - self.mjd_ecmwf[0]
@@ -128,8 +125,6 @@ class EcmwfMolecularProfile:
             ecmwf_density_at_15km.append(func_ecmwf(self.x[8]))
             mjd_at_15km.append(mjd)
             month_at_15km.append(self.month_ecmwf[self.mjd_ecmwf == mjd])
-            #diff_ecmwf_with_magic.append((int_dens_ecwmf - self.func_magic(self.x)) / int_dens_ecwmf)
-            #diff_ecmwf_with_prod3.append((int_dens_ecwmf - self.func_prod3(self.x)) / int_dens_ecwmf)
 
             mjd += step_hours
         pbar.close()
@@ -139,12 +134,6 @@ class EcmwfMolecularProfile:
         self.ecmwf_density_at_15km = np.asarray(ecmwf_density_at_15km)
         self.mjd_at_15km_ecmwf = np.asarray(mjd_at_15km)
         self.ecmwf_averages = compute_averages_std(self.interpolated_density_ecmwf)
-#        Differences w.r.t. MAGIC W model
-#        self.diff_ecmwf_with_magic = np.asarray(diff_ecmwf_with_magic)
-#        self.diff_ecmwf_MAGIC = compute_averages_std(self.diff_ecmwf_with_magic)
-#        Differences w.r.t. Prod3
-#        self.diff_ecmwf_with_prod3 = np.asarray(diff_ecmwf_with_prod3)
-#        self.diff_ecmwf_PROD3 = compute_averages_std(self.diff_ecmwf_with_prod3)
 
     def compute_diff_wrt_model(self):
 
@@ -152,8 +141,6 @@ class EcmwfMolecularProfile:
         diff_ecmwf_with_prod3 = []
 
         self._get_prod3sim_data()
-
-        mjd = self.mjd_ecmwf[0]
         self.x = np.linspace(1000., 25000., num=15, endpoint=True)
 
         print("Computing the differences of the values of density for ECMWF:")
@@ -232,7 +219,7 @@ class EcmwfMolecularProfile:
         ax.errorbar(self.x + 175., self.diff_ecmwf_MAGIC[0], yerr=self.diff_ecmwf_MAGIC[1], fmt=':', color='b',
                     elinewidth=3.1)
 
-        ax.set_title('Relative Difference w.r.t MAGIC W model %s %s' % (self.year, self.epoch_text))
+        ax.set_title('Relative Difference w.r.t MAGIC W model %s' % (self.epoch_text))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference (model - MW)')
         ax.set_xlim(0., 25100.)
@@ -270,7 +257,7 @@ class EcmwfMolecularProfile:
         ax.errorbar(self.x + 175., diff_ecmwf, yerr=ediff_ecmwf, fmt=':', color='b',
                     elinewidth=3.1)
 
-        ax.set_title('Relative Difference w.r.t %s model, year: %s, epoch: %s' % (model, self.year,
+        ax.set_title('Relative Difference w.r.t %s model, epoch: %s' % (model,
                                                                                   self.epoch_text))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference')
@@ -309,7 +296,7 @@ class EcmwfMolecularProfile:
             print('Wrong model. Exiting')
             sys.exit()
 
-        ax.set_title(self.label_ecmwf + ' ' + str(self.year) + ' ' + str(self.epoch_text))
+        ax.set_title(self.label_ecmwf + ' ' + ' ' + str(self.epoch_text))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax.set_xlim(0., 25100.)

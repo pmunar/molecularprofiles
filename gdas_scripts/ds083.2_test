@@ -4,7 +4,7 @@
 dataset=ds083.2                               
 #
 # Required, use '-get_metadata' fields 'startdate' and 'enddate' as bounds
-date=201701010000/to/201701310000                    
+date=201607010000/to/201712150000                    
 #
 #datetype=init                                # Optional, use if you would like the date range to include data based on model initialization date/time instead of valid date/time
 #
@@ -13,8 +13,8 @@ param=HGT/PRES/TMP/R H/P WAT/A PCP/U GRD/V GRD/T CDC/LANDN/TOZNE
 #
 #level=SSSS:NNN/NNN;SSSS:NNN;SSSS:NNN/NNN     # Optional, use '-get_metadata' field 'level' or 'level_description' for 'SSSS'.                                           
 # Use '-get_metadata' field 'levelvalue' for 'NNN'.  Separate multiple level values with "/".
-level=ISBL:1000/975/925/850/750/650/550/450/350/250/150/70/30/10
-#
+#level=ISBL:1000/975/925/850/750/650/550/450/350/250/150/70/30/10
+level=ISBL:1000/975/950/925/900/850/800/750/700/650/600/550/500/450/400/350/300/250/200/150/100/50/20
 #
 # Optional but required if spatial subsetting is requested on select datasets. Current options are netCDF or csv for single grid point extraction. 
 #oformat=SSSS                                 

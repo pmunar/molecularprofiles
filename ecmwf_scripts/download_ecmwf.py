@@ -125,8 +125,8 @@ def request_ecwmf(date_i, date_f, lat, lon, outfile='my_ecmwf_file.grib'):
     })
 
 
-def find_nearest(a, value):  # Function to find the nearest grid position to a given latitude or longitude
-    return a[np.abs(a-value).argmin()]
+def find_nearest(a, num):  # Function to find the nearest grid position to a given latitude or longitude
+    return a[np.abs(a-num).argmin()]
 
 
 if __name__ == '__main__':

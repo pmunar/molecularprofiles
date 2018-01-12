@@ -1,11 +1,9 @@
 from tqdm import *
+import numpy as np
+from molecularprofiles.utils.grib_utils import mjd2date, get_epoch
 
 
 def read_gdas(file_gdas, epoch_text):
-    import numpy as np
-    import sys
-    from grib_utils import mjd2date
-    from grib_utils import get_epoch
 
     print("loading and selecting gdas data")
     gdas_file = open(file_gdas)
