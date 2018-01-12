@@ -64,6 +64,8 @@ class EcmwfMolecularProfile:
 
     def _get_prod3sim_data(self):
 
+        # TODO: change the directory definition. Make an import since everything is now recognised as package
+
         MOLECULARPROFILES_DIR = os.environ.get('MOLECULARPROFILES_DIR')
         ECMWF_DIR = MOLECULARPROFILES_DIR + 'ecmwf_scipts/'
         PROD3_DIR = MOLECULARPROFILES_DIR + 'Prod3b_simulations/'
@@ -164,6 +166,8 @@ class EcmwfMolecularProfile:
     # =======================================================================================================
 
     def plot_average_at_15km(self):
+        # TODO: change the plotting of the lines. If data does not contain the initial day of year, it crashes
+
         """
         Function that produces a plot of the averaged density at 15 km for ECMWF data
         :return: 
@@ -176,9 +180,9 @@ class EcmwfMolecularProfile:
         ax.plot(self.mjd_at_15km_ecmwf, self.ecmwf_density_at_15km, 'o', color='#99CCFF', markersize=0.75,
                 label=self.label_ecmwf+' '+self.observatory, alpha=0.3)
 
-        mjd_start_year = self.mjd_at_15km_ecmwf[(self.month_ecmwf == 1) & (self.day_ecmwf == 1)]
-        mjd_half_year = self.mjd_at_15km_ecmwf[(self.month_ecmwf == 7) & (self.day_ecmwf == 1)]
-        year_plot = self.year_ecmwf[(self.month_ecmwf == 7) & (self.day_ecmwf == 1)]
+        mjd_start_year = date2mjd(self.year_ecmwf[0], 1, 1, 0)
+        mjd_half_year = date2mjd(self.year_ecmwf[0], 7, 1, 0)
+        year_plot = self.year_ecmwf[0]
 
         if mjd_start_year.all():
             for i in np.arange(len(mjd_start_year)):
