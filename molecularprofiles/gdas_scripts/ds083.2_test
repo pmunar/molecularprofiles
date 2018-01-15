@@ -1,0 +1,42 @@
+#this is a rdams subset request control file template.  
+#Valid parameters output by the command 'rdams -get_metadata <dsnnn.n>' must be included for this file to be processed into a request.
+# Required, use '-get_metadata' field 'dataset'
+dataset=ds083.2                               
+#
+# Required, use '-get_metadata' fields 'startdate' and 'enddate' as bounds
+date=201607010000/to/201712150000                    
+#
+#datetype=init                                # Optional, use if you would like the date range to include data based on model initialization date/time instead of valid date/time
+#
+# Required, use '-get_metadata' field 'param' or 'param_description'.  Separate multiple parameters with "/".
+param=HGT/PRES/TMP/R H/P WAT/A PCP/U GRD/V GRD/T CDC/LANDN/TOZNE                         
+#
+#level=SSSS:NNN/NNN;SSSS:NNN;SSSS:NNN/NNN     # Optional, use '-get_metadata' field 'level' or 'level_description' for 'SSSS'.                                           
+# Use '-get_metadata' field 'levelvalue' for 'NNN'.  Separate multiple level values with "/".
+#level=ISBL:1000/975/925/850/750/650/550/450/350/250/150/70/30/10
+level=ISBL:1000/975/950/925/900/850/800/750/700/650/600/550/500/450/400/350/300/250/200/150/100/50/20
+#
+# Optional but required if spatial subsetting is requested on select datasets. Current options are netCDF or csv for single grid point extraction. 
+#oformat=SSSS                                 
+# Optional, use for spatial subset requests 90 to -90
+nlat=28.8                                      
+# Optional, use for spatial subset requests 90 to -90
+slat=28.8                                      
+# Optional, use for spatial subset requests -180 to 180
+wlon=-17.8
+# Optioanal, use for spatial subset requests -180 to 180
+elon=-17.8                                     
+# To extract a single grid point at lat=yy.y,lon=xxx.x, set both nlat and slat=yy.y, and both elon and wlon = xxx.x
+#
+# Optional, use '-get_metadata' field 'product'.  Separate multiple products with "/".
+product=Analysis
+#
+# Optional, use '-get_metadata' field 'gridproj'
+#gridproj=latLon
+#griddef=SSSS                                 # Optional, use '-get_metadata' field 'griddef'
+#groupindex=NN                                # Optional, use '-get_summary' field 'groupindex' if available
+#
+# Optional, use 'GZ' for gzip, 'Z' for unix compress, 'BZ2' for bzip2, or 'ZIP' for Zip, for external users only
+compression=GZ                               
+# Optional, request output will be created in current working directory if 'targetdir' is not set to a desired output directory.  This option is only available for NCAR HPC users.
+targetdir=test                               
