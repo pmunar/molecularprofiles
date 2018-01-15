@@ -66,8 +66,8 @@ class gdasMolecularProfile:
     def _get_prod3sim_data(self):
 
         MOLECULARPROFILES_DIR = os.environ.get('MOLECULARPROFILES_DIR')
-        gdas_DIR = MOLECULARPROFILES_DIR + 'gdas_scipts/'
-        PROD3_DIR = MOLECULARPROFILES_DIR + 'Prod3b_simulations/'
+        gdas_DIR = MOLECULARPROFILES_DIR + '/molecularprofiles/gdas_scipts/'
+        PROD3_DIR = MOLECULARPROFILES_DIR + '/molecularprofiles/Prod3b_simulations/'
         # Prod3 Simulations (based on NRLMSISE)
         if self.observatory == 'north':
             prod3 = open(PROD3_DIR + '/atmprof36_lapalma.dat')
@@ -173,20 +173,20 @@ class gdasMolecularProfile:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.plot(self.mjd_at_15km_gdas, self.gdas_density_at_15km, 'o', color='#99CCFF', markersize=0.75,
-                label=self.label_gdas + ' ' + self.observatory, alpha=0.3)
+                label=self.label_gdas + ' ' + self.observatory, alpha=0.7)
 
-        mjd_start_year = self.mjd_at_15km_gdas[(self.month_gdas == 1) & (self.day_gdas == 1)]
-        mjd_half_year = self.mjd_at_15km_gdas[(self.month_gdas == 7) & (self.day_gdas == 1)]
-        year_plot = self.year_gdas[(self.month_gdas == 7) & (self.day_gdas == 1)]
+        mjd_start_year = np.array([date2mjd(self.year_gdas[0], 1, 1, 0)])
+        mjd_half_year = np.array([date2mjd(self.year_gdas[0], 7, 1, 0)])
+        year_plot = np.array([self.year_gdas[0]])
 
         if mjd_start_year.all():
             for i in np.arange(len(mjd_start_year)):
                 ax.vlines(mjd_start_year[i], 0.775, 1.0, color='0.7', linewidth=1.)
-                ax.text(mjd_start_year[i] - 7.25, 0.77, str(year_plot[i]), rotation=90, color='0.7')
+                ax.text(mjd_start_year[i] - 7.25, 0.79, str(year_plot[i]), rotation=90, color='0.7')
         if mjd_half_year.all():
             for i in np.arange(len(mjd_half_year)):
                 ax.vlines(mjd_half_year[i], 0.775, 1.0, color='0.7', linewidth=1.)
-                ax.text(mjd_half_year[i] - 7.25, 0.77, str(year_plot[i]), rotation=90, color='0.7')
+                ax.text(mjd_half_year[i] - 7.25, 0.79, str(year_plot[i]), rotation=90, color='0.7')
 
         ax.hlines(np.mean(self.gdas_density_at_15km), np.min(self.mjd_at_15km_gdas) - 10.,
                   np.max(self.mjd_at_15km_gdas) + 10.,
@@ -231,8 +231,8 @@ class gdasMolecularProfile:
         fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.eps', bbox_inches='tight')
         fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_differences_wrt_other(self, model):
-        print('Computing the averages, std dev and peak-to-peak values for the differences wrt other model:')
+    def plot_differences_wrt_model(self, model=None):
+        print('Computing the averages, std dev and peak-to-peak values for the differences wrt model:')
         print('plotting averaged data values for selected epoch')
         print('NEED TO FINisH THIS!')
         if model == 'MW':
@@ -244,7 +244,7 @@ class gdasMolecularProfile:
             ediff_gdas_pp = [self.diff_gdas_PROD3[3], self.diff_gdas_PROD3[2]]
             ediff_gdas = self.diff_gdas_PROD3[1]
         else:
-            print('Wrong model name')
+            print('Wrong model. It must be "MW" for MAGIC Winter model, or "PROD3" for Paranal model. \n Exiting!')
             sys.exit()
 
         fig = plt.figure()
@@ -267,10 +267,10 @@ class gdasMolecularProfile:
         ax.yaxis.set_major_locator(MultipleLocator(0.02))
         ax.legend(loc='best', numpoints=1)
         ax.grid(which='both', axis='y', color='0.8')
-        fig.savefig('differences_wrt_PROD3_' + self.output_plot_name + '.eps', bbox_inches='tight')
-        fig.savefig('differences_wrt_PROD3_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
+        fig.savefig('differences_wrt_'+str(model)+'_' + self.output_plot_name + '.eps', bbox_inches='tight')
+        fig.savefig('differences_wrt_'+str(model)+'_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_models_comparison(self, model):
+    def plot_models_comparison(self, model=None):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
@@ -287,12 +287,12 @@ class gdasMolecularProfile:
             ax.plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
                     label='Prod3 ' + self.observatory)
         elif model == 'both':
-            ax.plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
+            ax.plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), ':', color='0.8',
                     label='MAGIC W')
             ax.plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
                     label='Prod3 ' + self.observatory)
         else:
-            print('Wrong model. Exiting')
+            print('Wrong model. It must be "MW" for MAGIC Winter model, or "PROD3" for Paranal model. \n Exiting')
             sys.exit()
 
         ax.set_title(self.label_gdas + ' ' + ' ' + str(self.epoch_text))
