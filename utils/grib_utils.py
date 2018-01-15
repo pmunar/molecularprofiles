@@ -6,6 +6,7 @@ import pygrib as pg
 from tqdm import *
 from molecularprofiles.utils.meteorological_constants import *
 import sys
+import gc
 
 
 def ddmmss2deg(deg, min, sec):
@@ -220,11 +221,10 @@ def get_gribfile_variables(file_name):
     varname = []
     while True:
         v = grb.read(1)[0]
-        vname = v.name
+        vname = v.name.replace(" ", "")
         vshortname = v.shortName
-        print(v, vshortname)
         if vname not in varname:
-            varname.append(vname.replace(" ", ""))
+            varname.append(vname)
             varshortname.append(vshortname)
         else:
             break
@@ -264,9 +264,11 @@ def readgribfile2text(file_name, observatory, gridstep):
     for sn in vsn:
         var = grb.select(shortName=sn, typeOfLevel='isobaricInhPa')
         data.append(var)
-        del var
+        gc.collect()
 
     datadict = dict(zip(vn, data))
+    data = None
+    gc.collect()
 
     # print('selecting temperature parameter...')
     # temperature = grb.select(shortName='t', typeOfLevel='isobaricInhPa')
@@ -292,7 +294,7 @@ def readgribfile2text(file_name, observatory, gridstep):
     for j in np.arange(len(datadict['Temperature'])):
         if (type(datadict['Temperature'][j].values) == float) or (len(datadict['Temperature'][j].values) == 1):
             if 'GeopotentialHeight' in vn:
-                h = datadict['GeopotentialHeight'][j].values
+                h = GetAltitudeFromGeopotentialHeight(datadict['GeopotentialHeight'][j].values, observatory)
             else:
                 h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
             density = Ns * datadict['Temperature'][j].level / ps * Ts / datadict['Temperature'][j].values
@@ -303,22 +305,26 @@ def readgribfile2text(file_name, observatory, gridstep):
 
         else: # this is just in case the grib file contains more than one grid point
             if 'GeopotentialHeight' in vn:
-                h = np.float(datadict['GeopotentialHeight'][j].values[
+                h = GetAltitudeFromGeopotentialHeight(np.float(datadict['GeopotentialHeight'][j].values[
                                  (datadict['GeopotentialHeight'][j].data()[1] == lat_gridpoint) &
-                                 (datadict['GeopotentialHeight'][j].data()[2] == lon_gridpoint)])
+                                 (datadict['GeopotentialHeight'][j].data()[2] == lon_gridpoint)]), observatory)
             else:
-                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
+                h = GetAltitudeFromGeopotential(np.float(datadict['Geopotential'][j].values[
+                                 (datadict['Geopotential'][j].data()[1] == lat_gridpoint) &
+                                 (datadict['Geopotential'][j].data()[2] == lon_gridpoint)]), observatory)
             temperature = np.float(datadict['Temperature'][j].values[
                                        (datadict['Temperature'][j].data()[1] == lat_gridpoint) &
                                        (datadict['Temperature'][j].data()[2] == lon_gridpoint)])
 
             density = Ns * datadict['Temperature'][j].level / ps * Ts / temperature
+
             print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
                   temperature, h, density, datadict['Ucomponentofwind'][j].values,
                   datadict['Vcomponentofwind'][j].values, datadict['Relativehumidity'][j].values, file=table_file)
+
     table_file.close()
-    del datadict
+    datadict = None
 
 def readgribfile2magic(file_name, observatory, gridstep):
     """
@@ -410,7 +416,7 @@ if __name__ == "__main__":
     else:
         if sys.argv[1] == '-r':
             readgribfile2text(sys.argv[2], sys.argv[3], float(sys.argv[4]))
-        if sys.argv[1] == '-rmagic':
+        elif sys.argv[1] == '-rmagic':
             readgribfile2magic(sys.argv[2], sys.argv[3], float(sys.argv[4]))
         elif sys.argv[1] == '-mjd':
             print(mjd2date(float(sys.argv[2])))
@@ -422,14 +428,14 @@ if __name__ == "__main__":
             print('Wrong option...')
             print("Usage: python grib_utils.py <options>")
             print("Options are:")
-            print("            -r      <grib_file_name> <observatory> <gridstep>")
+            print("            -r <grib_file_name> <observatory> <gridstep>")
             print("               note that <gridstep> is 0.75deg for ECMWF data")
             print("               and 1.0 deg for GDAS data")
             print("            -rmagic <grib_file_name> <observatory> <gridstep>")
             print("               note that <gridstep> is 0.75deg for ECMWF data")
             print("               and 1.0 deg for GDAS data")
-            print("            -mjd    <mjd>")
-            print("            -date   <yyyy-mm-dd-hh>")
+            print("            -mjd <mjd>")
+            print("            -date <yyyy-mm-dd-hh>")
 
             sys.exit()
 
