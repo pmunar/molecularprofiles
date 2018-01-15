@@ -1,14 +1,14 @@
 from tqdm import *
+from molecularprofiles.utils.grib_utils import date2mjd, get_epoch
+import numpy as np
 
 
 def read_ecmwf(file_ecmwf, epoch_text):
-    import numpy as np
-    from grib_utils import date2mjd, get_epoch
     global months, month_ecmwf
     print("loading and selecting ecmwf data")
     ecmwf_file = open(file_ecmwf)
-    date_ecmwf, year_ecmwf, month_ecmwf, day_ecmwf, hour_ecmwf, p_ecmwf, T_ecmwf, geop_ecmwf, h_ecmwf, n_ecmwf = \
-        np.loadtxt(ecmwf_file, usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), unpack=True)
+    date_ecmwf, year_ecmwf, month_ecmwf, day_ecmwf, hour_ecmwf, p_ecmwf, T_ecmwf, h_ecmwf, n_ecmwf, U_ecmwf, V_ecmwf, \
+        RH_ecmwf = np.loadtxt(ecmwf_file, usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), unpack=True)
 
     mjd_ecmwf = []
 
