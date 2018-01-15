@@ -365,7 +365,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
             if new_pl_index[j] == 1:
                 print(str([0.00] * 34)[1:-1].replace(",", " "), file=table_file)
             if 'GeopotentialHeight' in vn:
-                h = datadict['GeopotentialHeight'][j].values
+                h = GetAltitudeFromGeopotentialHeight(datadict['GeopotentialHeight'][j].values, observatory)
             else:
                 h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
 
