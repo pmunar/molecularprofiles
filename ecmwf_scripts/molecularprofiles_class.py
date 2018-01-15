@@ -180,9 +180,9 @@ class EcmwfMolecularProfile:
         ax.plot(self.mjd_at_15km_ecmwf, self.ecmwf_density_at_15km, 'o', color='#99CCFF', markersize=0.75,
                 label=self.label_ecmwf+' '+self.observatory, alpha=0.3)
 
-        mjd_start_year = date2mjd(self.year_ecmwf[0], 1, 1, 0)
-        mjd_half_year = date2mjd(self.year_ecmwf[0], 7, 1, 0)
-        year_plot = self.year_ecmwf[0]
+        mjd_start_year = np.array([date2mjd(self.year_ecmwf[0], 1, 1, 0)])
+        mjd_half_year = np.array([date2mjd(self.year_ecmwf[0], 7, 1, 0)])
+        year_plot = np.array([self.year_ecmwf[0]])
 
         if mjd_start_year.all():
             for i in np.arange(len(mjd_start_year)):
@@ -239,7 +239,6 @@ class EcmwfMolecularProfile:
     def plot_differences_wrt_other(self, model):
         print('Computing the averages, std dev and peak-to-peak values for the differences wrt other model:')
         print('plotting averaged data values for selected epoch')
-        print('NEED TO FINisH THIS!')
         if model == 'MW':
             diff_ecmwf = self.diff_ecmwf_MAGIC[0]
             ediff_ecmwf_pp = [self.diff_ecmwf_MAGIC[3], self.diff_ecmwf_MAGIC[2]]
@@ -249,7 +248,7 @@ class EcmwfMolecularProfile:
             ediff_ecmwf_pp = [self.diff_ecmwf_PROD3[3], self.diff_ecmwf_PROD3[2]]
             ediff_ecmwf = self.diff_ecmwf_PROD3[1]
         else:
-            print('Wrong model name')
+            print('Wrong model name. It must be "MW" for MAGIC Winter model, or "PROD3" for Paranal model. \n Exiting!')
             sys.exit()
 
         fig = plt.figure()
@@ -275,7 +274,7 @@ class EcmwfMolecularProfile:
         fig.savefig('differences_wrt_PROD3_' + self.output_plot_name + '.eps', bbox_inches='tight')
         fig.savefig('differences_wrt_PROD3_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_models_comparison(self, model):
+    def plot_models_comparison(self, model=None):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
@@ -297,7 +296,8 @@ class EcmwfMolecularProfile:
             ax.plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
                     label='Prod3 ' + self.observatory)
         else:
-            print('Wrong model. Exiting')
+            print('Wrong model. It must be "MW" for MAGIC Winter model, or "PROD3" for Paranal model or "both". '
+                  '\n Exiting!')
             sys.exit()
 
         ax.set_title(self.label_ecmwf + ' ' + ' ' + str(self.epoch_text))
