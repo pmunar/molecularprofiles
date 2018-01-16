@@ -246,12 +246,13 @@ def get_plevels(variable):
 
 def readgribfile2text(file_name, observatory, gridstep):
     """
-    This function opens a grib file, selects the Temperature and Geopotential parameters,
+    This function opens a grib file, selects the parameters (all available: Temperature, Geopotential, RH, ...),
     and finally creates a txt file where these parameters, together with date, year, month,
     day, hour, pressure level, real height and density, are written.
 
     Input: file_name (string)
            observatory (string). Possible values are 'north' or 'south'
+           gridstep (float): grid spacing in degrees. Values are 1.0 for GDAS data and 0.75 for ECMWF data.
 
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
@@ -413,7 +414,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
 def runInParallel(list_of_gribfiles, observatory, gridstep):
     if multiprocessing.cpu_count() == 4:
         max_cpus = 2
-    elif multiprocessing.cpu_count() == 48:
+    elif multiprocessing.cpu_count() >= 10:
         max_cpus = 5
     elif multiprocessing.cpu_count() == 1:
         max_cpus = 1
