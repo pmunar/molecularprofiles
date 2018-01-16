@@ -257,7 +257,7 @@ def readgribfile2text(file_name, observatory, gridstep):
     """
 
     if os.path.exists((file_name).split('.')[0] + '.txt'):
-        print('Output file already exists. Aborting.')
+        print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + '.txt'))
         sys.exit()
 
     print('getting all variable names...')
@@ -343,7 +343,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
     if os.path.exists((file_name).split('.')[0] + 'MAGIC_format.txt'):
-        print('Output file already exists. Aborting.')
+        print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + 'MAGIC_format.txt'))
         sys.exit()
 
     print('getting all variable names...')
