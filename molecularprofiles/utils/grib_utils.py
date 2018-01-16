@@ -442,22 +442,23 @@ def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
                 p.join()
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] == '-h' or sys.argv[1] == '-help':
         print("Usage: python grib_utils.py <options>")
         print("Options are:")
-        print("            -r      <grib_file_name> <observatory> <gridstep>")
-        print("               note that <gridstep> is 0.75deg for ECMWF data")
-        print("               and 1.0 deg for GDAS data")
-        print("            -rmagic <grib_file_name> <observatory> <gridstep>")
-        print("               note that <gridstep> is 0.75deg for ECMWF data")
-        print("               and 1.0 deg for GDAS data")
-        print("            -mjd    <mjd>")
-        print("            -date   <yyyy-mm-dd-hh>")
-        print("             Note: with the -r or -rmagic option, if a txt file containing")
-        print("                   a list of grib files is passed instead of a single grib")
-        print("                   file, the processing is run in parallel")
+        print("        -r         <grib_file_name> <observatory> <gridstep>")
+        print("                   note that <gridstep> is 0.75deg for ECMWF data")
+        print("                   and 1.0 deg for GDAS data")
+        print("        -rmagic    <grib_file_name> <observatory> <gridstep>")
+        print("                   note that <gridstep> is 0.75deg for ECMWF data")
+        print("                   and 1.0 deg for GDAS data")
+        print("        -mjd       <mjd>")
+        print("        -date      <yyyy-mm-dd-hh>")
+        print("                   Note: with the -r or -rmagic option, if a txt file")
+        print("                   containing a list of grib files is passed instead")
+        print("                   of a single grib file, the processing is run in parallel")
 
         sys.exit()
+
     else:
         if sys.argv[1] == '-r':
             if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
@@ -482,8 +483,10 @@ if __name__ == "__main__":
                     list_of_files.append(line[:-1])
                     line = list_file.readline()
                 runInParallel(readgribfile2magic, list_of_files, sys.argv[3], float(sys.argv[4]))
+
         elif sys.argv[1] == '-mjd':
             print(mjd2date(float(sys.argv[2])))
+
         elif sys.argv[1] == '-date':
             date = sys.argv[2].split('-')
             print(date2mjd(int(date[0]),int(date[1]),int(date[2]),int(date[3])))
@@ -492,17 +495,17 @@ if __name__ == "__main__":
             print('Wrong option...')
             print("Usage: python grib_utils.py <options>")
             print("Options are:")
-            print("            -r <grib_file_name> <observatory> <gridstep>")
-            print("               note that <gridstep> is 0.75deg for ECMWF data")
-            print("               and 1.0 deg for GDAS data")
-            print("            -rmagic <grib_file_name> <observatory> <gridstep>")
-            print("               note that <gridstep> is 0.75deg for ECMWF data")
-            print("               and 1.0 deg for GDAS data")
-            print("            -mjd <mjd>")
-            print("            -date <yyyy-mm-dd-hh>")
-            print("             Note: with the -r or -rmagic option, if a txt file containing")
-            print("                   a list of grib files is passed instead of a single grib")
-            print("                   file, the processing is run in parallel")
+            print("        -r         <grib_file_name> <observatory> <gridstep>")
+            print("                   note that <gridstep> is 0.75deg for ECMWF data")
+            print("                   and 1.0 deg for GDAS data")
+            print("        -rmagic    <grib_file_name> <observatory> <gridstep>")
+            print("                   note that <gridstep> is 0.75deg for ECMWF data")
+            print("                   and 1.0 deg for GDAS data")
+            print("        -mjd       <mjd>")
+            print("        -date      <yyyy-mm-dd-hh>")
+            print("                   Note: with the -r or -rmagic option, if a txt file")
+            print("                   containing a list of grib files is passed instead")
+            print("                   of a single grib file, the processing is run in parallel")
 
             sys.exit()
 
