@@ -414,7 +414,7 @@ def runInParallel(list_of_gribfiles, observatory, gridstep):
 def runInParallel_Pool(list_of_gribfiles, observatory, gridstep):
     pool = Pool(processes = multiprocessing.cpu_count() - 2)
     for f in list_of_files:
-        pool.apply(readgribfile2text, args=(f, observatory, gridstep))
+        pool.apply_async(readgribfile2text, args=(f, observatory, gridstep))
         pool.close()
         pool.join()
 
