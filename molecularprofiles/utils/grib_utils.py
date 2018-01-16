@@ -411,7 +411,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
     table_file.close()
 
 
-def runInParallel(list_of_gribfiles, observatory, gridstep):
+def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
     if multiprocessing.cpu_count() == 4:
         max_cpus = 2
     elif multiprocessing.cpu_count() >= 10:
@@ -426,7 +426,7 @@ def runInParallel(list_of_gribfiles, observatory, gridstep):
         sub_list_of_gribfiles = list_of_gribfiles[first_element:first_element + max_cpus]
         proc = []
         for f in sub_list_of_gribfiles:
-            p = Process(target=readgribfile2text, args=(f, observatory, gridstep))
+            p = Process(target=function_name, args=(f, observatory, gridstep))
             proc.append(p)
             p.start()
         for p in proc:
@@ -469,10 +469,19 @@ if __name__ == "__main__":
                 while line:
                     list_of_files.append(line[:-1])
                     line = list_file.readline()
-                runInParallel(list_of_files, sys.argv[3], float(sys.argv[4]))
+                runInParallel(readgribfile2text, list_of_files, sys.argv[3], float(sys.argv[4]))
 
         elif sys.argv[1] == '-rmagic':
-            readgribfile2magic(sys.argv[2], sys.argv[3], float(sys.argv[4]))
+            if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
+                readgribfile2magic(sys.argv[2], sys.argv[3], float(sys.argv[4]))
+            elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
+                list_file = open(sys.argv[2], 'r')
+                line = list_file.readline()
+                list_of_files = []
+                while line:
+                    list_of_files.append(line[:-1])
+                    line = list_file.readline()
+                runInParallel(readgribfile2magic, list_of_files, sys.argv[3], float(sys.argv[4]))
         elif sys.argv[1] == '-mjd':
             print(mjd2date(float(sys.argv[2])))
         elif sys.argv[1] == '-date':
