@@ -403,13 +403,26 @@ def readgribfile2magic(file_name, observatory, gridstep):
 
 
 def runInParallel(list_of_gribfiles, observatory, gridstep):
-    proc = []
-    for f in list_of_gribfiles:
-        p = Process(target=readgribfile2text, args=(f, observatory, gridstep))
-        p.start()
-        proc.append(p)
-    for p in proc:
-        p.join()
+    if multiprocessing.cpu_count() == 4:
+        max_cpus = 2
+    elif multiprocessing.cpu_count() == 48:
+        max_cpus = 10
+    elif multiprocessing.cpu_count() == 1:
+        max_cpus = 1
+    else:
+        max_cpus = multiprocessing.cpu_count() - 1
+
+    first_element = 0
+    while first_element + max_cpus <= len(list_of_gribfiles):
+        sub_list_of_gribfiles = list_of_gribfiles[first_element:first_element + max_cpus]
+        proc = []
+        for f in sub_list_of_gribfiles:
+            p = Process(target=readgribfile2text, args=(f, observatory, gridstep))
+            proc.append(p)
+            p.start()
+        for p in proc:
+            p.join()
+        first_element += max_cpus
 
 def runInParallel_Pool(list_of_gribfiles, observatory, gridstep):
     pool = Pool(processes = multiprocessing.cpu_count() - 2)
