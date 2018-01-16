@@ -7,6 +7,9 @@ from tqdm import *
 from molecularprofiles.utils.meteorological_constants import *
 import sys
 import gc
+import multiprocessing
+from multiprocessing import Process
+from multiprocessing import Pool
 
 
 def ddmmss2deg(deg, min, sec):
@@ -399,6 +402,22 @@ def readgribfile2magic(file_name, observatory, gridstep):
     table_file.close()
 
 
+def runInParallel(list_of_gribfiles, observatory, gridstep):
+    proc = []
+    for f in list_of_gribfiles:
+        p = Process(target=readgribfile2text, args=(f, observatory, gridstep))
+        p.start()
+        proc.append(p)
+    for p in proc:
+        p.join()
+
+def runInParallel_Pool(list_of_gribfiles, observatory, gridstep):
+    pool = Pool(processes = multiprocessing.cpu_count() - 2)
+    for f in list_of_files:
+        pool.apply(readgribfile2text, args=(f, observatory, gridstep))
+        pool.close()
+        pool.join()
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python grib_utils.py <options>")
@@ -415,7 +434,17 @@ if __name__ == "__main__":
         sys.exit()
     else:
         if sys.argv[1] == '-r':
-            readgribfile2text(sys.argv[2], sys.argv[3], float(sys.argv[4]))
+            if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
+                readgribfile2text(sys.argv[2], sys.argv[3], float(sys.argv[4]))
+            elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
+                list_file = open(sys.argv[2], 'r')
+                line = list_file.readline()
+                list_of_files = []
+                while line:
+                    list_of_files.append(line[:-1])
+                    line = list_file.readline()
+
+
         elif sys.argv[1] == '-rmagic':
             readgribfile2magic(sys.argv[2], sys.argv[3], float(sys.argv[4]))
         elif sys.argv[1] == '-mjd':
