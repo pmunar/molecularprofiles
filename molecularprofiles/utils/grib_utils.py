@@ -260,11 +260,12 @@ def readgribfile2text(file_name, observatory, gridstep):
         print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + '.txt'))
         sys.exit()
 
+    print('Working on %s' %(file_name))
     print('getting all variable names...')
     vn, vsn = get_gribfile_variables(file_name)
-    print('indexing the file (this might take a while...)')
+    print('indexing the file %s (this might take a while...)' % (file_name))
     grb = pg.index(file_name, 'shortName', 'typeOfLevel')
-    print('selecting the parameters information...')
+    print('selecting the parameters information for %s ...' % (file_name))
     data = []
 
     for sn in vsn:
@@ -346,11 +347,12 @@ def readgribfile2magic(file_name, observatory, gridstep):
         print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + 'MAGIC_format.txt'))
         sys.exit()
 
+    print('Working on %s' %(file_name))
     print('getting all variable names...')
     vn, vsn = get_gribfile_variables(file_name)
-    print('indexing the file (this might take a while...)')
+    print('indexing the file %s (this might take a while...)' % (file_name))
     grb = pg.index(file_name, 'shortName', 'typeOfLevel')
-    print('selecting the parameters information...')
+    print('selecting the parameters information for %s ...' % (file_name))
     data = []
 
     for sn in vsn:
