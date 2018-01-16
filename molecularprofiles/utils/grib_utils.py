@@ -3,14 +3,12 @@
 from builtins import str
 import numpy as np
 import pygrib as pg
-from tqdm import *
 from molecularprofiles.utils.meteorological_constants import *
 import sys
 import gc
 import multiprocessing
 from multiprocessing import Process
-from multiprocessing import Pool
-
+import os
 
 def ddmmss2deg(deg, min, sec):
     """
@@ -257,6 +255,11 @@ def readgribfile2text(file_name, observatory, gridstep):
 
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
+
+    if os.path.exists((file_name).split('.')[0] + '.txt'):
+        print('Output file already exists. Aborting.')
+        sys.exit()
+
     print('getting all variable names...')
     vn, vsn = get_gribfile_variables(file_name)
     print('indexing the file (this might take a while...)')
@@ -339,6 +342,9 @@ def readgribfile2magic(file_name, observatory, gridstep):
            gridstep (float): grid spacing (0.75 degrees for ECMWF and 1.0 degrees for GDAS)
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
+    if os.path.exists((file_name).split('.')[0] + 'MAGIC_format.txt'):
+        print('Output file already exists. Aborting.')
+        sys.exit()
 
     print('getting all variable names...')
     vn, vsn = get_gribfile_variables(file_name)
@@ -423,6 +429,14 @@ def runInParallel(list_of_gribfiles, observatory, gridstep):
         for p in proc:
             p.join()
         first_element += max_cpus
+        if first_element + max_cpus > len(list_of_gribfiles):
+            sub_list_of_gribfiles = list_of_gribfiles[first_element:]
+            for f in sub_list_of_gribfiles:
+                p = Process(target=readgribfile2text, args=(f, observatory, gridstep))
+                proc.append(p)
+                p.start()
+            for p in proc:
+                p.join()
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -436,6 +450,9 @@ if __name__ == "__main__":
         print("               and 1.0 deg for GDAS data")
         print("            -mjd    <mjd>")
         print("            -date   <yyyy-mm-dd-hh>")
+        print("             Note: with the -r or -rmagic option, if a txt file containing")
+        print("                   a list of grib files is passed instead of a single grib")
+        print("                   file, the processing is run in parallel")
 
         sys.exit()
     else:
@@ -471,6 +488,9 @@ if __name__ == "__main__":
             print("               and 1.0 deg for GDAS data")
             print("            -mjd <mjd>")
             print("            -date <yyyy-mm-dd-hh>")
+            print("             Note: with the -r or -rmagic option, if a txt file containing")
+            print("                   a list of grib files is passed instead of a single grib")
+            print("                   file, the processing is run in parallel")
 
             sys.exit()
 
