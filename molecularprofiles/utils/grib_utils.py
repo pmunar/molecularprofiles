@@ -406,7 +406,7 @@ def runInParallel(list_of_gribfiles, observatory, gridstep):
     if multiprocessing.cpu_count() == 4:
         max_cpus = 2
     elif multiprocessing.cpu_count() == 48:
-        max_cpus = 10
+        max_cpus = 5
     elif multiprocessing.cpu_count() == 1:
         max_cpus = 1
     else:
@@ -423,13 +423,6 @@ def runInParallel(list_of_gribfiles, observatory, gridstep):
         for p in proc:
             p.join()
         first_element += max_cpus
-
-def runInParallel_Pool(list_of_gribfiles, observatory, gridstep):
-    pool = Pool(processes = multiprocessing.cpu_count() - 2)
-    for f in list_of_gribfiles:
-        pool.apply_async(readgribfile2text, args=(f, observatory, gridstep))
-        pool.close()
-        pool.join()
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -456,7 +449,7 @@ if __name__ == "__main__":
                 while line:
                     list_of_files.append(line[:-1])
                     line = list_file.readline()
-
+                runInParallel(list_of_files, sys.argv[3], float(sys.argv[4]))
 
         elif sys.argv[1] == '-rmagic':
             readgribfile2magic(sys.argv[2], sys.argv[3], float(sys.argv[4]))
