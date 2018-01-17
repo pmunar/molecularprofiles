@@ -181,7 +181,7 @@ class EcmwfMolecularProfile:
         ax.legend(loc='best', numpoints=1)
         ax.set_xlabel('MJD')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
-        #ax.set_ylim(np.min(self.ecmwf_density_at_15km)*0.98, np.max(self.ecmwf_density_at_15km)*1.02)
+        ax.set_ylim(np.min(self.ecmwf_density_at_15km)*0.98, np.max(self.ecmwf_density_at_15km)*1.02)
         #ax.set_xlim(np.min(self.mjd_at_15km_ecmwf) - 10, np.max(self.mjd_at_15km_ecmwf) + 10)
         ax.set_title('Density over time at h = 15 km (for %s months)' %(self.epoch_text))
         xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
