@@ -106,29 +106,24 @@ class EcmwfMolecularProfile:
         interpolated_density_ecmwf = []
         ecmwf_density_at_15km = []
         mjd_at_15km = []
-        month_at_15km = []
         mjd = self.mjd_ecmwf[0]
         self.x = np.linspace(1000., 25000., num=15, endpoint=True)
         step_hours = self.mjd_ecmwf[37] - self.mjd_ecmwf[0]
         steps = (np.max(self.mjd_ecmwf) - mjd) / step_hours
 
-        pbar = tqdm(total = steps + 1)
+        pbar = tqdm(total = len(np.unique(self.mjd_ecmwf)))
 
         print("Computing the extrapolation of the values of density for ECMWF:")
-        while mjd < (np.max(self.mjd_ecmwf) + 0.25):
-            # Percentage counter bar
+
+        for mjd in np.unique(self.mjd_ecmwf):
             pbar.update(1)
-            # ---------------------------
-            func_ecmwf = interp1d(self.h_ecmwf[self.mjd_ecmwf == mjd], self.n_ecmwf[self.mjd_ecmwf == mjd] / self.Ns *
-                                  np.exp(self.h_ecmwf[self.mjd_ecmwf == mjd] / self.Hs), kind='cubic')
+            func_ecmwf = interp1d(self.h_ecmwf[self.mjd_ecmwf == mjd], self.n_ecmwf[self.mjd_ecmwf == mjd] / self.Ns
+                                   * np.exp(self.h_ecmwf[self.mjd_ecmwf == mjd] / self.Hs), kind='cubic')
 
             int_dens_ecwmf = func_ecmwf(self.x)
             interpolated_density_ecmwf.append(int_dens_ecwmf)
             ecmwf_density_at_15km.append(func_ecmwf(self.x[8]))
             mjd_at_15km.append(mjd)
-            month_at_15km.append(self.month_ecmwf[self.mjd_ecmwf == mjd])
-
-            mjd += step_hours
         pbar.close()
 
         print('\n')
@@ -185,21 +180,21 @@ class EcmwfMolecularProfile:
         #ax.set_xlim(np.min(self.mjd_at_15km_ecmwf) - 10, np.max(self.mjd_at_15km_ecmwf) + 10)
         ax.set_title('Density over time at h = 15 km (for %s months)' %(self.epoch_text))
         xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
-
+        yspan = ax.get_ylim()[1] - ax.get_ylim()[0]
         for y in np.unique(self.year_ecmwf):
             mjd_start_year = date2mjd(y, 1, 1, 0)
             mjd_half_year = date2mjd(y, 7, 1, 0)
             year_plot = y
 
             if 1 in np.unique(self.month_ecmwf):
-                ax.vlines(mjd_start_year, ax.get_ylim()[0]*1.02, ax.get_ylim()[1], color='0.7', linewidth=1.,
+                ax.vlines(mjd_start_year, ax.get_ylim()[0] + 0.12*yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
                           linestyles='dotted')
-                ax.text(mjd_start_year - xspan*0.01, ax.get_ylim()[0]*1.015, str(year_plot), rotation=90, color='0.7')
+                ax.text(mjd_start_year - xspan*0.01, ax.get_ylim()[0] + 0.095*yspan, str(year_plot), rotation=90, color='0.7')
 
             if 7 in np.unique(self.month_ecmwf):
-                ax.vlines(mjd_half_year,  ax.get_ylim()[0]*1.02, ax.get_ylim()[1], color='0.7', linewidth=1.,
+                ax.vlines(mjd_half_year,  ax.get_ylim()[0] + 0.12*yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
                           linestyles='dotted')
-                ax.text(mjd_half_year, 0.77, str(year_plot), rotation=90, color='0.7')
+                ax.text(mjd_half_year - xspan*0.01, ax.get_ylim()[0] + 0.095*yspan, str(year_plot + 0.5), rotation=90, color='0.7')
 
         ax.hlines(np.mean(self.ecmwf_density_at_15km), ax.get_xlim()[0], ax.get_xlim()[1], colors='#336699',
                   linestyle='solid', lw=1., zorder=10)
