@@ -181,9 +181,9 @@ class EcmwfMolecularProfile:
         ax.legend(loc='best', numpoints=1)
         ax.set_xlabel('MJD')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
-        ax.set_ylim(np.min(self.ecmwf_density_at_15km)*0.98, np.max(self.ecmwf_density_at_15km)*1.02)
-        ax.set_xlim(np.min(self.mjd_at_15km_ecmwf)- 10, np.max(self.mjd_at_15km_ecmwf) + 10)
-        ax.set_title('Density over time at h = 15 km (%s)' %(self.epoch_text))
+        #ax.set_ylim(np.min(self.ecmwf_density_at_15km)*0.98, np.max(self.ecmwf_density_at_15km)*1.02)
+        #ax.set_xlim(np.min(self.mjd_at_15km_ecmwf) - 10, np.max(self.mjd_at_15km_ecmwf) + 10)
+        ax.set_title('Density over time at h = 15 km (for %s months)' %(self.epoch_text))
         xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
 
         for y in np.unique(self.year_ecmwf):
@@ -197,7 +197,7 @@ class EcmwfMolecularProfile:
                 ax.text(mjd_start_year - xspan*0.01, ax.get_ylim()[0]*1.015, str(year_plot), rotation=90, color='0.7')
 
             if 7 in np.unique(self.month_ecmwf):
-                ax.vlines(mjd_half_year,  ax.get_ylim()[0], ax.get_ylim()[1], color='0.7', linewidth=1.,
+                ax.vlines(mjd_half_year,  ax.get_ylim()[0]*1.02, ax.get_ylim()[1], color='0.7', linewidth=1.,
                           linestyles='dotted')
                 ax.text(mjd_half_year, 0.77, str(year_plot), rotation=90, color='0.7')
 
