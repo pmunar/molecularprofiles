@@ -67,8 +67,7 @@ class EcmwfMolecularProfile:
         # TODO: change the directory definition. Make an import since everything is now recognised as package
 
         MOLECULARPROFILES_DIR = os.environ.get('MOLECULARPROFILES_DIR')
-        ECMWF_DIR = MOLECULARPROFILES_DIR + 'ecmwf_scipts/'
-        PROD3_DIR = MOLECULARPROFILES_DIR + 'Prod3b_simulations/'
+        PROD3_DIR = MOLECULARPROFILES_DIR + 'molecularprofiles/Prod3b_simulations/'
         # Prod3 Simulations (based on NRLMSISE)
         if self.observatory == 'north':
             prod3 = open(PROD3_DIR+'/atmprof36_lapalma.dat')
@@ -106,14 +105,10 @@ class EcmwfMolecularProfile:
         interpolated_density_ecmwf = []
         ecmwf_density_at_15km = []
         mjd_at_15km = []
-        mjd = self.mjd_ecmwf[0]
         self.x = np.linspace(1000., 25000., num=15, endpoint=True)
-        step_hours = self.mjd_ecmwf[37] - self.mjd_ecmwf[0]
-        steps = (np.max(self.mjd_ecmwf) - mjd) / step_hours
-
-        pbar = tqdm(total = len(np.unique(self.mjd_ecmwf)))
 
         print("Computing the extrapolation of the values of density for ECMWF:")
+        pbar = tqdm(total = len(np.unique(self.mjd_ecmwf)))
 
         for mjd in np.unique(self.mjd_ecmwf):
             pbar.update(1)
@@ -177,10 +172,10 @@ class EcmwfMolecularProfile:
         ax.set_xlabel('MJD')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax.set_ylim(np.min(self.ecmwf_density_at_15km)*0.98, np.max(self.ecmwf_density_at_15km)*1.02)
-        #ax.set_xlim(np.min(self.mjd_at_15km_ecmwf) - 10, np.max(self.mjd_at_15km_ecmwf) + 10)
         ax.set_title('Density over time at h = 15 km (for %s months)' %(self.epoch_text))
         xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
         yspan = ax.get_ylim()[1] - ax.get_ylim()[0]
+
         for y in np.unique(self.year_ecmwf):
             mjd_start_year = date2mjd(y, 1, 1, 0)
             mjd_half_year = date2mjd(y, 7, 1, 0)
@@ -285,11 +280,13 @@ class EcmwfMolecularProfile:
             ax.plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
                     label='MAGIC W')
         elif model == 'PROD3':
+            self._get_prod3sim_data()
             ax.plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
                     label='Prod3 ' + self.observatory)
         elif model == 'both':
             ax.plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
                     label='MAGIC W')
+            self._get_prod3sim_data()
             ax.plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
                     label='Prod3 ' + self.observatory)
         else:
