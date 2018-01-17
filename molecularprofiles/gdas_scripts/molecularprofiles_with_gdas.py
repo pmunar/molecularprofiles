@@ -104,28 +104,20 @@ class gdasMolecularProfile:
         interpolated_density_gdas = []
         gdas_density_at_15km = []
         mjd_at_15km = []
-        month_at_15km = []
-        mjd = self.mjd_gdas[0]
         self.x = np.linspace(1000., 25000., num=15, endpoint=True)
-        step_hours = self.mjd_gdas[37] - self.mjd_gdas[0]
-        steps = (np.max(self.mjd_gdas) - mjd) / step_hours
-
-        pbar = tqdm(total=steps + 1)
 
         print("Computing the extrapolation of the values of density for gdas:")
-        while mjd < (np.max(self.mjd_gdas) + 0.25):
-            # Percentage counter bar
+        pbar = tqdm(total = len(np.unique(self.mjd_gdas)))
+
+        for mjd in np.unique(self.mjd_gdas):
             pbar.update(1)
-            # ---------------------------
-            func_gdas = interp1d(self.h_gdas[self.mjd_gdas == mjd], self.n_gdas[self.mjd_gdas == mjd] / self.Ns *
-                                  np.exp(self.h_gdas[self.mjd_gdas == mjd] / self.Hs), kind='cubic')
+            func_gdas = interp1d(self.h_gdas[self.mjd_gdas == mjd], self.n_gdas[self.mjd_gdas == mjd] / self.Ns
+                                   * np.exp(self.h_gdas[self.mjd_gdas == mjd] / self.Hs), kind='cubic')
 
             int_dens_ecwmf = func_gdas(self.x)
             interpolated_density_gdas.append(int_dens_ecwmf)
             gdas_density_at_15km.append(func_gdas(self.x[8]))
             mjd_at_15km.append(mjd)
-            month_at_15km.append(self.month_gdas[self.mjd_gdas == mjd])
-            mjd += step_hours
         pbar.close()
 
         print('\n')
