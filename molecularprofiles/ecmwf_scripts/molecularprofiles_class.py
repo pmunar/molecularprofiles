@@ -166,8 +166,6 @@ class EcmwfMolecularProfile:
     # =======================================================================================================
 
     def plot_average_at_15km(self):
-        # TODO: change the plotting of the lines. If data does not contain the initial day of year, it crashes
-
         """
         Function that produces a plot of the averaged density at 15 km for ECMWF data
         :return: 
@@ -177,31 +175,35 @@ class EcmwfMolecularProfile:
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.plot(self.mjd_at_15km_ecmwf, self.ecmwf_density_at_15km, 'o', color='#99CCFF', markersize=0.75,
-                label=self.label_ecmwf+' '+self.observatory, alpha=0.3)
-
-        mjd_start_year = np.array([date2mjd(self.year_ecmwf[0], 1, 1, 0)])
-        mjd_half_year = np.array([date2mjd(self.year_ecmwf[0], 7, 1, 0)])
-        year_plot = np.array([self.year_ecmwf[0]])
-
-        if mjd_start_year.all():
-            for i in np.arange(len(mjd_start_year)):
-                ax.vlines(mjd_start_year[i], 0.775, 1.0, color='0.7', linewidth=1.)
-                ax.text(mjd_start_year[i] - 7.25, 0.77, str(year_plot[i]), rotation=90, color='0.7')
-        if mjd_half_year.all():
-            for i in np.arange(len(mjd_half_year)):
-                ax.vlines(mjd_half_year[i], 0.775, 1.0, color='0.7', linewidth=1.)
-                ax.text(mjd_half_year[i] - 7.25, 0.77, str(year_plot[i]), rotation=90, color='0.7')
-
-        ax.hlines(np.mean(self.ecmwf_density_at_15km), np.min(self.mjd_at_15km_ecmwf) - 10.,
-                  np.max(self.mjd_at_15km_ecmwf) + 10.,
-                  colors='b', linestyle='solid', lw=2., zorder=10)
+        ax.plot(self.mjd_at_15km_ecmwf, self.ecmwf_density_at_15km, 'o', color='#99CCFF', markersize=1.2,
+                label=self.label_ecmwf+' '+self.observatory, alpha=0.8)
 
         ax.legend(loc='best', numpoints=1)
         ax.set_xlabel('MJD')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
-        ax.set_ylim(0.757, 0.939)
-        ax.set_title('Density over time at h = 15 km (' + str(self.epoch_text) + ')')
+        ax.set_ylim(np.min(self.ecmwf_density_at_15km)*0.98, np.max(self.ecmwf_density_at_15km)*1.02)
+        ax.set_xlim(np.min(self.mjd_at_15km_ecmwf)- 10, np.max(self.mjd_at_15km_ecmwf) + 10)
+        ax.set_title('Density over time at h = 15 km (%s)' %(self.epoch_text))
+        xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
+
+        for y in np.unique(self.year_ecmwf):
+            mjd_start_year = date2mjd(y, 1, 1, 0)
+            mjd_half_year = date2mjd(y, 7, 1, 0)
+            year_plot = y
+
+            if 1 in np.unique(self.month_ecmwf):
+                ax.vlines(mjd_start_year, ax.get_ylim()[0]*1.02, ax.get_ylim()[1], color='0.7', linewidth=1.,
+                          linestyles='dotted')
+                ax.text(mjd_start_year - xspan*0.01, ax.get_ylim()[0]*1.015, str(year_plot), rotation=90, color='0.7')
+
+            if 7 in np.unique(self.month_ecmwf):
+                ax.vlines(mjd_half_year,  ax.get_ylim()[0], ax.get_ylim()[1], color='0.7', linewidth=1.,
+                          linestyles='dotted')
+                ax.text(mjd_half_year, 0.77, str(year_plot[i]), rotation=90, color='0.7')
+
+        ax.hlines(np.mean(self.ecmwf_density_at_15km), ax.get_xlim()[0], ax.get_xlim()[1], colors='#336699',
+                  linestyle='solid', lw=1., zorder=10)
+
         fig.savefig(self.output_plot_name + '_at_15_km.eps', bbox_inches='tight')
         fig.savefig(self.output_plot_name + '_at_15_km.png', bbox_inches='tight', dpi=300)
 
@@ -223,7 +225,7 @@ class EcmwfMolecularProfile:
         ax.errorbar(self.x + 175., self.diff_ecmwf_MAGIC[0], yerr=self.diff_ecmwf_MAGIC[1], fmt=':', color='b',
                     elinewidth=3.1)
 
-        ax.set_title('Relative Difference w.r.t MAGIC W model %s' % (self.epoch_text))
+        ax.set_title('Relative Difference w.r.t MAGIC W model, for %s months' % (self.epoch_text))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference (model - MW)')
         ax.set_xlim(0., 25100.)
