@@ -199,7 +199,7 @@ class EcmwfMolecularProfile:
             if 7 in np.unique(self.month_ecmwf):
                 ax.vlines(mjd_half_year,  ax.get_ylim()[0], ax.get_ylim()[1], color='0.7', linewidth=1.,
                           linestyles='dotted')
-                ax.text(mjd_half_year, 0.77, str(year_plot[i]), rotation=90, color='0.7')
+                ax.text(mjd_half_year, 0.77, str(year_plot), rotation=90, color='0.7')
 
         ax.hlines(np.mean(self.ecmwf_density_at_15km), ax.get_xlim()[0], ax.get_xlim()[1], colors='#336699',
                   linestyle='solid', lw=1., zorder=10)
