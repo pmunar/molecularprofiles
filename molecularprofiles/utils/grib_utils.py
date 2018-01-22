@@ -244,11 +244,11 @@ def get_plevels(variable):
             break
     return plevels, index
 
-def readgribfile2text(file_name, observatory, gridstep):
+def get_grib_file_data(file_name):
     """
     This function opens a grib file, selects the parameters (all available: Temperature, Geopotential, RH, ...),
-    and finally creates a txt file where these parameters, together with date, year, month,
-    day, hour, pressure level, real height and density, are written.
+    and creates a dictionary variable where these parameters. It also returns the variable name (vn) and variable
+    short name (vsn)
 
     Input: file_name (string)
            observatory (string). Possible values are 'north' or 'south'
@@ -256,10 +256,6 @@ def readgribfile2text(file_name, observatory, gridstep):
 
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
-
-    if os.path.exists((file_name).split('.')[0] + '.txt'):
-        print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + '.txt'))
-        sys.exit()
 
     print('Working on %s' %(file_name))
     print('getting all variable names...')
@@ -277,14 +273,25 @@ def readgribfile2text(file_name, observatory, gridstep):
     datadict = dict(zip(vn, data))
     data = None
     gc.collect()
+    return vn, vsn, datadict
 
-    # print('selecting temperature parameter...')
-    # temperature = grb.select(shortName='t', typeOfLevel='isobaricInhPa')
-    # print('selecting geopotential parameter...')
-    # try:
-    #     geop_height = grb.select(shortName='z', typeOfLevel='isobaricInhPa')
-    # except:
-    #     geop_height = grb.select(shortName='gh', typeOfLevel='isobaricInhPa')
+def readgribfile2text(file_name, observatory, gridstep):
+    """
+    This function creates a txt file where the information from the get_grib_file_data function is written,
+    together with date, year, month, day, hour, pressure level, real height and density.
+
+    Input: file_name (string)
+           observatory (string). Possible values are 'north' or 'south'
+           gridstep (float): grid spacing in degrees. Values are 1.0 for GDAS data and 0.75 for ECMWF data.
+
+    Output: a txt file with the exact name as the input file name, but with .txt as extension
+    """
+
+    if os.path.exists((file_name).split('.')[0] + '.txt'):
+        print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + '.txt'))
+        sys.exit()
+
+    vn, vsn, datadict = get_grib_file_data(file_name)
 
     latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
@@ -348,19 +355,8 @@ def readgribfile2magic(file_name, observatory, gridstep):
         print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + 'MAGIC_format.txt'))
         sys.exit()
 
-    print('Working on %s' %(file_name))
-    print('getting all variable names...')
-    vn, vsn = get_gribfile_variables(file_name)
-    print('indexing the file %s (this might take a while...)' % (file_name))
-    grb = pg.index(file_name, 'shortName', 'typeOfLevel')
-    print('selecting the parameters information for %s ...' % (file_name))
-    data = []
+    vn, vsn, datadict = get_grib_file_data(file_name)
 
-    for sn in vsn:
-        var = grb.select(shortName=sn, typeOfLevel='isobaricInhPa')
-        data.append(var)
-
-    datadict = dict(zip(vn, data))
     pl, pl_index = get_plevels(datadict['Temperature'])
     new_pl_index = pl_index * int((len(datadict['Temperature'])/len(pl_index)))
     latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
@@ -410,6 +406,13 @@ def readgribfile2magic(file_name, observatory, gridstep):
             table_file.write(row_str + '\n')
     table_file.close()
 
+def readgribfile2magic_fromtxt(txt_file):
+    """
+    TODO create the function
+    :param txt_file:
+    :return:
+    """
+    return None
 
 def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
     if multiprocessing.cpu_count() == 4:
@@ -441,22 +444,25 @@ def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
             for p in proc:
                 p.join()
 
+def print_help():
+    print("Usage: python grib_utils.py <options>")
+    print("Options are:")
+    print("        -r         <grib_file_name> <observatory> <gridstep>")
+    print("                   note that <gridstep> is 0.75deg for ECMWF data")
+    print("                   and 1.0 deg for GDAS data")
+    print("        -rmagic    <grib_file_name> <observatory> <gridstep>")
+    print("                   note that <gridstep> is 0.75deg for ECMWF data")
+    print("                   and 1.0 deg for GDAS data")
+    print("        -mjd       <mjd>")
+    print("        -date      <yyyy-mm-dd-hh>")
+    print("                   Note: with the -r or -rmagic option, if a txt file")
+    print("                   containing a list of grib files is passed instead")
+    print("                   of a single grib file, the processing is run in parallel")
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] == '-h' or sys.argv[1] == '-help':
-        print("Usage: python grib_utils.py <options>")
-        print("Options are:")
-        print("        -r         <grib_file_name> <observatory> <gridstep>")
-        print("                   note that <gridstep> is 0.75deg for ECMWF data")
-        print("                   and 1.0 deg for GDAS data")
-        print("        -rmagic    <grib_file_name> <observatory> <gridstep>")
-        print("                   note that <gridstep> is 0.75deg for ECMWF data")
-        print("                   and 1.0 deg for GDAS data")
-        print("        -mjd       <mjd>")
-        print("        -date      <yyyy-mm-dd-hh>")
-        print("                   Note: with the -r or -rmagic option, if a txt file")
-        print("                   containing a list of grib files is passed instead")
-        print("                   of a single grib file, the processing is run in parallel")
-
+        print_help()
         sys.exit()
 
     else:
@@ -493,19 +499,6 @@ if __name__ == "__main__":
 
         else:
             print('Wrong option...')
-            print("Usage: python grib_utils.py <options>")
-            print("Options are:")
-            print("        -r         <grib_file_name> <observatory> <gridstep>")
-            print("                   note that <gridstep> is 0.75deg for ECMWF data")
-            print("                   and 1.0 deg for GDAS data")
-            print("        -rmagic    <grib_file_name> <observatory> <gridstep>")
-            print("                   note that <gridstep> is 0.75deg for ECMWF data")
-            print("                   and 1.0 deg for GDAS data")
-            print("        -mjd       <mjd>")
-            print("        -date      <yyyy-mm-dd-hh>")
-            print("                   Note: with the -r or -rmagic option, if a txt file")
-            print("                   containing a list of grib files is passed instead")
-            print("                   of a single grib file, the processing is run in parallel")
-
+            print_help()
             sys.exit()
 
