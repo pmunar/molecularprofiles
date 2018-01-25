@@ -315,7 +315,7 @@ def readgribfile2text(file_name, observatory, gridstep):
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
     rh_levels = get_plevels(datadict['Relativehumidity'])
-    t_levels = get_plevels(datadict['Tempreature'])
+    t_levels = get_plevels(datadict['Temperature'])
 
     if len(datadict['Temperature']) != len(datadict['Relativehumidity']):
         RH = fill_RH_gaps(datadict['Relativehumidity'])
@@ -324,7 +324,7 @@ def readgribfile2text(file_name, observatory, gridstep):
         for i in np.arange(len(datadict['Relativehumidity'])):
             RH.append(datadict['Relativehumidity'][i].values)
         RH = np.asarray(RH)
-        
+
     # We create the table file and fill it with the information stored in the above variables, plus the height
     # and density computed form them.
 
