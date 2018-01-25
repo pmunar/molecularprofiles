@@ -330,7 +330,7 @@ def readgribfile2text(file_name, observatory, gridstep):
             print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year,
                   datadict['Temperature'][j].month, datadict['Temperature'][j].day, datadict['Temperature'][j].hour,
                   datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density,
-                  datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values, file=table_file)
+                  datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
 
         else: # this is just in case the grib file contains more than one grid point
             if 'GeopotentialHeight' in vn:
@@ -350,7 +350,7 @@ def readgribfile2text(file_name, observatory, gridstep):
             print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
                   temperature, h, density, datadict['Ucomponentofwind'][j].values,
-                  datadict['Vcomponentofwind'][j].values, file=table_file)
+                  datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
 
     table_file.close()
     datadict = None
