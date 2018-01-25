@@ -302,8 +302,8 @@ def readgribfile2text(file_name, observatory, gridstep):
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
     RH = []
-    for i in np.arange(len(datadict['RelativeHumidity'])):
-        RH.append(datadict['RelativeHumidity'][i].values)
+    for i in np.arange(len(datadict['Relativehumidity'])):
+        RH.append(datadict['Relativehumidity'][i].values)
     RH = np.asarray(RH)
 
     for i in np.arange(len(RH)):
