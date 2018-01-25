@@ -347,13 +347,13 @@ def readgribfile2text(file_name, observatory, gridstep):
 
             density = Ns * datadict['Temperature'][j].level / ps * Ts / temperature
 
-        if datadict['Temperature'][j].level == 20 or datadict['Temperature'][j].level == 50:
-            print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
+            if datadict['Temperature'][j].level == 20 or datadict['Temperature'][j].level == 50:
+                print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
                   temperature, h, density, datadict['Ucomponentofwind'][j].values,
                   datadict['Vcomponentofwind'][j].values, 0.0, file=table_file)
-        else:
-            print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
+            else:
+                print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
                   temperature, h, density, datadict['Ucomponentofwind'][j].values,
                   datadict['Vcomponentofwind'][j].values, datadict['Relativehumidity'][j].values, file=table_file)
