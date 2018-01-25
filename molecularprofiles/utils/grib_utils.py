@@ -220,6 +220,7 @@ def get_gribfile_variables(file_name):
     #grb.rewind()
     varshortname = []
     varname = []
+    grb.read(10)[0]
     while True:
         v = grb.read(1)[0]
         vname = v.name.replace(" ", "")
@@ -495,7 +496,7 @@ if __name__ == "__main__":
 
         elif sys.argv[1] == '-date':
             date = sys.argv[2].split('-')
-            print(date2mjd(int(date[0]),int(date[1]),int(date[2]),int(date[3])))
+            print(date2mjd(int(date[0]), int(date[1]), int(date[2]), int(date[3])))
 
         else:
             print('Wrong option...')
