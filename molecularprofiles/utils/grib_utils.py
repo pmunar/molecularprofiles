@@ -208,6 +208,7 @@ def get_closest_gridpoint(lat, lon, gridstep):
 def find_nearest(a, value):  # Function to find the nearest grid position to a given latitude or longitude
     return a[np.abs(a-value).argmin()]
 
+
 def get_gribfile_variables(file_name):
     """
     Function that returns all the different variable names in a grib file
@@ -233,6 +234,7 @@ def get_gribfile_variables(file_name):
     grb.close()
     return varname, varshortname
 
+
 def get_plevels(variable):
     plevels = []
     index = []
@@ -244,6 +246,7 @@ def get_plevels(variable):
         else:
             break
     return plevels, index
+
 
 def get_grib_file_data(file_name):
     """
@@ -276,6 +279,7 @@ def get_grib_file_data(file_name):
     gc.collect()
     return vn, vsn, datadict
 
+
 def readgribfile2text(file_name, observatory, gridstep):
     """
     This function creates a txt file where the information from the get_grib_file_data function is written,
@@ -296,7 +300,7 @@ def readgribfile2text(file_name, observatory, gridstep):
 
     latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
-
+    plevels = get_plevels(datadict['Temperature'])
 
     # We create the table file and fill it with the information stored in the above variables, plus the height
     # and density computed form them.
@@ -314,10 +318,19 @@ def readgribfile2text(file_name, observatory, gridstep):
             else:
                 h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
             density = Ns * datadict['Temperature'][j].level / ps * Ts / datadict['Temperature'][j].values
-            print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
-                  datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
-                  datadict['Temperature'][j].values, h, density, datadict['Ucomponentofwind'][j].values,
-                  datadict['Vcomponentofwind'][j].values, datadict['Relativehumidity'][j].values, file=table_file)
+            if datadict['Temperature'][j].level == 20 or datadict['Temperature'][j].level == 50:
+                print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year,
+                      datadict['Temperature'][j].month, datadict['Temperature'][j].day, datadict['Temperature'][j].hour,
+                      datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density,
+                      datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values,
+                      0.0, file=table_file)
+            else:
+
+                print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year,
+                      datadict['Temperature'][j].month, datadict['Temperature'][j].day, datadict['Temperature'][j].hour,
+                      datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density,
+                      datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values,
+                      datadict['Relativehumidity'][j].values, file=table_file)
 
         else: # this is just in case the grib file contains more than one grid point
             if 'GeopotentialHeight' in vn:
@@ -334,6 +347,12 @@ def readgribfile2text(file_name, observatory, gridstep):
 
             density = Ns * datadict['Temperature'][j].level / ps * Ts / temperature
 
+        if datadict['Temperature'][j].level == 20 or datadict['Temperature'][j].level == 50:
+            print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
+                  datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
+                  temperature, h, density, datadict['Ucomponentofwind'][j].values,
+                  datadict['Vcomponentofwind'][j].values, 0.0, file=table_file)
+        else:
             print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
                   temperature, h, density, datadict['Ucomponentofwind'][j].values,
@@ -341,6 +360,7 @@ def readgribfile2text(file_name, observatory, gridstep):
 
     table_file.close()
     datadict = None
+
 
 def readgribfile2magic(file_name, observatory, gridstep):
     """
@@ -407,6 +427,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
             table_file.write(row_str + '\n')
     table_file.close()
 
+
 def readgribfile2magic_fromtxt(txt_file):
     """
     TODO create the function
@@ -414,6 +435,7 @@ def readgribfile2magic_fromtxt(txt_file):
     :return:
     """
     return None
+
 
 def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
     if multiprocessing.cpu_count() == 4:
