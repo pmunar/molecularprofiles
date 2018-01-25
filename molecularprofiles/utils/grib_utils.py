@@ -279,6 +279,19 @@ def get_grib_file_data(file_name):
     gc.collect()
     return vn, vsn, datadict
 
+def fill_RH_gaps(rhdata):
+    """ in case the RH data for Plevels 20 and 50 hPa is not present, this function fills these gaps
+        with 0.0"""
+    RH = []
+    for i in np.arange(len(rhdata)):
+        RH.append(rhdata[i].values)
+    RH = np.asarray(RH)
+
+    for i in np.arange(len(RH)):
+        if i*23 < len(RH):
+            RH = np.insert(RH, (i*23, i*23), 0.0)
+    return RH
+
 
 def readgribfile2text(file_name, observatory, gridstep):
     """
@@ -301,16 +314,17 @@ def readgribfile2text(file_name, observatory, gridstep):
     latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
-    RH = []
-    for i in np.arange(len(datadict['Relativehumidity'])):
-        RH.append(datadict['Relativehumidity'][i].values)
-    RH = np.asarray(RH)
+    rh_levels = get_plevels(datadict['Relativehumidity'])
+    t_levels = get_plevels(datadict['Tempreature'])
 
-    for i in np.arange(len(RH)):
-        if i*23 < len(RH):
-            RH = np.insert(RH, (i*23, i*23), 0.0)
-
-
+    if len(datadict['Temperature']) != len(datadict['Relativehumidity']):
+        RH = fill_RH_gaps(datadict['Relativehumidity'])
+    else:
+        RH = []
+        for i in np.arange(len(datadict['Relativehumidity'])):
+            RH.append(datadict['Relativehumidity'][i].values)
+        RH = np.asarray(RH)
+        
     # We create the table file and fill it with the information stored in the above variables, plus the height
     # and density computed form them.
 
@@ -395,7 +409,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
             fields = (datadict['Temperature'][j].year - 2000, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, new_pl_index[j], h,
                   datadict['Temperature'][j].values, datadict['Ucomponentofwind'][j].values,
-                  datadict['Vcomponentofwind'][j].values, datadict['Relativehumidity'][j].values)
+                  datadict['Vcomponentofwind'][j].values, RH[j])
             row_str = '{: >6d}{: >6d}{: >6d}{: >6d}{: >6d}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}'
             row_str = row_str.format(*fields)
             table_file.write(row_str + '\n')
@@ -416,7 +430,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
             fields = (datadict['Temperature'][j].year - 2000, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, new_pl_index[j], h, temperature,
                   datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values,
-                  datadict['Relativehumidity'][j].values)
+                  RH[j])
             row_str = '{: >6d}{: >6d}{: >6d}{: >6d}{: >6d}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}'
             row_str = row_str.format(*fields)
             table_file.write(row_str + '\n')
