@@ -300,7 +300,16 @@ def readgribfile2text(file_name, observatory, gridstep):
 
     latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
-    plevels = get_plevels(datadict['Temperature'])
+
+    RH = []
+    for i in np.arange(len(datadict['RelativeHumidity']):
+        RH.append(datadict['RelativeHumidity'][i].values)
+    RH = np.asarray(RH)
+
+    for i in np.arange(len(RH)):
+        if i*23 < len(RH):
+            RH = np.insert(RH, (i*23, i*23), 0.0)
+
 
     # We create the table file and fill it with the information stored in the above variables, plus the height
     # and density computed form them.
@@ -399,6 +408,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
                                  (datadict['GeopotentialHeight'][j].data()[2] == lon_gridpoint)])
             else:
                 h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
+
             temperature = np.float(datadict['Temperature'][j].values[
                                        (datadict['Temperature'][j].data()[1] == lat_gridpoint) &
                                        (datadict['Temperature'][j].data()[2] == lon_gridpoint)])
