@@ -166,7 +166,8 @@ class MolecularProfile:
                                   np.exp(self.h[self.mjd == mjd] / self.Hs), kind = 'cubic')
             interpolated_rho.append(func_rho(self.x))
         interpolated_rho = np.asarray(interpolated_rho)
-        self.rho, self.e_rho, self.rho_pp, self.rho_pm = compute_averages_std(interpolated_rho)
+        rho, e_rho, rho_pp, rho_pm = compute_averages_std(interpolated_rho)
+        return rho, e_rho, rho_pp, rho_pm
 
     def compute_diff_wrt_model(self):
 
