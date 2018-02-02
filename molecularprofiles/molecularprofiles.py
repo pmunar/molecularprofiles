@@ -158,13 +158,16 @@ class MolecularProfile:
             else:
                 print('Wrong air condition. It must be "moist" or "dry". Aborting!')
                 sys.exit()
+        pbar.close()
 
         rho = np.asarray(rho)
-
+        pbar = tqdm(total=len(np.unique(self.mjd)))
         for mjd in np.unique(self.mjd):
+            pbar.update(1)
             func_rho = interp1d(self.h[self.mjd == mjd], rho[self.mjd == mjd]*
                                   np.exp(self.h[self.mjd == mjd] / self.Hs), kind = 'cubic')
             interpolated_rho.append(func_rho(self.x))
+        pbar.close()
         interpolated_rho = np.asarray(interpolated_rho)
         rho, e_rho, rho_pp, rho_pm = compute_averages_std(interpolated_rho)
         return rho, e_rho, rho_pp, rho_pm
