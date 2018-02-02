@@ -10,8 +10,7 @@ from molecularprofiles.utils.read_txt_gribfile import *
 from molecularprofiles.utils.plot_settings import settings
 from molecularprofiles.utils.magic_winter_profile import heightmw, rhomw
 from molecularprofiles.utils.meteorological_constants import *
-sys.path.append('/home/pmunar/feina/software/LIDAR_Analysis')
-from humidity import *
+from molecularprofiles.utils.humidity import *
 
 settings()
 
