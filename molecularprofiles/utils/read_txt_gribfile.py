@@ -7,27 +7,24 @@ def read_file(file, epoch_text):
     global months, month
     print("loading and selecting data")
     file = open(file)
-    date, year, month, day, hour, p, T, h, n, U, V, RH = np.loadtxt(file, usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                                                                                   11), unpack=True)
+    date, year, month, day, hour, mjd, p, T, h, n, U, V, RH = np.loadtxt(file, usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                                                                                        10,11, 12), unpack=True)
 
-    mjd = []
+    # This is commented since in the new version, the MJD column is computed in the transformation from grib2 format
+    # directly into the final txt file. It made much more sense!
 
-    for i in tqdm(np.arange(len(date))):
-        mjd.append(date2mjd(year[i], month[i], day[i], hour[i]))
-    print('\n')
-    mjd = np.asarray(mjd)
+    # mjd = []
+    #
+    # for i in tqdm(np.arange(len(date))):
+    #     mjd.append(date2mjd(year[i], month[i], day[i], hour[i]))
+    # print('\n')
+    # mjd = np.asarray(mjd)
+
     epoch = get_epoch(epoch_text)
 
-    # mjd = mjd[month == epoch]
-    # year = year[month == epoch]
-    # day = date[month == epoch]
-    # hour = hour[month == epoch]
-    # h   = h[month == epoch]
-    # dn   = n[month == epoch]
-    # p   = p[month == epoch]
-    # month = month[month == epoch]
-
     if epoch_text == 'winter':
+        date = date[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
+                  (month == epoch[3]) | (month == epoch[4])]
         mjd = mjd[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
                               (month == epoch[3]) | (month == epoch[4])]
         h = h[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
@@ -46,6 +43,7 @@ def read_file(file, epoch_text):
                           (month == epoch[3]) | (month == epoch[4])]
 
     elif epoch_text == 'summer':
+        date = date[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
         mjd = mjd[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
         h = h[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
         n = n[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
@@ -56,6 +54,8 @@ def read_file(file, epoch_text):
         RH = RH[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
 
     elif epoch_text == 'intermediate':
+        date = date[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
+                  (month == epoch[3])]
         mjd = mjd[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
                               (month == epoch[3])]
         h = h[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
@@ -74,6 +74,7 @@ def read_file(file, epoch_text):
               (month == epoch[3])]
 
     elif epoch_text == 'all':
+        date = date
         mjd = mjd
         h = h
         n = n
@@ -83,6 +84,4 @@ def read_file(file, epoch_text):
         V = V
         RH = RH
 
-
-
-    return mjd, year, month, day, hour, p, h, n, T, U, V, RH
+    return date, year, month, day, hour, mjd, p, h, n, T, U, V, RH
