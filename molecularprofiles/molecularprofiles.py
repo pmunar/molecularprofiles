@@ -11,6 +11,7 @@ from molecularprofiles.utils.plot_settings import settings
 from molecularprofiles.utils.magic_winter_profile import heightmw, rhomw
 from molecularprofiles.utils.meteorological_constants import *
 from molecularprofiles.utils.humidity import *
+import pandas as pd
 
 settings()
 
@@ -51,7 +52,7 @@ class MolecularProfile:
         self.Hs = Hs  # [km]    density scale hight for La Palma Winter
         # ----------------------------------------------------------------------
 
-        # Plevel = np.array([1000, 975, 950, 925, 900, 875, 850, 825, 800, 775, 750, 700, 650, 600, 550, 500, 450, 400,
+        # P = np.array([1000, 975, 950, 925, 900, 875, 850, 825, 800, 775, 750, 700, 650, 600, 550, 500, 450, 400,
         #                    350, 300, 250, 225, 200, 175, 150, 125, 100, 70, 50, 30, 20, 10, 7, 5, 3, 2, 1])
 
         # MAGIC Winter parameters
@@ -102,7 +103,7 @@ class MolecularProfile:
             self.p (hPa)
             self.h (m)
             self.n (cm^-3)
-            self.T (K)
+            self.Temp (K)
             self.U (m s^-1)
             self.V (m s^-1)
             self.RH (%)
@@ -120,35 +121,42 @@ class MolecularProfile:
         self.epoch_text = epoch
         self.output_plot_name = self.tag_name + '_' + self.epoch_text
 
-        self.date, self.year, self.month, self.day, self.hour, self.mjd, self.p, self.h, \
-        self.n, self.T, self.U, self.V, self.RH = read_file(self.data_file.split('.')[0] + '.txt', self.epoch_text)
+        self.dataframe = pd.read_table(self.data_file.split('.')[0] + '.txt', delimiter=' ')
 
-        interpolated_density = []
-        density_at_15km = []
-        mjd_at_15km = []
+        self.group_by_p = self.dataframe.groupby('P')
+
+        self.dataframe['n_exp'] = self.dataframe.n /self.Ns * np.exp(self.dataframe.h /self.Hs)
+        self.h_avgs = avg_std_dataframe(self.group_by_p, 'h')
+        self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
         self.x = np.linspace(2200., 25000., num=15, endpoint=True)
+
+    def _interpolate_param_to_h(self, param, height):
+
+        interpolated_param = []
+        self.group_mjd = self.dataframe.groupby('MJD')
 
         print("Computing the extrapolation of the values of density:")
         print("(This is to make it easier to compare ECMWF and GDAS, or any other")
         print("weather model)")
-        pbar = tqdm(total=len(np.unique(self.mjd)))
+        pbar = tqdm(total=len(np.unique(self.dataframe.MJD)))
 
-        for mjd in np.unique(self.mjd):
+        for mjd in np.unique(self.dataframe.MJD):
             pbar.update(1)
-            func = interp1d(self.h[self.mjd == mjd], self.n[self.mjd == mjd] / self.Ns
-                                  * np.exp(self.h[self.mjd == mjd] / self.Hs), kind='cubic')
+            h_at_mjd = self.group_mjd.get_group(mjd)['h'].tolist()
+            param_at_mjd = self.group_mjd.get_group(mjd)[param].tolist()
+            func = interp1d(h_at_mjd, param_at_mjd, kind='cubic', fill_value='extrapolate')
 
-            int_dens = func(self.x)
-            interpolated_density.append(int_dens)
-            density_at_15km.append(func(self.x[8]))
-            mjd_at_15km.append(mjd)
+            interpolated_param.append(np.float(func(height)))
         pbar.close()
 
         print('\n')
-        self.interpolated_density = np.asarray(interpolated_density)
-        self.density_at_15km = np.asarray(density_at_15km)
-        self.mjd_at_15km = np.asarray(mjd_at_15km)
-        self.averages = compute_averages_std(self.interpolated_density)
+        interpolated_param = np.asarray(interpolated_param)
+        if type(height) != float:
+            interpolated_param_avgs = compute_averages_std(interpolated_param)
+            return interpolated_param, interpolated_param_avgs
+        elif type(height) == float:
+            return interpolated_param
+
 
     def compute_mass_density(self, air='moist'):
         """
@@ -164,54 +172,47 @@ class MolecularProfile:
         Xw = []
         interpolated_rho = []
 
-        pbar = tqdm(total=len(self.p))
-        for i in np.arange(len(self.p)):
+        pbar = tqdm(total=len(self.dataframe.P))
+        for i in np.arange(len(self.dataframe.P)):
             pbar.update(1)
             if air == 'moist':
-                Xw.append(MolarFractionWaterVapor(self.p[i], self.T[i], self.RH[i]))
-                Z.append(Compressibility(self.p[i], self.T[i], Xw[i]))
-                rho.append(DensityMoistAir(self.p[i] * 100., self.T[i], Z[i], Xw[i], C))
+                Xw.append(MolarFractionWaterVapor(self.dataframe.P[i], self.dataframe.Temp[i], self.dataframe.RH[i]))
+                Z.append(Compressibility(self.dataframe.P[i], self.dataframe.Temp[i], Xw[i]))
+                rho.append(DensityMoistAir(self.dataframe.P[i] * 100., self.dataframe.Temp[i], Z[i], Xw[i], C))
 
             elif air == 'dry':
-                Z.append(Compressibility(self.p[i], self.T[i], 0.0))
-                rho.append(DensityMoistAir(self.p[i]*100., self.T[i], Z[i], 0.0, C))
+                Z.append(Compressibility(self.dataframe.P[i], self.dataframe.Temp[i], 0.0))
+                rho.append(DensityMoistAir(self.dataframe.P[i]*100., self.dataframe.Temp[i], Z[i], 0.0, C))
             else:
                 print('Wrong air condition. It must be "moist" or "dry". Aborting!')
                 sys.exit()
         pbar.close()
 
         rho = np.asarray(rho)
-        pbar = tqdm(total=len(np.unique(self.mjd)))
-        for mjd in np.unique(self.mjd):
-            pbar.update(1)
-            func_rho = interp1d(self.h[self.mjd == mjd], rho[self.mjd == mjd] *
-                                np.exp(self.h[self.mjd == mjd] / self.Hs), kind = 'cubic', fill_value='extrapolate')
-            interpolated_rho.append(func_rho(self.x))
-        pbar.close()
-        interpolated_rho = np.asarray(interpolated_rho)
-        rho, e_rho, rho_pp, rho_pm = compute_averages_std(interpolated_rho)
-        return rho, e_rho, rho_pp, rho_pm
+        interpolated_rho, rho_avgs = self._interpolate_param_to_h(rho, self.x)
+        rho, e_rho, rho_pp, rho_pm = rho_avgs
+        return rho, e_rho, rho_pp, rho_pm, raw_rho
 
-    def compute_diff_wrt_model(self):
+    def compute_diff_wrt_model(self, interpolated_density):
 
         diff_with_magic = []
         diff_with_prod3 = []
 
         self._get_prod3sim_data()
-        self.x = np.linspace(1000., 25000., num=15, endpoint=True)
+        x = np.linspace(1000., 25000., num=15, endpoint=True)
 
         print("Computing the differences of the values of density:")
-        for i in tqdm(np.arange(len(self.interpolated_density))):
+        for i in tqdm(np.arange(len(interpolated_density))):
             # Percentage counter bar
             # sys.stdout.write('\r')
             # k = 100
             # sys.stdout.write("[%-100s] %d%%" % ('=' * k, k))
             # sys.stdout.flush()
             # ---------------------------
-            diff_with_magic.append((self.interpolated_density[i] - self.func_magic(self.x))
-                                         / self.interpolated_density[i])
-            diff_with_prod3.append((self.interpolated_density[i] - self.func_prod3(self.x))
-                                         / self.interpolated_density[i])
+            diff_with_magic.append((interpolated_density[i] - self.func_magic(x))
+                                         / interpolated_density[i])
+            diff_with_prod3.append((interpolated_density[i] - self.func_prod3(x))
+                                         / interpolated_density[i])
 
         self.diff_with_magic = np.asarray(diff_with_magic)
         self.diff_with_prod3 = np.asarray(diff_with_prod3)
@@ -230,35 +231,36 @@ class MolecularProfile:
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.plot(self.mjd_at_15km, self.density_at_15km, 'o', color='#99CCFF', markersize=1.2,
+        density_at_15km = self._interpolate_param_to_h('n_exp', 15000.)
+        ax.plot(np.unique(self.dataframe.MJD), density_at_15km, 'o', color='#99CCFF', markersize=1.2,
                 label=self.data_server + ' ' + self.observatory, alpha=0.8)
 
         ax.legend(loc='best', numpoints=1)
         ax.set_xlabel('MJD')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
-        ax.set_ylim(np.min(self.density_at_15km) * 0.98, np.max(self.density_at_15km) * 1.02)
+        ax.set_ylim(np.min(density_at_15km) * 0.98, np.max(density_at_15km) * 1.02)
         ax.set_title('Density over time at h = 15 km (for %s months)' % (self.epoch_text))
         xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
         yspan = ax.get_ylim()[1] - ax.get_ylim()[0]
 
-        for y in np.unique(self.year):
+        for y in np.unique(self.dataframe.year):
             mjd_start_year = date2mjd(y, 1, 1, 0)
             mjd_half_year = date2mjd(y, 7, 1, 0)
             year_plot = y
 
-            if 1 in np.unique(self.month):
+            if 1 in np.unique(self.dataframe.month):
                 ax.vlines(mjd_start_year, ax.get_ylim()[0] + 0.12 * yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
                           linestyles='dotted')
                 ax.text(mjd_start_year - xspan * 0.01, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot), rotation=90,
                         color='0.7')
 
-            if 7 in np.unique(self.month):
+            if 7 in np.unique(self.dataframe.month):
                 ax.vlines(mjd_half_year, ax.get_ylim()[0] + 0.12 * yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
                           linestyles='dotted')
                 ax.text(mjd_half_year - xspan * 0.01, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot + 0.5),
                         rotation=90, color='0.7')
 
-        ax.hlines(np.mean(self.density_at_15km), ax.get_xlim()[0], ax.get_xlim()[1], colors='#336699',
+        ax.hlines(np.mean(density_at_15km), ax.get_xlim()[0], ax.get_xlim()[1], colors='#336699',
                   linestyle='solid', lw=1., zorder=10)
 
         fig.savefig(self.output_plot_name + '_at_15_km.eps', bbox_inches='tight')
