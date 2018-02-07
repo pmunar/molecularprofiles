@@ -118,7 +118,7 @@ def compute_averages_std(input_array):
 
     Input: input_array (array-like)
 
-    Output: average, stand_dev, peak_to_peak_p, peak_to_peak_m (array-like)
+    Output: average, stand_dev, peak_to_peak_p, peak_to_peak_m (all array-like)
     """
     import numpy as np
     from statsmodels import robust
@@ -292,6 +292,8 @@ def fill_RH_gaps(rhdata):
             RH = np.insert(RH, (i*23, i*23), 0.0)
     return RH
 
+def computedensity(p,T):
+    return Ns * p / ps * Ts / T
 
 def readgribfile2text(file_name, observatory, gridstep):
     """
@@ -314,9 +316,6 @@ def readgribfile2text(file_name, observatory, gridstep):
     latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
-    rh_levels = get_plevels(datadict['Relativehumidity'])
-    t_levels = get_plevels(datadict['Temperature'])
-
     if len(datadict['Temperature']) != len(datadict['Relativehumidity']):
         RH = fill_RH_gaps(datadict['Relativehumidity'])
     else:
@@ -331,8 +330,8 @@ def readgribfile2text(file_name, observatory, gridstep):
     print('creating the txt file containing the selected data...')
 
     table_file = open(file_name.split('.')[0] + '.txt', 'w')
-    print('# Date, year,     month, day, hour, Plevel, T_average, h,   n,       U,     V,     RH', file=table_file)
-    print('# YYYYMMDD, YYYY, MM,    DD,  HH,   (hPa),  (K),       (m), (cm^-3), (m/s), (m/s), (%)', file=table_file)
+    print('# Date,     year, month, day, hour, MJD, Plevel, T_average, h,   n,       U,     V,     RH', file=table_file)
+    print('# YYYYMMDD, YYYY, MM,    DD,  HH,      , (hPa),  (K),       (m), (cm^-3), (m/s), (m/s), (%)', file=table_file)
 
     for j in np.arange(len(datadict['Temperature'])):
         if (type(datadict['Temperature'][j].values) == float) or (len(datadict['Temperature'][j].values) == 1):
@@ -340,9 +339,12 @@ def readgribfile2text(file_name, observatory, gridstep):
                 h = GetAltitudeFromGeopotentialHeight(datadict['GeopotentialHeight'][j].values, observatory)
             else:
                 h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
-            density = Ns * datadict['Temperature'][j].level / ps * Ts / datadict['Temperature'][j].values
-            print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year,
-                  datadict['Temperature'][j].month, datadict['Temperature'][j].day, datadict['Temperature'][j].hour,
+            density = computedensity(datadict['Temperature'][j].level, datadict['Temperature'][j].values)
+            mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
+                           datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
+            #density = Ns * datadict['Temperature'][j].level / ps * Ts / datadict['Temperature'][j].values
+            print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year,
+                  datadict['Temperature'][j].month, datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd,
                   datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density,
                   datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
 
@@ -359,10 +361,14 @@ def readgribfile2text(file_name, observatory, gridstep):
                                        (datadict['Temperature'][j].data()[1] == lat_gridpoint) &
                                        (datadict['Temperature'][j].data()[2] == lon_gridpoint)])
 
-            density = Ns * datadict['Temperature'][j].level / ps * Ts / temperature
+            density = computedensity(datadict['Temperature'][j].level, temperature)
+            mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
+                           datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
 
-            print(datadict['Temperature'][j].dataDate, datadict['Temperature'][j].year, datadict['Temperature'][j].month,
-                  datadict['Temperature'][j].day, datadict['Temperature'][j].hour, datadict['Temperature'][j].level,
+            #density = Ns * datadict['Temperature'][j].level / ps * Ts / temperature
+
+            print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year, datadict['Temperature'][j].month,
+                  datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd, datadict['Temperature'][j].level,
                   temperature, h, density, datadict['Ucomponentofwind'][j].values,
                   datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
 
@@ -372,13 +378,14 @@ def readgribfile2text(file_name, observatory, gridstep):
 
 def readgribfile2magic(file_name, observatory, gridstep):
     """
-    This function opens a grib file, selects the Temperature and Geopotential parameters,
+    This function opens a grib file, selects all parameters
     and finally creates a txt file where these parameters, together with date, year, month,
     day, hour, pressure level, real height and density, are written.
     Input: file_name (string)
            observatory (string). Possible values are 'north' or 'south'
            gridstep (float): grid spacing (0.75 degrees for ECMWF and 1.0 degrees for GDAS)
-    Output: a txt file with the exact name as the input file name, but with .txt as extension
+    Output: a txt file with the exact name as the input file name, but with .txt as extension in a format that can be
+            read by MARS
     """
     if os.path.exists((file_name).split('.')[0] + 'MAGIC_format.txt'):
         print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + 'MAGIC_format.txt'))
@@ -438,8 +445,8 @@ def readgribfile2magic(file_name, observatory, gridstep):
 
 
 def readgribfile2magic_fromtxt(txt_file):
+#    TODO create the function
     """
-    TODO create the function
     :param txt_file:
     :return:
     """
@@ -487,9 +494,11 @@ def print_help():
     print("                   and 1.0 deg for GDAS data")
     print("        -mjd       <mjd>")
     print("        -date      <yyyy-mm-dd-hh>")
+    print(" ")
     print("                   Note: with the -r or -rmagic option, if a txt file")
     print("                   containing a list of grib files is passed instead")
     print("                   of a single grib file, the processing is run in parallel")
+    print("                   using a certain number of CPU's")
 
 
 if __name__ == "__main__":
