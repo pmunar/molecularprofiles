@@ -110,6 +110,25 @@ def compute_averages_std_simple(input_array):
     peak_to_peak_m = np.average(input_array) - np.min(input_array)
     return average, stand_dev, peak_to_peak_p, peak_to_peak_m
 
+def avg_std_dataframe(group, param):
+    """
+
+    :param group: dataframe grouped by a certain parameter
+    :param param: the parameter by which the dataframe is grouped
+    :return:
+        avg: the mean value for each grouped level
+        std: the standard deviation for each grouped level
+        p2p_p: the peak-to-peak maximum value for each grouped level
+        p2p_m: the peak-to-peak minimum value for each grouped level
+    """
+
+    avg = group[param].mean()
+    std = group[param].std()
+    p2p_p = np.max(group[param]) - avg
+    p2p_m = avg - np.min(group[param])
+
+    return avg, std, p2p_p, p2p_m
+
 
 def compute_averages_std(input_array):
     """
@@ -330,8 +349,7 @@ def readgribfile2text(file_name, observatory, gridstep):
     print('creating the txt file containing the selected data...')
 
     table_file = open(file_name.split('.')[0] + '.txt', 'w')
-    print('# Date,     year, month, day, hour, MJD, Plevel, T_average, h,   n,       U,     V,     RH', file=table_file)
-    print('# YYYYMMDD, YYYY, MM,    DD,  HH,      , (hPa),  (K),       (m), (cm^-3), (m/s), (m/s), (%)', file=table_file)
+    print('Date year month day hour MJD Plevel T_average h n U V RH', file=table_file)
 
     for j in np.arange(len(datadict['Temperature'])):
         if (type(datadict['Temperature'][j].values) == float) or (len(datadict['Temperature'][j].values) == 1):
@@ -342,7 +360,6 @@ def readgribfile2text(file_name, observatory, gridstep):
             density = computedensity(datadict['Temperature'][j].level, datadict['Temperature'][j].values)
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
-            #density = Ns * datadict['Temperature'][j].level / ps * Ts / datadict['Temperature'][j].values
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year,
                   datadict['Temperature'][j].month, datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd,
                   datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density,
@@ -364,8 +381,6 @@ def readgribfile2text(file_name, observatory, gridstep):
             density = computedensity(datadict['Temperature'][j].level, temperature)
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
-
-            #density = Ns * datadict['Temperature'][j].level / ps * Ts / temperature
 
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd, datadict['Temperature'][j].level,
