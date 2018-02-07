@@ -92,7 +92,25 @@ class MolecularProfile:
 
         Input: epoch_text: (str) can be "winter", "summer", "intermediate", "all". Default is "all"
 
-        :return: ()
+        :return:
+            self.date (YYYYMMDD)
+            self.year (YYYY)
+            self.month (MM)
+            self.day (DD)
+            self.hour (HH)
+            self.mjd (DDDD.D)
+            self.p (hPa)
+            self.h (m)
+            self.n (cm^-3)
+            self.T (K)
+            self.U (m s^-1)
+            self.V (m s^-1)
+            self.RH (%)
+            self.interpolated_density (cm^-3)
+            self.x (m)
+            self.density_at_15km (cm^-3)
+            self.mjd_at_15km (DDDD.D)
+            self.averages (
         """
 
         if not os.path.exists((self.data_file).split('.')[0] + '.txt'):
@@ -102,15 +120,17 @@ class MolecularProfile:
         self.epoch_text = epoch
         self.output_plot_name = self.tag_name + '_' + self.epoch_text
 
-        self.mjd, self.year, self.month, self.day, self.hour, self.p, self.h, \
+        self.date, self.year, self.month, self.day, self.hour, self.mjd, self.p, self.h, \
         self.n, self.T, self.U, self.V, self.RH = read_file(self.data_file.split('.')[0] + '.txt', self.epoch_text)
 
         interpolated_density = []
         density_at_15km = []
         mjd_at_15km = []
-        self.x = np.linspace(1000., 25000., num=15, endpoint=True)
+        self.x = np.linspace(2200., 25000., num=15, endpoint=True)
 
         print("Computing the extrapolation of the values of density:")
+        print("(This is to make it easier to compare ECMWF and GDAS, or any other")
+        print("weather model)")
         pbar = tqdm(total=len(np.unique(self.mjd)))
 
         for mjd in np.unique(self.mjd):
@@ -144,7 +164,7 @@ class MolecularProfile:
         Xw = []
         interpolated_rho = []
 
-        pbar = tqdm(total=len(np.unique(self.mjd)))
+        pbar = tqdm(total=len(self.p))
         for i in np.arange(len(self.p)):
             pbar.update(1)
             if air == 'moist':
@@ -164,8 +184,8 @@ class MolecularProfile:
         pbar = tqdm(total=len(np.unique(self.mjd)))
         for mjd in np.unique(self.mjd):
             pbar.update(1)
-            func_rho = interp1d(self.h[self.mjd == mjd], rho[self.mjd == mjd]*
-                                  np.exp(self.h[self.mjd == mjd] / self.Hs), kind = 'cubic')
+            func_rho = interp1d(self.h[self.mjd == mjd], rho[self.mjd == mjd] *
+                                np.exp(self.h[self.mjd == mjd] / self.Hs), kind = 'cubic', fill_value='extrapolate')
             interpolated_rho.append(func_rho(self.x))
         pbar.close()
         interpolated_rho = np.asarray(interpolated_rho)
