@@ -3,22 +3,12 @@ from molecularprofiles.utils.grib_utils import date2mjd, get_epoch
 import numpy as np
 
 
-def read_file(file, epoch_text):
+def select_epoch(file, epoch_text):
     global months, month
     print("loading and selecting data")
     file = open(file)
     date, year, month, day, hour, mjd, p, T, h, n, U, V, RH = np.loadtxt(file, usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
                                                                                         10,11, 12), unpack=True)
-
-    # This is commented since in the new version, the MJD column is computed in the transformation from grib2 format
-    # directly into the final txt file. It made much more sense!
-
-    # mjd = []
-    #
-    # for i in tqdm(np.arange(len(date))):
-    #     mjd.append(date2mjd(year[i], month[i], day[i], hour[i]))
-    # print('\n')
-    # mjd = np.asarray(mjd)
 
     epoch = get_epoch(epoch_text)
 
