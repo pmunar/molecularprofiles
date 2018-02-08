@@ -25,7 +25,6 @@ class MolecularProfile:
 
         :param data_file: txt file containing the data (string)
         :param tag_name: name to be given to the output files (string)
-        :param epoch_text: season to be analyzed. Valid values are: "all", "winter", "summer", "intermediate" (string) 
         :param data_server: label to be put in some of the output plots (string)
         :param observatory: valid options are: "north", "south"
 
@@ -91,7 +90,7 @@ class MolecularProfile:
         If the input filename does not exist, the program searches for the same
         input name with .grib extension and extracts the data from it
 
-        Input: epoch_text: (str) can be "winter", "summer", "intermediate", "all". Default is "all"
+        Input: epoch: (str) can be "winter", "summer", "intermediate", "all". Default is "all"
 
         :return:
             self.date (YYYYMMDD)
@@ -118,13 +117,15 @@ class MolecularProfile:
             grib_file = self.data_file
             readgribfile2text(grib_file, self.observatory, gridstep=0.75)
 
-        self.epoch_text = epoch
-        self.output_plot_name = self.tag_name + '_' + self.epoch_text
+        self.output_plot_name = self.tag_name + '_' + epoch
+        self.epoch = epoch
 
         self.dataframe = pd.read_table(self.data_file.split('.')[0] + '.txt', delimiter=' ')
 
-        self.group_by_p = self.dataframe.groupby('P')
+        if epoch != 'all':
+            self.dataframe = select_dataframe_epoch(self.dataframe, epoch)
 
+        self.group_by_p = self.dataframe.groupby('P')
         self.dataframe['n_exp'] = self.dataframe.n /self.Ns * np.exp(self.dataframe.h /self.Hs)
         self.h_avgs = avg_std_dataframe(self.group_by_p, 'h')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
@@ -146,15 +147,19 @@ class MolecularProfile:
             param_at_mjd = self.group_mjd.get_group(mjd)[param].tolist()
             func = interp1d(h_at_mjd, param_at_mjd, kind='cubic', fill_value='extrapolate')
 
-            interpolated_param.append(np.float(func(height)))
+            if type(height) == int or type(height) == float:
+                interpolated_param.append(np.float(func(height)))
+            else:
+                interpolated_param.append(func(height))
         pbar.close()
 
         print('\n')
         interpolated_param = np.asarray(interpolated_param)
         if type(height) != float:
             interpolated_param_avgs = compute_averages_std(interpolated_param)
-            return interpolated_param, interpolated_param_avgs
-        elif type(height) == float:
+            return interpolated_param, interpolated_param_avgs[0], interpolated_param_avgs[1], \
+                   interpolated_param_avgs[2], interpolated_param_avgs[3]
+        elif type(height) == float or type(height) == int:
             return interpolated_param
 
 
@@ -188,9 +193,9 @@ class MolecularProfile:
                 sys.exit()
         pbar.close()
 
-        rho = np.asarray(rho)
-        interpolated_rho, rho_avgs = self._interpolate_param_to_h(rho, self.x)
-        rho, e_rho, rho_pp, rho_pm = rho_avgs
+        self.dataframe['n_mass_'+air] = rho
+        raw_rho = np.asarray(rho)
+        interpolated_rho, rho_avg, e_rho, rho_pp, rho_pm = self._interpolate_param_to_h('n_mass_'+air, self.x)
         return rho, e_rho, rho_pp, rho_pm, raw_rho
 
     def compute_diff_wrt_model(self, interpolated_density):
@@ -221,6 +226,81 @@ class MolecularProfile:
 
     # =======================================================================================================
 
+    def plot_moist_dry_comparison(self):
+
+        fig, axs = plt.subplots(2,1,sharex=True)
+        plt.subplots_adjust(hspace=0)
+
+        av_heights = self.h_avgs
+        raw_rhod = self.compute_mass_density(air='dry')[4]
+        raw_rhow = self.compute_mass_density(air='moist')[4]
+
+        rel_dif = (raw_rhod - raw_rhow) * 100. / raw_rhod
+        self.dataframe['rel_dif_n_mass'] = rel_dif
+        self.group_by_p = self.dataframe.groupby('P')
+        a_rhod, e_rhod, pp_rhod, pm_rhod = avg_std_dataframe(self.group_by_p, 'n_mass_dry')
+        a_rhow, e_rhow, pp_rhow, pm_rhow = avg_std_dataframe(self.group_by_p, 'n_mass_moist')
+        a_rel_dif, e_rel_dif, pp_rel_dif, pm_rel_dif = avg_std_dataframe(self.group_by_p,'rel_dif_n_mass')
+
+        axs[0].errorbar(av_heights[0], a_rhod, yerr=e_rhod, fmt=':', color='#ff7f0e', elinewidth=3)
+        axs[0].errorbar(av_heights[0], a_rhow, yerr=e_rhow, fmt=':', color='#1f77b4', elinewidth=3)
+        ebw = axs[0].errorbar(av_heights[0], a_rhow, yerr=[pm_rhow, pp_rhow], fmt='o', color='#1f77b4', capsize=0.5, mec='#1f77b4', ms=2., label='$\\rho_w$ (moist air)')
+        ebd = axs[0].errorbar(av_heights[0], a_rhod, yerr=[pm_rhod, pp_rhod], fmt='o', color='#ff7f0e', capsize=0.5, mec='#ff7f0e', ms=2., label='$\\rho_d$ (dry air)')
+        ebd[-1][0].set_linestyle(':')
+        ebw[-1][0].set_linestyle(':')
+
+        axs[0].legend(loc='best')
+        #axs[0].set_ylabel('$\\rho$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
+        axs[0].axes.tick_params(direction='in')
+
+        axs[1].axes.tick_params(direction='inout', top='on')
+        axs[1].set_xlabel('height [m]')
+        axs[1].set_yscale('log')
+        axs[1].errorbar(av_heights[0], a_rel_dif, yerr=e_rel_dif, color='#2ca02c', ms=2.)
+        ebrd = axs[1].errorbar(av_heights[0], a_rel_dif, yerr=[pm_rel_dif, pp_rel_dif], capsize=0.5, ms=2.)
+        ebrd[-1][0].set_linestyle(':')
+        axs[1].set_ylabel('rel. diff [%]')
+        axs[1].set_ylim(1.e-4, 5.e-1)
+
+        fig.savefig('dry_vs_moist_air_density_RH_lt_0.80_h_gt_2200_rel_dif_error.png', bbox_inches='tight', dpi=300)
+        plt.show()
+
+    def plot_moist_dry_comparison_interpolated(self):
+
+        fig, axs = plt.subplots(2, 1, sharex=True)
+        plt.subplots_adjust(hspace=0)
+
+        av_heights = self.x
+        a_rhod, e_rhod, pp_rhod, pm_rhod, raw_rhod = self.compute_mass_density(air='dry')
+        a_rhow, e_rhow, pp_rhow, pm_rhow, raw_rhow = self.compute_mass_density(air='moist')
+
+        rel_dif = (a_rhod - a_rhow) * 100. / a_rhod
+
+        axs[0].errorbar(av_heights, a_rhod, yerr=e_rhod, fmt=':', color='#ff7f0e', elinewidth=3)
+        axs[0].errorbar(av_heights, a_rhow, yerr=e_rhow, fmt=':', color='#1f77b4', elinewidth=3)
+        ebw = axs[0].errorbar(av_heights, a_rhow, yerr=[pm_rhow, pp_rhow], fmt='o', color='#1f77b4', capsize=0.5,
+                              mec='#1f77b4', ms=2., label='$\\rho_w$ (moist air)')
+        ebd = axs[0].errorbar(av_heights, a_rhod, yerr=[pm_rhod, pp_rhod], fmt='o', color='#ff7f0e', capsize=0.5,
+                              mec='#ff7f0e', ms=2., label='$\\rho_d$ (dry air)')
+        ebd[-1][0].set_linestyle(':')
+        ebw[-1][0].set_linestyle(':')
+
+        axs[0].legend(loc='best')
+        axs[0].set_ylabel('$\\rho$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
+        axs[0].axes.tick_params(direction='in')
+
+        axs[1].axes.tick_params(direction='inout', top='on')
+        axs[1].set_xlabel('height [m]')
+        axs[1].set_yscale('log')
+        axs[1].errorbar(av_heights, rel_dif, color='#2ca02c', ms=2.)
+        ebrd = axs[1].errorbar(av_heights, rel_dif, capsize=0.5, ms=2.)
+        ebrd[-1][0].set_linestyle(':')
+        axs[1].set_ylabel('rel. diff [\%]')
+        axs[1].set_ylim(1.e-4, 5.e-1)
+
+        fig.savefig('interpolated_dry_vs_moist_air_density_RH_lt_0.80_h_gt_2200_rel_dif_error.png', bbox_inches='tight', dpi=300)
+        plt.show()
+
     def plot_average_at_15km(self):
         """
         Function that produces a plot of the averaged density at 15 km
@@ -239,7 +319,7 @@ class MolecularProfile:
         ax.set_xlabel('MJD')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax.set_ylim(np.min(density_at_15km) * 0.98, np.max(density_at_15km) * 1.02)
-        ax.set_title('Density over time at h = 15 km (for %s months)' % (self.epoch_text))
+        ax.set_title('Density over time at h = 15 km (for %s months)' % (self.epoch))
         xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
         yspan = ax.get_ylim()[1] - ax.get_ylim()[0]
 
@@ -271,8 +351,6 @@ class MolecularProfile:
         Function that plots the difference between density models w.r.t the MAGIC Winter model
         :return: 
         """
-
-        print('Computing the averages, std dev and peak-to-peak values for the differences wrt MAGIC Winter model:')
         print('plotting averaged data values for selected epoch')
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -284,7 +362,7 @@ class MolecularProfile:
         ax.errorbar(self.x + 175., self.diff_MAGIC[0], yerr=self.diff_MAGIC[1], fmt=':', color='b',
                     elinewidth=3.1)
 
-        ax.set_title('Relative Difference w.r.t MAGIC W model, for %s months' % (self.epoch_text))
+        ax.set_title('Relative Difference w.r.t MAGIC W model, for %s months' % (self.epoch))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference (model - MW)')
         ax.set_xlim(0., 25100.)
@@ -297,8 +375,7 @@ class MolecularProfile:
         fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.eps', bbox_inches='tight')
         fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_differences_wrt_other(self, model):
-        print('Computing the averages, std dev and peak-to-peak values for the differences wrt other model:')
+    def plot_differences_wrt_model(self, model):
         print('plotting averaged data values for selected epoch')
         if model == 'MW':
             diff = self.diff_MAGIC[0]
@@ -321,8 +398,7 @@ class MolecularProfile:
         ax.errorbar(self.x + 175., diff, yerr=ediff, fmt=':', color='b',
                     elinewidth=3.1)
 
-        ax.set_title('Relative Difference w.r.t %s model, epoch: %s' % (model,
-                                                                        self.epoch_text))
+        ax.set_title('Relative Difference w.r.t %s model, epoch: %s' % (model, self.epoch))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference')
         ax.set_xlim(0., 25100.)
@@ -335,15 +411,22 @@ class MolecularProfile:
         fig.savefig('differences_wrt_PROD3_' + self.output_plot_name + '.eps', bbox_inches='tight')
         fig.savefig('differences_wrt_PROD3_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_models_comparison(self, model=None):
+    def plot_models_comparison(self, model=None, interpolate=False):
         fig = plt.figure()
         ax = fig.add_subplot(111)
-
-        eb2 = ax.errorbar(self.x, self.averages[0], yerr=[self.averages[3], self.averages[2]],
+        if interpolate:
+            raw_n_exp, avg_n_exp, e_n_exp, pp_n_exp, pm_n_exp = self._interpolate_param_to_h('n_exp', self.x)
+            eb2 = ax.errorbar(self.x, avg_n_exp, yerr=[pm_n_exp, pp_n_exp],
                           fmt='o', color='b', capsize=0.5, mec='b', ms=1., label=self.data_server)
-        eb2[-1][0].set_linestyle(':')
-        ax.errorbar(self.x, self.averages[0], yerr=self.averages[1], fmt=':', color='b',
-                    elinewidth=3.)
+            eb2[-1][0].set_linestyle(':')
+            ax.errorbar(self.x, avg_n_exp, yerr=e_n_exp, fmt=':', color='b', elinewidth=3., label=None)
+        else:
+            eb2 = ax.errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=[self.n_exp_avgs[3],
+                                                                                             self.n_exp_avgs[2]],
+                              fmt='o', color='b', capsize=0.5, mec='b', ms=1., label=self.data_server)
+            eb2[-1][0].set_linestyle(':')
+            ax.errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[1], fmt=':',
+                        color='b', elinewidth=3., label=None)
 
         if model == 'MW':
             ax.plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
@@ -363,7 +446,7 @@ class MolecularProfile:
                   '\n Exiting!')
             sys.exit()
 
-        ax.set_title(self.data_server + ' ' + ' ' + str(self.epoch_text))
+        ax.set_title(self.data_server + ' ' + ' ' + str(self.epoch))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax.set_xlim(0., 25100.)
@@ -373,7 +456,7 @@ class MolecularProfile:
         ax.yaxis.set_major_locator(MultipleLocator(0.1))
         ax.legend(loc='best', numpoints=1)
         ax.grid(which='both', axis='y', color='0.8')
-        fig.savefig('comparison_' + self.output_plot_name + '.eps', bbox_inches='tight')
+#        fig.savefig('comparison_' + self.output_plot_name + '.eps', bbox_inches='tight')
         fig.savefig('comparison_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
     def print_to_text_file(self):
