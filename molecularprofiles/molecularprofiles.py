@@ -234,18 +234,22 @@ class MolecularProfile:
         av_heights = self.h_avgs
         raw_rhod = self.compute_mass_density(air='dry')[4]
         raw_rhow = self.compute_mass_density(air='moist')[4]
-
         rel_dif = (raw_rhod - raw_rhow) * 100. / raw_rhod
+
         self.dataframe['rel_dif_n_mass'] = rel_dif
         self.group_by_p = self.dataframe.groupby('P')
         a_rhod, e_rhod, pp_rhod, pm_rhod = avg_std_dataframe(self.group_by_p, 'n_mass_dry')
         a_rhow, e_rhow, pp_rhow, pm_rhow = avg_std_dataframe(self.group_by_p, 'n_mass_moist')
         a_rel_dif, e_rel_dif, pp_rel_dif, pm_rel_dif = avg_std_dataframe(self.group_by_p,'rel_dif_n_mass')
 
-        axs[0].errorbar(av_heights[0], a_rhod, yerr=e_rhod, fmt=':', color='#ff7f0e', elinewidth=3)
-        axs[0].errorbar(av_heights[0], a_rhow, yerr=e_rhow, fmt=':', color='#1f77b4', elinewidth=3)
-        ebw = axs[0].errorbar(av_heights[0], a_rhow, yerr=[pm_rhow, pp_rhow], fmt='o', color='#1f77b4', capsize=0.5, mec='#1f77b4', ms=2., label='$\\rho_w$ (moist air)')
-        ebd = axs[0].errorbar(av_heights[0], a_rhod, yerr=[pm_rhod, pp_rhod], fmt='o', color='#ff7f0e', capsize=0.5, mec='#ff7f0e', ms=2., label='$\\rho_d$ (dry air)')
+        condition = (self.dataframe.RH > 80.)
+
+        axs[0].errorbar(av_heights[0], a_rhod, yerr=e_rhod, fmt=':', color='#ff7f0e', elinewidth=3, label=None)
+        axs[0].errorbar(av_heights[0], a_rhow, yerr=e_rhow, fmt=':', color='#1f77b4', elinewidth=3, label=None)
+        ebw = axs[0].errorbar(av_heights[0], a_rhow, yerr=[pm_rhow, pp_rhow], fmt='o', color='#1f77b4', capsize=0.5,
+                              mec='#1f77b4', ms=2., label='$\\rho_w$ (moist air)')
+        ebd = axs[0].errorbar(av_heights[0], a_rhod, yerr=[pm_rhod, pp_rhod], fmt='o', color='#ff7f0e', capsize=0.5,
+                              mec='#ff7f0e', ms=2., label='$\\rho_d$ (dry air)')
         ebd[-1][0].set_linestyle(':')
         ebw[-1][0].set_linestyle(':')
 
@@ -262,7 +266,7 @@ class MolecularProfile:
         axs[1].set_ylabel('rel. diff [%]')
         axs[1].set_ylim(1.e-4, 5.e-1)
 
-        fig.savefig('dry_vs_moist_air_density_RH_lt_0.80_h_gt_2200_rel_dif_error.png', bbox_inches='tight', dpi=300)
+        fig.savefig('dry_vs_moist_air_density.png', bbox_inches='tight', dpi=300)
         plt.show()
 
     def plot_moist_dry_comparison_interpolated(self):
