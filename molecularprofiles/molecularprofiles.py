@@ -276,42 +276,6 @@ class MolecularProfile:
         fig.savefig('dry_vs_moist_air_density.png', bbox_inches='tight', dpi=300)
         fig.show()
 
-    def plot_moist_dry_comparison_interpolated(self):
-
-        fig, axs = plt.subplots(2, 1, sharex=True)
-        plt.subplots_adjust(hspace=0)
-
-        av_heights = self.x
-        a_rhod, e_rhod, pp_rhod, pm_rhod, raw_rhod = self.compute_mass_density(air='dry')
-        a_rhow, e_rhow, pp_rhow, pm_rhow, raw_rhow = self.compute_mass_density(air='moist')
-
-        rel_dif = (a_rhod - a_rhow) * 100. / a_rhod
-
-        axs[0].errorbar(av_heights, a_rhod, yerr=e_rhod, fmt=':', color='#ff7f0e', elinewidth=3)
-        axs[0].errorbar(av_heights, a_rhow, yerr=e_rhow, fmt=':', color='#1f77b4', elinewidth=3)
-        ebw = axs[0].errorbar(av_heights, a_rhow, yerr=[pm_rhow, pp_rhow], fmt='o', color='#1f77b4', capsize=0.5,
-                              mec='#1f77b4', ms=2., label='$\\rho_w$ (moist air)')
-        ebd = axs[0].errorbar(av_heights, a_rhod, yerr=[pm_rhod, pp_rhod], fmt='o', color='#ff7f0e', capsize=0.5,
-                              mec='#ff7f0e', ms=2., label='$\\rho_d$ (dry air)')
-        ebd[-1][0].set_linestyle(':')
-        ebw[-1][0].set_linestyle(':')
-
-        axs[0].legend(loc='best')
-        axs[0].set_ylabel('$\\rho$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
-        axs[0].axes.tick_params(direction='in')
-
-        axs[1].axes.tick_params(direction='inout', top='on')
-        axs[1].set_xlabel('height [m]')
-        axs[1].set_yscale('log')
-        axs[1].errorbar(av_heights, rel_dif, color='#2ca02c', ms=2.)
-        ebrd = axs[1].errorbar(av_heights, rel_dif, capsize=0.5, ms=2.)
-        ebrd[-1][0].set_linestyle(':')
-        axs[1].set_ylabel('rel. diff [\%]')
-        axs[1].set_ylim(1.e-4, 5.e-1)
-
-        fig.savefig('interpolated_dry_vs_moist_air_density_RH_lt_0.80_h_gt_2200_rel_dif_error.png', bbox_inches='tight', dpi=300)
-        plt.show()
-
     def plot_average_at_15km(self):
         """
         Function that produces a plot of the averaged density at 15 km
