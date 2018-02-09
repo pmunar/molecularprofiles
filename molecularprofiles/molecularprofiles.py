@@ -41,8 +41,8 @@ class MolecularProfile:
         """
 
         self.data_file = data_file
-        self.tag_name = tag_name
         self.data_server = data_server
+        self.tag_name = tag_name + '_' + self.data_server
         self.observatory = observatory
 
         self.Ns = Ns  # [cm^-3] molecular number density for standard air conditions
@@ -134,7 +134,7 @@ class MolecularProfile:
     def _interpolate_param_to_h(self, param, height):
 
         interpolated_param = []
-        self.group_mjd = self.dataframe.groupby('MJD')
+        group_mjd = self.dataframe.groupby('MJD')
 
         print("Computing the extrapolation of the values of density:")
         print("(This is to make it easier to compare ECMWF and GDAS, or any other")
@@ -143,8 +143,8 @@ class MolecularProfile:
 
         for mjd in np.unique(self.dataframe.MJD):
             pbar.update(1)
-            h_at_mjd = self.group_mjd.get_group(mjd)['h'].tolist()
-            param_at_mjd = self.group_mjd.get_group(mjd)[param].tolist()
+            h_at_mjd = group_mjd.get_group(mjd)['h'].tolist()
+            param_at_mjd = group_mjd.get_group(mjd)[param].tolist()
             func = interp1d(h_at_mjd, param_at_mjd, kind='cubic', fill_value='extrapolate')
 
             if type(height) == int or type(height) == float:
@@ -163,7 +163,7 @@ class MolecularProfile:
             return interpolated_param
 
 
-    def compute_mass_density(self, air='moist'):
+    def compute_mass_density(self, air='moist', interpolation=False):
         """
         Uses the functions DensityMoistAir, MolarFractionWaterVapor and Compressibility from the LIDAR_analysis module humidity.py
         input:
@@ -175,45 +175,40 @@ class MolecularProfile:
         Z = []
         rho = []
         Xw = []
-        interpolated_rho = []
 
         pbar = tqdm(total=len(self.dataframe.P))
         for i in np.arange(len(self.dataframe.P)):
             pbar.update(1)
             if air == 'moist':
-                Xw.append(MolarFractionWaterVapor(self.dataframe.P[i], self.dataframe.Temp[i], self.dataframe.RH[i]))
-                Z.append(Compressibility(self.dataframe.P[i], self.dataframe.Temp[i], Xw[i]))
-                rho.append(DensityMoistAir(self.dataframe.P[i] * 100., self.dataframe.Temp[i], Z[i], Xw[i], C))
+                Xw.append(MolarFractionWaterVapor(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i],
+                                                  self.dataframe.RH.iloc[i]))
+                Z.append(Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], Xw[i]))
+                rho.append(DensityMoistAir(self.dataframe.P.iloc[i] * 100., self.dataframe.Temp.iloc[i], Z[i], Xw[i], C))
 
             elif air == 'dry':
-                Z.append(Compressibility(self.dataframe.P[i], self.dataframe.Temp[i], 0.0))
-                rho.append(DensityMoistAir(self.dataframe.P[i]*100., self.dataframe.Temp[i], Z[i], 0.0, C))
+                Z.append(Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], 0.0))
+                rho.append(DensityMoistAir(self.dataframe.P.iloc[i]*100., self.dataframe.Temp.iloc[i], Z[i], 0.0, C))
             else:
                 print('Wrong air condition. It must be "moist" or "dry". Aborting!')
                 sys.exit()
         pbar.close()
 
         self.dataframe['n_mass_'+air] = rho
-        raw_rho = np.asarray(rho)
-        interpolated_rho, rho_avg, e_rho, rho_pp, rho_pm = self._interpolate_param_to_h('n_mass_'+air, self.x)
-        return rho, e_rho, rho_pp, rho_pm, raw_rho
+        self.dataframe['nexp_mass_' + air] = self.dataframe['n_mass_'+air] /self.Ns * np.exp(self.dataframe.h / self.Hs)
 
-    def compute_diff_wrt_model(self, interpolated_density):
+
+    def compute_diff_wrt_model(self):
 
         diff_with_magic = []
         diff_with_prod3 = []
+
+        interpolated_density = self._interpolate_param_to_h('n_exp', self.x)[0]
 
         self._get_prod3sim_data()
         x = np.linspace(1000., 25000., num=15, endpoint=True)
 
         print("Computing the differences of the values of density:")
         for i in tqdm(np.arange(len(interpolated_density))):
-            # Percentage counter bar
-            # sys.stdout.write('\r')
-            # k = 100
-            # sys.stdout.write("[%-100s] %d%%" % ('=' * k, k))
-            # sys.stdout.flush()
-            # ---------------------------
             diff_with_magic.append((interpolated_density[i] - self.func_magic(x))
                                          / interpolated_density[i])
             diff_with_prod3.append((interpolated_density[i] - self.func_prod3(x))
@@ -226,49 +221,62 @@ class MolecularProfile:
 
     # =======================================================================================================
 
-    def plot_moist_dry_comparison(self):
+    def plot_moist_dry_comparison(self, min_humidity=0.):
 
         fig, axs = plt.subplots(2,1,sharex=True)
         plt.subplots_adjust(hspace=0)
 
-        av_heights = self.h_avgs
-        raw_rhod = self.compute_mass_density(air='dry')[4]
-        raw_rhow = self.compute_mass_density(air='moist')[4]
-        rel_dif = (raw_rhod - raw_rhow) * 100. / raw_rhod
+        self.compute_mass_density(air='dry')
+        self.compute_mass_density(air='moist')
+        
+        dfmin_rh = self.dataframe[self.dataframe.RH > min_humidity]
+        rel_dif = (dfmin_rh.nexp_mass_dry - dfmin_rh.nexp_mass_moist) * 100. / dfmin_rh.nexp_mass_dry
+        
+        dfmin_rh['rel_dif_n_mass'] = rel_dif
+        group_by_P = dfmin_rh.groupby('P')
+        height = avg_std_dataframe(group_by_P, 'h')
+        
+        rhow, erhow, pprhow, pmrhow = avg_std_dataframe(group_by_P, 'n_mass_moist')
+        rhod, erhod, pprhod, pmrhod = avg_std_dataframe(group_by_P, 'n_mass_dry')
+        rel_dif = avg_std_dataframe(group_by_P, 'rel_dif_n_mass')
 
-        self.dataframe['rel_dif_n_mass'] = rel_dif
-        self.group_by_p = self.dataframe.groupby('P')
-        a_rhod, e_rhod, pp_rhod, pm_rhod = avg_std_dataframe(self.group_by_p, 'n_mass_dry')
-        a_rhow, e_rhow, pp_rhow, pm_rhow = avg_std_dataframe(self.group_by_p, 'n_mass_moist')
-        a_rel_dif, e_rel_dif, pp_rel_dif, pm_rel_dif = avg_std_dataframe(self.group_by_p,'rel_dif_n_mass')
-
-        condition = (self.dataframe.RH > 80.)
-
-        axs[0].errorbar(av_heights[0], a_rhod, yerr=e_rhod, fmt=':', color='#ff7f0e', elinewidth=3, label=None)
-        axs[0].errorbar(av_heights[0], a_rhow, yerr=e_rhow, fmt=':', color='#1f77b4', elinewidth=3, label=None)
-        ebw = axs[0].errorbar(av_heights[0], a_rhow, yerr=[pm_rhow, pp_rhow], fmt='o', color='#1f77b4', capsize=0.5,
-                              mec='#1f77b4', ms=2., label='$\\rho_w$ (moist air)')
-        ebd = axs[0].errorbar(av_heights[0], a_rhod, yerr=[pm_rhod, pp_rhod], fmt='o', color='#ff7f0e', capsize=0.5,
-                              mec='#ff7f0e', ms=2., label='$\\rho_d$ (dry air)')
+        e_color_dry = '#1f77b4'
+        e_color_moist = '#ff7f0e'
+        
+        fig.clf()
+        fig, axs = plt.subplots(2,1,sharex=True)
+        plt.subplots_adjust(hspace=0)
+        
+        axs[0].errorbar(height[0], rhod, yerr=erhod, fmt=':', color=e_color_dry, elinewidth=3, label=None)
+        
+        ebd = axs[0].errorbar(height[0], rhod, yerr=[pmrhod, pprhod], fmt='o', color=e_color_dry, capsize=0.5,
+                              mec=e_color_dry, ms=2., label='ECMWF $\\rho_d$ (dry air)')
+        
+        axs[0].errorbar(height[0], rhow, yerr=erhow, fmt=':', color=e_color_moist, elinewidth=3, label=None)
+        
+        ebw = axs[0].errorbar(height[0], rhow, yerr=[pmrhow, pprhow], fmt='o', color=e_color_moist, capsize=0.5,
+                              mec=e_color_moist, ms=2., label='ECMWF $\\rho_w$ (moist air)')
+        
         ebd[-1][0].set_linestyle(':')
         ebw[-1][0].set_linestyle(':')
-
+        
+        axs[0].set_ylabel('$\\rho$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
         axs[0].legend(loc='best')
-        #axs[0].set_ylabel('$\\rho$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
         axs[0].axes.tick_params(direction='in')
-
+        
+        axs[1].errorbar(height[0], rel_dif[0], yerr=rel_dif[1], color='#8c564b', ms=2., label=None)
+        ebrd = axs[1].errorbar(height[0], rel_dif[0], yerr=[rel_dif[3], rel_dif[2]], capsize=0.5, ms=2.,
+                               color='#8c564b', mec='#8c564b', mfc='#8c564b', label='ECMWF')
+        ebrd[-1][0].set_linestyle(':')
+        
+        axs[1].legend(loc='best')
         axs[1].axes.tick_params(direction='inout', top='on')
         axs[1].set_xlabel('height [m]')
         axs[1].set_yscale('log')
-        axs[1].errorbar(av_heights[0], a_rel_dif, yerr=e_rel_dif, color='#2ca02c', ms=2.)
-        ebrd = axs[1].errorbar(av_heights[0], a_rel_dif, yerr=[pm_rel_dif, pp_rel_dif], capsize=0.5, ms=2.)
-        ebrd[-1][0].set_linestyle(':')
-        axs[1].set_ylabel('rel. diff [%]')
-        axs[1].set_ylim(1.e-4, 5.e-1)
-
+        axs[1].set_ylabel('rel. diff [\\%]')
         fig.savefig('dry_vs_moist_air_density.png', bbox_inches='tight', dpi=300)
-        plt.show()
-
+        fig.show()
+        
     def plot_moist_dry_comparison_interpolated(self):
 
         fig, axs = plt.subplots(2, 1, sharex=True)
@@ -353,8 +361,11 @@ class MolecularProfile:
     def plot_differences_wrt_magic(self):
         """
         Function that plots the difference between density models w.r.t the MAGIC Winter model
-        :return: 
+        :return:
         """
+
+        self.compute_diff_wrt_model()
+
         print('plotting averaged data values for selected epoch')
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -380,6 +391,9 @@ class MolecularProfile:
         fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
     def plot_differences_wrt_model(self, model):
+
+        self.compute_diff_wrt_model()
+
         print('plotting averaged data values for selected epoch')
         if model == 'MW':
             diff = self.diff_MAGIC[0]
@@ -396,7 +410,7 @@ class MolecularProfile:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        eb2 = ax.errorbar(self.x + 175., diff, yerr=ediff_pp, fmt='o', color='b', capsize=0.5, mec='b',
+        eb2 = ax.errorbar(self.x, diff, yerr=ediff_pp, fmt='o', color='b', capsize=0.5, mec='b',
                           ms=1., label=self.data_server)
         eb2[-1][0].set_linestyle(':')
         ax.errorbar(self.x + 175., diff, yerr=ediff, fmt=':', color='b',
@@ -412,8 +426,8 @@ class MolecularProfile:
         ax.yaxis.set_major_locator(MultipleLocator(0.02))
         ax.legend(loc='best', numpoints=1)
         ax.grid(which='both', axis='y', color='0.8')
-        fig.savefig('differences_wrt_PROD3_' + self.output_plot_name + '.eps', bbox_inches='tight')
-        fig.savefig('differences_wrt_PROD3_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
+        fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name + '.eps', bbox_inches='tight')
+        fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
     def plot_models_comparison(self, model=None, interpolate=False):
         fig = plt.figure()
