@@ -6,7 +6,6 @@ from tqdm import *
 from matplotlib.ticker import MultipleLocator
 from scipy.interpolate import interp1d
 from molecularprofiles.utils.grib_utils import *
-from molecularprofiles.utils.read_txt_gribfile import *
 from molecularprofiles.utils.plot_settings import settings
 from molecularprofiles.utils.magic_winter_profile import heightmw, rhomw
 from molecularprofiles.utils.meteorological_constants import *

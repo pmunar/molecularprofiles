@@ -389,9 +389,10 @@ def select_epoch(file, epoch_text):
     return date, year, month, day, hour, mjd, p, h, n, T, U, V, RH
 
 def select_dataframe_epoch(df, epoch_text):
+
+    epoch = get_epoch(epoch_text)
     if epoch_text == 'winter':
-        new_df = df[(df.month == epoch_text[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) |
-                  (df.month == epoch[3]) | (df.month == epoch[4])]
+        new_df = df[(df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3]) | (df.month == epoch[4])]
 
     elif epoch_text == 'summer':
         new_df = df[(df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2])]
