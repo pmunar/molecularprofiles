@@ -243,7 +243,6 @@ class MolecularProfile:
         e_color_dry = '#1f77b4'
         e_color_moist = '#ff7f0e'
         
-        fig.clf()
         fig, axs = plt.subplots(2,1,sharex=True)
         plt.subplots_adjust(hspace=0)
         
@@ -276,7 +275,7 @@ class MolecularProfile:
         axs[1].set_ylabel('rel. diff [\\%]')
         fig.savefig('dry_vs_moist_air_density.png', bbox_inches='tight', dpi=300)
         fig.show()
-        
+
     def plot_moist_dry_comparison_interpolated(self):
 
         fig, axs = plt.subplots(2, 1, sharex=True)
