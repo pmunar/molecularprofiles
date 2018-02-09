@@ -128,12 +128,24 @@ def request_ecwmf(date_i, date_f, lat, lon, outfile='my_ecmwf_file.grib'):
 def find_nearest(a, num):  # Function to find the nearest grid position to a given latitude or longitude
     return a[np.abs(a-num).argmin()]
 
+def print_help():
+    print('The call of this function must be:')
+    print('')
+    print('python download_ecmwf.py date_start date_end latitude longitude (outtag)')
+    print('where:')
+    print('date_start and date_end must be in YYYY-MM-DD format')
+    print('latitude and longitude must be in degrees')
+    print('outtag is optional tag for the downloaded data files')
 
 if __name__ == '__main__':
     if len(sys.argv) == 5:
         retrieve_interim(sys.argv[1], sys.argv[2], np.float(sys.argv[3]), np.float(sys.argv[4]))
     elif len(sys.argv) == 6:
         retrieve_interim(sys.argv[1], sys.argv[2], np.float(sys.argv[3]), np.float(sys.argv[4]), sys.argv[5])
+    elif len(sys.argv) == 2:
+        if sys.argv[1] == '-h' or sys.argv[1] == '-help' or sys.argv[1] == '-man':
+            print_help()
     else:
         print('Wrong number of arguments!')
+        print_help()
         exit()
