@@ -9,7 +9,7 @@ from molecularprofiles.utils.grib_utils import *
 from molecularprofiles.utils.plot_settings import settings
 from molecularprofiles.utils.magic_winter_profile import heightmw, rhomw
 from molecularprofiles.utils.meteorological_constants import *
-from molecularprofiles.utils.humidity import *
+from LIDAR_Analysis.humidity import *
 import pandas as pd
 
 settings()
@@ -164,7 +164,8 @@ class MolecularProfile:
 
     def compute_mass_density(self, air='moist', interpolation=False):
         """
-        Uses the functions DensityMoistAir, MolarFractionWaterVapor and Compressibility from the LIDAR_analysis module humidity.py
+        Uses the functions DensityMoistAir, MolarFractionWaterVapor and Compressibility
+        from the LIDAR_analysis module humidity.py
         input:
             air: (str, optional) must be 'moist' or 'dry'
 
@@ -222,9 +223,6 @@ class MolecularProfile:
 
     def plot_moist_dry_comparison(self, min_humidity=0.):
 
-        fig, axs = plt.subplots(2,1,sharex=True)
-        plt.subplots_adjust(hspace=0)
-
         self.compute_mass_density(air='dry')
         self.compute_mass_density(air='moist')
         
@@ -272,7 +270,7 @@ class MolecularProfile:
         axs[1].set_xlabel('height [m]')
         axs[1].set_yscale('log')
         axs[1].set_ylabel('rel. diff [\\%]')
-        fig.savefig('dry_vs_moist_air_density.png', bbox_inches='tight', dpi=300)
+        fig.savefig('dry_vs_moist_air_density'+self.data_server+'_'+self.epoch+'.png', bbox_inches='tight', dpi=300)
         fig.show()
 
     def plot_average_at_15km(self):
@@ -375,7 +373,7 @@ class MolecularProfile:
         eb2 = ax.errorbar(self.x, diff, yerr=ediff_pp, fmt='o', color='b', capsize=0.5, mec='b',
                           ms=1., label=self.data_server)
         eb2[-1][0].set_linestyle(':')
-        ax.errorbar(self.x + 175., diff, yerr=ediff, fmt=':', color='b',
+        ax.errorbar(self.x, diff, yerr=ediff, fmt=':', color='b',
                     elinewidth=3.1)
 
         ax.set_title('Relative Difference w.r.t %s model, epoch: %s' % (model, self.epoch))
@@ -392,52 +390,108 @@ class MolecularProfile:
         fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
     def plot_models_comparison(self, model=None, interpolate=False):
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
+        fig, ax = plt.subplots(2, 1, sharex=True)
+        plt.subplots_adjust(hspace=0)
         if interpolate:
             raw_n_exp, avg_n_exp, e_n_exp, pp_n_exp, pm_n_exp = self._interpolate_param_to_h('n_exp', self.x)
-            eb2 = ax.errorbar(self.x, avg_n_exp, yerr=[pm_n_exp, pp_n_exp],
+            eb2 = ax[0].errorbar(self.x, avg_n_exp, yerr=[pm_n_exp, pp_n_exp],
                           fmt='o', color='b', capsize=0.5, mec='b', ms=1., label=self.data_server)
             eb2[-1][0].set_linestyle(':')
-            ax.errorbar(self.x, avg_n_exp, yerr=e_n_exp, fmt=':', color='b', elinewidth=3., label=None)
+            ax[0].errorbar(self.x, avg_n_exp, yerr=e_n_exp, fmt=':', color='b', elinewidth=3., label=None)
+            ax[1].plot(self.x, e_n_exp/avg_n_exp, 'o:', color='b', ms=2.)
+
         else:
-            eb2 = ax.errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=[self.n_exp_avgs[3],
+            eb2 = ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=[self.n_exp_avgs[3],
                                                                                              self.n_exp_avgs[2]],
                               fmt='o', color='b', capsize=0.5, mec='b', ms=1., label=self.data_server)
             eb2[-1][0].set_linestyle(':')
-            ax.errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[1], fmt=':',
+            ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[1], fmt=':',
                         color='b', elinewidth=3., label=None)
+            ax[1].plot(self.h_avgs[0], self.n_exp_avgs[1]/self.n_exp_avgs[0], 'o:', color='b', ms=2.)
 
         if model == 'MW':
-            ax.plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
+            ax[0].plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
                     label='MAGIC W')
         elif model == 'PROD3':
             self._get_prod3sim_data()
-            ax.plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
+            ax[0].plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
                     label='Prod3 ' + self.observatory)
         elif model == 'both':
-            ax.plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
+            ax[0].plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
                     label='MAGIC W')
             self._get_prod3sim_data()
-            ax.plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
+            ax[0].plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-', color='0.2',
                     label='Prod3 ' + self.observatory)
         else:
             print('Wrong model. It must be "MW" for MAGIC Winter model, or "PROD3" for Paranal model or "both". '
                   '\n Exiting!')
             sys.exit()
 
-        ax.set_title(self.data_server + ' ' + ' ' + str(self.epoch))
-        ax.set_xlabel('h a.s.l. [m]')
-        ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
-        ax.set_xlim(0., 25100.)
-        ax.set_ylim(0.4, 1.2)
-        ax.xaxis.set_minor_locator(MultipleLocator(1000))
-        ax.xaxis.set_major_locator(MultipleLocator(2000))
-        ax.yaxis.set_major_locator(MultipleLocator(0.1))
-        ax.legend(loc='best', numpoints=1)
-        ax.grid(which='both', axis='y', color='0.8')
-#        fig.savefig('comparison_' + self.output_plot_name + '.eps', bbox_inches='tight')
-        fig.savefig('comparison_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
+        ax[0].set_title(self.data_server + ' ' + ' ' + str(self.epoch))
+        ax[0].set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
+        ax[0].set_xlim(0., 25100.)
+        ax[0].set_ylim(0.4, 1.2)
+        ax[0].xaxis.set_minor_locator(MultipleLocator(1000))
+        ax[0].xaxis.set_major_locator(MultipleLocator(2000))
+        ax[0].yaxis.set_major_locator(MultipleLocator(0.1))
+        ax[0].legend(loc='best', numpoints=1)
+        ax[0].grid(which='both', axis='y', color='0.8')
+        ax[0].axes.tick_params(direction='in')
+
+        ax[1].axes.tick_params(direction='inout', top='on')
+        ax[1].set_xlabel('h a.s.l. [m]')
+        ax[1].set_ylabel('std/$\\langle n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})} \\rangle$')
+
+        fig.savefig('comparison_' + self.output_plot_name + '.eps', bbox_inches='tight')
+        fig.savefig('model_comparison_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
+
+    def plot_epoch_comparison(self, epochs, interpolate=False, plot_MW=False, format='png'):
+        fig, ax = plt.subplots(2, 1, sharex=True)
+        plt.subplots_adjust(hspace=0)
+        for e in epochs:
+            self.get_data(e)
+            color = next(ax[0]._get_lines.prop_cycler)['color']
+            if interpolate:
+                raw_n_exp, avg_n_exp, e_n_exp, pp_n_exp, pm_n_exp = self._interpolate_param_to_h('n_exp', self.x)
+                eb2 = ax[0].errorbar(self.x, avg_n_exp, yerr=[pm_n_exp, pp_n_exp],
+                              fmt='o', mec=None, color=color, capsize=0.5, ms=1., label=self.data_server+'\_'+e)
+                eb2[-1][0].set_linestyle(':')
+                ax[0].errorbar(self.x, avg_n_exp, yerr=e_n_exp, fmt=':', color=color, elinewidth=3., label=None)
+                ax[1].plot(self.x, e_n_exp/avg_n_exp, 'o:', ms=2., color=color, label=self.data_server+'\_'+e)
+
+            else:
+                eb2 = ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=[self.n_exp_avgs[3],
+                                                                                                    self.n_exp_avgs[2]],
+                                     fmt='o', color=color, capsize=0.5, ms=1., label=self.data_server+'\_'+e)
+                eb2[-1][0].set_linestyle(':')
+                ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[1],
+                               fmt=':', color = color, elinewidth=3., label=None)
+                ax[1].plot(self.h_avgs[0], self.n_exp_avgs[1]/self.n_exp_avgs[0], 'o:', ms=2., color=color,
+                           label=self.data_server+'\_'+e)
+
+        if plot_MW:
+            ax[0].plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
+                    label='MAGIC W')
+
+        ax[0].set_title(self.data_server + ' ' + ' ' + str(self.epoch))
+        ax[0].set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
+        ax[0].set_xlim(0., 25100.)
+        ax[0].set_ylim(0.4, 1.2)
+        ax[0].xaxis.set_minor_locator(MultipleLocator(1000))
+        ax[0].xaxis.set_major_locator(MultipleLocator(2000))
+        ax[0].yaxis.set_major_locator(MultipleLocator(0.1))
+        ax[0].legend(loc='best', numpoints=1)
+        ax[0].grid(which='both', axis='y', color='0.8')
+        ax[0].axes.tick_params(direction='in')
+
+        ax[1].axes.tick_params(direction='inout', top='on')
+        ax[1].set_xlabel('h a.s.l. [m]')
+        ax[1].set_ylabel('std/$\\langle n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})} \\rangle$')
+        ax[1].legend(loc='best', numpoints=1)
+        ax[1].grid(which='both', axis='y', color='0.8')
+        fig.savefig('epoch_comparison_' + self.output_plot_name + '.' + format, bbox_inches='tight', dpi=300)
+
+
 
     def print_to_text_file(self):
         textfile = open(self.output_plot_name + '_to_text_file.txt', 'w')
