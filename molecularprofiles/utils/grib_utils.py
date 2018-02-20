@@ -9,6 +9,7 @@ import gc
 import multiprocessing
 from multiprocessing import Process
 import os
+from tqdm import tqdm
 
 def ddmmss2deg(deg, min, sec):
     """
@@ -439,7 +440,9 @@ def readgribfile2text(file_name, observatory, gridstep):
     table_file = open(file_name.split('.')[0] + '.txt', 'w')
     print('Date year month day hour MJD Plevel T_average h n U V RH', file=table_file)
 
+    pbar = tqdm(total=len(datadict['Temperature']))
     for j in np.arange(len(datadict['Temperature'])):
+        pbar.update(1)
         if (type(datadict['Temperature'][j].values) == float) or (len(datadict['Temperature'][j].values) == 1):
             if 'GeopotentialHeight' in vn:
                 h = GetAltitudeFromGeopotentialHeight(datadict['GeopotentialHeight'][j].values, observatory)
@@ -476,6 +479,7 @@ def readgribfile2text(file_name, observatory, gridstep):
                   datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
 
     table_file.close()
+    pbar.close()
     datadict = None
 
 
@@ -497,7 +501,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
     vn, vsn, datadict = get_grib_file_data(file_name)
 
     pl, pl_index = get_plevels(datadict['Temperature'])
-    new_pl_index = pl_index * int((len(datadict['Temperature'])/len(pl_index)))
+    new_pl_index = pl_index[::-1] * int((len(datadict['Temperature'])/len(pl_index)))
     latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
@@ -508,6 +512,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
     table_file = open(file_name.split('.')[0] + 'MAGIC_format.txt', 'w')
 
     for j in np.arange(len(datadict['Temperature'])):
+
         if (type(datadict['Temperature'][j].values) == float) or (len(datadict['Temperature'][j].values) == 1):
             if new_pl_index[j] == 1:
                 print(str([0.00] * 34)[1:-1].replace(",", " "), file=table_file)
@@ -523,6 +528,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
             row_str = '{: >6d}{: >6d}{: >6d}{: >6d}{: >6d}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}'
             row_str = row_str.format(*fields)
             table_file.write(row_str + '\n')
+
         else:  # this is just in case the grib file contains more than one grid point
             if new_pl_index[j] == 1:
                 print(str([0.00] * 34)[1:-1].replace(",", " "), file=table_file)
@@ -548,13 +554,35 @@ def readgribfile2magic(file_name, observatory, gridstep):
 
 
 def readgribfile2magic_fromtxt(txt_file):
-#    TODO create the function
     """
     :param txt_file:
     :return:
     """
-    return None
+    input_f = open(txt_file, 'r')
+    output_f = open(txt_file + 'MAGIC_format.txt', 'w')
 
+    date, year, month, day, hour, mjd, p, T, h, n, U, V, RH = np.loadtxt(input_f, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12)
+                                                                         , unpack=True, skiprows=1)
+
+    pl = np.unique(p)[::-1]
+    pl_index = (np.arange(len(pl))+1).tolist()
+    new_pl_index = pl_index * int((len(T) / len(pl_index)))
+    remaining_index = len(p) - len(new_pl_index)
+    new_pl_index = new_pl_index + pl_index[: remaining_index]
+
+    pbar = tqdm(total=len(T))
+    for j in np.arange(len(T)):
+        pbar.update(1)
+        if new_pl_index[j] == 1:
+            print(str([0.00] * 34)[1:-1].replace(",", " "), file=output_f)
+
+        fields = (int(year[j] - 2000), int(month[j]), int(day[j]), int(hour[j]), int(new_pl_index[j]), h[j], T[j], U[j],
+                  V[j], RH[j])
+        row_str = '{: >6d}{: >6d}{: >6d}{: >6d}{: >6d}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}'
+        row_str = row_str.format(*fields)
+        output_f.write(row_str + '\n')
+
+    pbar.close()
 
 def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
     if multiprocessing.cpu_count() == 4:
@@ -580,7 +608,7 @@ def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
         if first_element + max_cpus > len(list_of_gribfiles):
             sub_list_of_gribfiles = list_of_gribfiles[first_element:]
             for f in sub_list_of_gribfiles:
-                p = Process(target=readgribfile2text, args=(f, observatory, gridstep))
+                p = Process(target=function_name, args=(f, observatory, gridstep))
                 proc.append(p)
                 p.start()
             for p in proc:
