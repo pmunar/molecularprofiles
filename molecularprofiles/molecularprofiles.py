@@ -16,7 +16,7 @@ settings()
 
 
 class MolecularProfile:
-    def __init__(self, data_file, data_server='ECMWF', tag_name='myplots', observatory='north'):
+    def __init__(self, data_file, data_server='server', tag_name='myplots', observatory='north'):
 
         """
         This class provides with a series of functions to analyze the quality of the data for both
@@ -162,7 +162,7 @@ class MolecularProfile:
             return interpolated_param
 
 
-    def compute_mass_density(self, air='moist', interpolation=False):
+    def compute_mass_density(self, air='moist', interpolate=False):
         """
         Uses the functions DensityMoistAir, MolarFractionWaterVapor and Compressibility
         from the LIDAR_analysis module humidity.py
@@ -255,7 +255,9 @@ class MolecularProfile:
         
         ebd[-1][0].set_linestyle(':')
         ebw[-1][0].set_linestyle(':')
-        
+
+        axs[0].axvline(2000., ls='dotted')
+        axs[0].set_ylim(10, 120)
         axs[0].set_ylabel('$\\rho$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
         axs[0].legend(loc='best')
         axs[0].axes.tick_params(direction='in')
@@ -264,7 +266,8 @@ class MolecularProfile:
         ebrd = axs[1].errorbar(height[0], rel_dif[0], yerr=[rel_dif[3], rel_dif[2]], capsize=0.5, ms=2.,
                                color='#8c564b', mec='#8c564b', mfc='#8c564b', label='ECMWF')
         ebrd[-1][0].set_linestyle(':')
-        
+
+        axs[1].axvline(2000., ls='dotted')
         axs[1].legend(loc='best')
         axs[1].axes.tick_params(direction='inout', top='on')
         axs[1].set_xlabel('height [m]')
@@ -337,6 +340,7 @@ class MolecularProfile:
         ax.errorbar(self.x + 175., self.diff_MAGIC[0], yerr=self.diff_MAGIC[1], fmt=':', color='b',
                     elinewidth=3.1)
 
+        ax.axvline(2000., ls='dotted')
         ax.set_title('Relative Difference w.r.t MAGIC W model, for %s months' % (self.epoch))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference (model - MW)')
@@ -376,6 +380,7 @@ class MolecularProfile:
         ax.errorbar(self.x, diff, yerr=ediff, fmt=':', color='b',
                     elinewidth=3.1)
 
+        ax.axvline(2000., ls='dotted')
         ax.set_title('Relative Difference w.r.t %s model, epoch: %s' % (model, self.epoch))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference')
@@ -427,6 +432,7 @@ class MolecularProfile:
                   '\n Exiting!')
             sys.exit()
 
+        ax[0].axvline(2000., ls='dotted')
         ax[0].set_title(self.data_server + ' ' + ' ' + str(self.epoch))
         ax[0].set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax[0].set_xlim(0., 25100.)
@@ -438,6 +444,7 @@ class MolecularProfile:
         ax[0].grid(which='both', axis='y', color='0.8')
         ax[0].axes.tick_params(direction='in')
 
+        ax[1].axvline(2000., ls='dotted')
         ax[1].axes.tick_params(direction='inout', top='on')
         ax[1].set_xlabel('h a.s.l. [m]')
         ax[1].set_ylabel('std/$\\langle n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})} \\rangle$')
@@ -473,7 +480,8 @@ class MolecularProfile:
             ax[0].plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
                     label='MAGIC W')
 
-        ax[0].set_title(self.data_server + ' ' + ' ' + str(self.epoch))
+        ax[0].axvline(2000., ls='dotted')
+        ax[0].set_title(self.data_server)
         ax[0].set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax[0].set_xlim(0., 25100.)
         ax[0].set_ylim(0.4, 1.2)
@@ -484,10 +492,12 @@ class MolecularProfile:
         ax[0].grid(which='both', axis='y', color='0.8')
         ax[0].axes.tick_params(direction='in')
 
+        ax[1].axvline(2000., ls='dotted')
         ax[1].axes.tick_params(direction='inout', top='on')
         ax[1].set_xlabel('h a.s.l. [m]')
         ax[1].set_ylabel('std/$\\langle n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})} \\rangle$')
-        ax[1].legend(loc='best', numpoints=1)
+        ax[1].set_ylim(0., 0.0449)
+        ax[1].legend(loc='best', numpoints=1, ncol=2)
         ax[1].grid(which='both', axis='y', color='0.8')
         fig.savefig('epoch_comparison_' + self.output_plot_name + '.' + format, bbox_inches='tight', dpi=300)
 

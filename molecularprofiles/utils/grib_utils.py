@@ -176,7 +176,7 @@ def get_observatory_coordinates(observatory):
 
 
 def get_winter_months():
-    return np.array([1, 2, 3, 4, 12])
+    return np.array([1, 2, 3, 12])
 
 
 def get_summer_months():
@@ -188,7 +188,7 @@ def get_all_months():
 
 
 def get_intermediate_months():
-    return np.array([5, 6, 10, 11])
+    return np.array([4, 5, 6, 10, 11])
 
 
 def get_epoch(epoch):
@@ -326,55 +326,41 @@ def select_epoch(file, epoch_text):
     epoch = get_epoch(epoch_text)
 
     if epoch_text == 'winter':
-        date = date[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                  (month == epoch[3]) | (month == epoch[4])]
-        mjd = mjd[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                              (month == epoch[3]) | (month == epoch[4])]
-        h = h[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3]) | (month == epoch[4])]
-        n = n[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3]) | (month == epoch[4])]
-        p = p[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3]) | (month == epoch[4])]
-        T = T[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3]) | (month == epoch[4])]
-        U = U[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3]) | (month == epoch[4])]
-        V = V[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3]) | (month == epoch[4])]
-        RH = RH[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3]) | (month == epoch[4])]
+        condition = (month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) | (month == epoch[3])
+        date = date[condition]
+        mjd = mjd[condition]
+        h = h[condition]
+        n = n[condition]
+        p = p[condition]
+        T = T[condition]
+        V = V[condition]
+        U = U[condition]
+        RH = RH[condition]
 
     elif epoch_text == 'summer':
-        date = date[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
-        mjd = mjd[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
-        h = h[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
-        n = n[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
-        p = p[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
-        T = T[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
-        U = U[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
-        V = V[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
-        RH = RH[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])]
+        condition = (month == epoch[0]) | (month == epoch[1]) | (month == epoch[2])
+        date = date[condition]
+        mjd = mjd[condition]
+        h = h[condition]
+        n = n[condition]
+        p = p[condition]
+        T = T[condition]
+        V = V[condition]
+        U = U[condition]
+        RH = RH[condition]
 
     elif epoch_text == 'intermediate':
-        date = date[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                  (month == epoch[3])]
-        mjd = mjd[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                              (month == epoch[3])]
-        h = h[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3])]
-        n = n[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3])]
-        p = p[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-                          (month == epoch[3])]
-        T = T[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-              (month == epoch[3])]
-        U = U[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-              (month == epoch[3])]
-        V = V[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-              (month == epoch[3])]
-        RH = RH[(month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) |
-              (month == epoch[3])]
+        condition = (month == epoch[0]) | (month == epoch[1]) | (month == epoch[2]) | (month == epoch[3]) | \
+                    (month == epoch[4])
+        date = date[condition]
+        mjd = mjd[condition]
+        h = h[condition]
+        n = n[condition]
+        p = p[condition]
+        T = T[condition]
+        V = V[condition]
+        U = U[condition]
+        RH = RH[condition]
 
     elif epoch_text == 'all':
         date = date
@@ -393,14 +379,17 @@ def select_dataframe_epoch(df, epoch_text):
 
     epoch = get_epoch(epoch_text)
     if epoch_text == 'winter':
-        new_df = df[(df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3]) | (df.month == epoch[4])]
+        condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3])
+        new_df = df[condition]
 
     elif epoch_text == 'summer':
-        new_df = df[(df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2])]
+        condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2])
+        new_df = df[condition]
 
     elif epoch_text == 'intermediate':
-        new_df = df[(df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) |
-                  (df.month == epoch[3])]
+        condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3]) | \
+                    (df.month == epoch[4])
+        new_df = df[condition]
     return new_df
 
 def readgribfile2text(file_name, observatory, gridstep):
