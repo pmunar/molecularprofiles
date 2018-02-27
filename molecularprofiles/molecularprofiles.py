@@ -304,18 +304,18 @@ class MolecularProfile:
             year_plot = y
 
             if 1 in np.unique(self.dataframe.month):
-                ax.vlines(mjd_start_year, ax.get_ylim()[0] + 0.12 * yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
-                          linestyles='dotted')
+                ax.axvline(mjd_start_year, ax.get_ylim()[0] + 0.12 * yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
+                          linestyle='dotted')
                 ax.text(mjd_start_year - xspan * 0.01, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot), rotation=90,
                         color='0.7')
 
             if 7 in np.unique(self.dataframe.month):
-                ax.vlines(mjd_half_year, ax.get_ylim()[0] + 0.12 * yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
-                          linestyles='dotted')
+                ax.axvline(mjd_half_year, ax.get_ylim()[0] + 0.12 * yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
+                          linestyle='dotted')
                 ax.text(mjd_half_year - xspan * 0.01, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot + 0.5),
                         rotation=90, color='0.7')
 
-        ax.hlines(np.mean(density_at_15km), ax.get_xlim()[0], ax.get_xlim()[1], colors='#336699',
+        ax.axhline(np.mean(density_at_15km), ax.get_xlim()[0], ax.get_xlim()[1], color='#336699',
                   linestyle='solid', lw=1., zorder=10)
 
         fig.savefig(self.output_plot_name + '_at_15_km.eps', bbox_inches='tight')
