@@ -70,7 +70,7 @@ class MolecularProfile:
             prod3 = open(PROD3_DIR + '/atmprof36_lapalma.dat')
             self.hprod3, nprod3, thickprod3, n1prod3, tempprod3, pprod3 = np.loadtxt(prod3, usecols=(0, 1, 2, 3, 4, 5),
                                                                                      unpack=True)
-        elif self.observatory == 'shouth':
+        elif self.observatory == 'south':
             prod3 = open(PROD3_DIR + '/atmprof26_paranal.dat')
             self.hprod3, nprod3, thickprod3, n1prod3, tempprod3, pprod3 = np.loadtxt(prod3, usecols=(0, 1, 2, 3, 4, 5),
                                                                                      unpack=True)
@@ -119,7 +119,7 @@ class MolecularProfile:
         self.output_plot_name = self.tag_name + '_' + epoch
         self.epoch = epoch
 
-        self.dataframe = pd.read_table(self.data_file.split('.')[0] + '.txt', delimiter=' ')
+        self.dataframe = pd.read_csv(self.data_file.split('.')[0] + '.txt', sep=' ', comment='#')
 
         if epoch != 'all':
             self.dataframe = select_dataframe_epoch(self.dataframe, epoch)
@@ -172,29 +172,28 @@ class MolecularProfile:
         :return: density [kg/m^3], std_dev(density) [kg/m^3], peak2peak_minus, peak2peak_plus
         """
         C = 415 # CO2 average global concentration in ppm
-        Z = []
+        rho_s = 1.225 # kg/m^3 standard air mass density (sea level, 15ºC)
         rho = []
-        Xw = []
 
         pbar = tqdm(total=len(self.dataframe.P))
         for i in np.arange(len(self.dataframe.P)):
             pbar.update(1)
             if air == 'moist':
-                Xw.append(MolarFractionWaterVapor(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i],
-                                                  self.dataframe.RH.iloc[i]))
-                Z.append(Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], Xw[i]))
-                rho.append(DensityMoistAir(self.dataframe.P.iloc[i] * 100., self.dataframe.Temp.iloc[i], Z[i], Xw[i], C))
+                Xw = MolarFractionWaterVapor(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i],
+                                                  self.dataframe.RH.iloc[i])
+                Z = Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], Xw)
+                rho.append(DensityMoistAir(self.dataframe.P.iloc[i] * 100., self.dataframe.Temp.iloc[i], Z, Xw, C))
 
             elif air == 'dry':
-                Z.append(Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], 0.0))
-                rho.append(DensityMoistAir(self.dataframe.P.iloc[i]*100., self.dataframe.Temp.iloc[i], Z[i], 0.0, C))
+                Z = Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], 0.0)
+                rho.append(DensityMoistAir(self.dataframe.P.iloc[i]*100., self.dataframe.Temp.iloc[i], Z, 0.0, C))
             else:
                 print('Wrong air condition. It must be "moist" or "dry". Aborting!')
                 sys.exit()
         pbar.close()
 
         self.dataframe['n_mass_'+air] = rho
-        self.dataframe['nexp_mass_' + air] = self.dataframe['n_mass_'+air] /self.Ns * np.exp(self.dataframe.h / self.Hs)
+        self.dataframe['nexp_mass_' + air] = self.dataframe['n_mass_'+air] / rho_s * np.exp(self.dataframe.h / self.Hs)
 
 
     def compute_diff_wrt_model(self):
@@ -233,8 +232,8 @@ class MolecularProfile:
         group_by_P = dfmin_rh.groupby('P')
         height = avg_std_dataframe(group_by_P, 'h')
         
-        rhow, erhow, pprhow, pmrhow = avg_std_dataframe(group_by_P, 'n_mass_moist')
-        rhod, erhod, pprhod, pmrhod = avg_std_dataframe(group_by_P, 'n_mass_dry')
+        rhow, erhow, pprhow, pmrhow = avg_std_dataframe(group_by_P, 'nexp_mass_moist')
+        rhod, erhod, pprhod, pmrhod = avg_std_dataframe(group_by_P, 'nexp_mass_dry')
         rel_dif = avg_std_dataframe(group_by_P, 'rel_dif_n_mass')
 
         e_color_dry = '#1f77b4'
@@ -258,7 +257,7 @@ class MolecularProfile:
 
         axs[0].axvline(2000., ls='dotted')
         axs[0].set_ylim(10, 120)
-        axs[0].set_ylabel('$\\rho$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
+        axs[0].set_ylabel('$\\rho / \\rho_{\\rm s}$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
         axs[0].legend(loc='best')
         axs[0].axes.tick_params(direction='in')
         
@@ -290,11 +289,6 @@ class MolecularProfile:
         ax.plot(np.unique(self.dataframe.MJD), density_at_15km, 'o', color='#99CCFF', markersize=1.2,
                 label=self.data_server + ' ' + self.observatory, alpha=0.8)
 
-        ax.legend(loc='best', numpoints=1)
-        ax.set_xlabel('MJD')
-        ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
-        ax.set_ylim(np.min(density_at_15km) * 0.98, np.max(density_at_15km) * 1.02)
-        ax.set_title('Density over time at h = 15 km (for %s months)' % (self.epoch))
         xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
         yspan = ax.get_ylim()[1] - ax.get_ylim()[0]
 
@@ -304,19 +298,22 @@ class MolecularProfile:
             year_plot = y
 
             if 1 in np.unique(self.dataframe.month):
-                ax.axvline(mjd_start_year, ax.get_ylim()[0] + 0.12 * yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
-                          linestyle='dotted')
-                ax.text(mjd_start_year - xspan * 0.01, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot), rotation=90,
+                ax.axvline(mjd_start_year, color='0.7', linewidth=1., linestyle='dotted', zorder=100)
+                ax.text(mjd_start_year - xspan * 0.018, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot), rotation=90,
                         color='0.7')
 
             if 7 in np.unique(self.dataframe.month):
-                ax.axvline(mjd_half_year, ax.get_ylim()[0] + 0.12 * yspan, ax.get_ylim()[1], color='0.7', linewidth=1.,
-                          linestyle='dotted')
-                ax.text(mjd_half_year - xspan * 0.01, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot + 0.5),
+                ax.axvline(mjd_half_year, color='0.7', linewidth=1., linestyle='dotted', zorder=100)
+                ax.text(mjd_half_year - xspan * 0.018, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot + 0.5),
                         rotation=90, color='0.7')
 
-        ax.axhline(np.mean(density_at_15km), ax.get_xlim()[0], ax.get_xlim()[1], color='#336699',
-                  linestyle='solid', lw=1., zorder=10)
+        ax.axhline(np.mean(density_at_15km), color='#336699', linestyle='solid', lw=1., zorder=10)
+
+        ax.legend(loc='best', numpoints=1)
+        ax.set_xlabel('MJD')
+        ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
+        ax.set_ylim(np.min(density_at_15km) * 0.98, np.max(density_at_15km) * 1.02)
+        ax.set_title('Density over time at h = 15 km (for %s months)' % (self.epoch))
 
         fig.savefig(self.output_plot_name + '_at_15_km.eps', bbox_inches='tight')
         fig.savefig(self.output_plot_name + '_at_15_km.png', bbox_inches='tight', dpi=300)
@@ -354,34 +351,36 @@ class MolecularProfile:
         fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.eps', bbox_inches='tight')
         fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_differences_wrt_model(self, model):
-
-        self.compute_diff_wrt_model()
-
-        print('plotting averaged data values for selected epoch')
-        if model == 'MW':
-            diff = self.diff_MAGIC[0]
-            ediff_pp = [self.diff_MAGIC[3], self.diff_MAGIC[2]]
-            ediff = self.diff_MAGIC[1]
-        elif model == 'PROD3':
-            diff = self.diff_PROD3[0]
-            ediff_pp = [self.diff_PROD3[3], self.diff_PROD3[2]]
-            ediff = self.diff_PROD3[1]
-        else:
-            print('Wrong model name. It must be "MW" for MAGIC Winter model, or "PROD3" for Paranal model. \n Exiting!')
-            sys.exit()
+    def plot_differences_wrt_model(self, epochs, model):
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        eb2 = ax.errorbar(self.x, diff, yerr=ediff_pp, fmt='o', color='b', capsize=0.5, mec='b',
-                          ms=1., label=self.data_server)
-        eb2[-1][0].set_linestyle(':')
-        ax.errorbar(self.x, diff, yerr=ediff, fmt=':', color='b',
-                    elinewidth=3.1)
+        for e in epochs:
+            self.get_data(e)
+
+            self.compute_diff_wrt_model()
+
+            print('plotting averaged data values for selected epoch')
+            if model == 'MW':
+                diff = self.diff_MAGIC[0]
+                ediff_pp = [self.diff_MAGIC[3], self.diff_MAGIC[2]]
+                ediff = self.diff_MAGIC[1]
+            elif model == 'PROD3':
+                diff = self.diff_PROD3[0]
+                ediff_pp = [self.diff_PROD3[3], self.diff_PROD3[2]]
+                ediff = self.diff_PROD3[1]
+            else:
+                print('Wrong model name. It must be "MW" for MAGIC Winter model, or "PROD3" for Paranal model. \n Exiting!')
+                sys.exit()
+
+
+            eb2 = ax.errorbar(self.x, diff, yerr=ediff_pp, fmt='o', capsize=0.5, ms=1., label=e)
+            eb2[-1][0].set_linestyle(':')
+            ax.errorbar(self.x, diff, yerr=ediff, fmt=':', elinewidth=3.1)
 
         ax.axvline(2000., ls='dotted')
-        ax.set_title('Relative Difference w.r.t %s model, epoch: %s' % (model, self.epoch))
+        ax.set_title('Relative Difference %s w.r.t %s model, epoch: %s' % (self.data_server, model, self.epoch))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference')
         ax.set_xlim(0., 25100.)
@@ -452,7 +451,7 @@ class MolecularProfile:
         fig.savefig('comparison_' + self.output_plot_name + '.eps', bbox_inches='tight')
         fig.savefig('model_comparison_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_epoch_comparison(self, epochs, interpolate=False, plot_MW=False, format='png'):
+    def plot_epoch_comparison(self, epochs, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
         fig, ax = plt.subplots(2, 1, sharex=True)
         plt.subplots_adjust(hspace=0)
         for e in epochs:
@@ -479,6 +478,10 @@ class MolecularProfile:
         if plot_MW:
             ax[0].plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
                     label='MAGIC W')
+        if plot_PROD3:
+            self._get_prod3sim_data()
+            ax[0].plot(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs), '-.', color='0.2',
+                       label='Prod3 ' + self.observatory)
 
         ax[0].axvline(2000., ls='dotted')
         ax[0].set_title(self.data_server)
