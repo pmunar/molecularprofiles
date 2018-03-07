@@ -82,7 +82,8 @@ class MolecularProfile:
         self.func_prod3 = interp1d(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs),
                                    kind='cubic')
 
-    def get_data(self, epoch='all'):
+    def get_data(self, epoch='all', years=None, months=None, select_good_weather=False,
+                 RH_lim=100., W_lim = 10000.):
 
         """
         Function that reads ECMWF or GDAS txt input files and returns quantities ready to plot.
@@ -121,8 +122,27 @@ class MolecularProfile:
 
         self.dataframe = pd.read_csv(self.data_file.split('.')[0] + '.txt', sep=' ', comment='#')
 
-        if epoch != 'all':
-            self.dataframe = select_dataframe_epoch(self.dataframe, epoch)
+        if years:
+            self.dataframe = select_dataframe_by_year(self.dataframe, years)
+            if months:
+                self.dataframe = select_dataframe_by_month(self.dataframe, months)
+            else:
+                if epoch != 'all':
+                    self.dataframe = select_dataframe_epoch(self.dataframe, epoch)
+        else:
+            if months:
+                self.dataframe = select_dataframe_by_month(self.dataframe, months)
+        if not years and not months:
+            if epoch != 'all':
+                self.dataframe = select_dataframe_epoch(self.dataframe, epoch)
+
+        if select_good_weather:
+            self.dataframe['W'] = np.sqrt(self.dataframe.U ** 2. + self.dataframe.V ** 2.)
+            h_cond = (self.dataframe.h > 2000.) & (self.dataframe.h < 2300.)
+            gw_cond = (self.dataframe.RH < RH_lim) & (self.dataframe.W < W_lim * 1000. / 3600.)
+            self.dataframe['datehour'] = self.dataframe.Date.astype(str) + self.dataframe.hour.astype(str)
+            good_weather_dates = self.dataframe.datehour[(h_cond) & (gw_cond)]
+            self.dataframe = self.dataframe[(self.dataframe.datehour.isin(good_weather_dates.tolist()))]
 
         self.group_by_p = self.dataframe.groupby('P')
         self.dataframe['n_exp'] = self.dataframe.n /self.Ns * np.exp(self.dataframe.h /self.Hs)
@@ -232,8 +252,8 @@ class MolecularProfile:
         group_by_P = dfmin_rh.groupby('P')
         height = avg_std_dataframe(group_by_P, 'h')
         
-        rhow, erhow, pprhow, pmrhow = avg_std_dataframe(group_by_P, 'nexp_mass_moist')
-        rhod, erhod, pprhod, pmrhod = avg_std_dataframe(group_by_P, 'nexp_mass_dry')
+        rhow, erhow, emadrhow, pprhow, pmrhow = avg_std_dataframe(group_by_P, 'nexp_mass_moist')
+        rhod, erhod, emadrhod, pprhod, pmrhod = avg_std_dataframe(group_by_P, 'nexp_mass_dry')
         rel_dif = avg_std_dataframe(group_by_P, 'rel_dif_n_mass')
 
         e_color_dry = '#1f77b4'
@@ -242,12 +262,12 @@ class MolecularProfile:
         fig, axs = plt.subplots(2,1,sharex=True)
         plt.subplots_adjust(hspace=0)
         
-        axs[0].errorbar(height[0], rhod, yerr=erhod, fmt=':', color=e_color_dry, elinewidth=3, label=None)
+        axs[0].errorbar(height[0], rhod, yerr=emadrhod, fmt=':', color=e_color_dry, elinewidth=3, label=None)
         
         ebd = axs[0].errorbar(height[0], rhod, yerr=[pmrhod, pprhod], fmt='o', color=e_color_dry, capsize=0.5,
                               mec=e_color_dry, ms=2., label='ECMWF $\\rho_d$ (dry air)')
         
-        axs[0].errorbar(height[0], rhow, yerr=erhow, fmt=':', color=e_color_moist, elinewidth=3, label=None)
+        axs[0].errorbar(height[0], rhow, yerr=emadrhow, fmt=':', color=e_color_moist, elinewidth=3, label=None)
         
         ebw = axs[0].errorbar(height[0], rhow, yerr=[pmrhow, pprhow], fmt='o', color=e_color_moist, capsize=0.5,
                               mec=e_color_moist, ms=2., label='ECMWF $\\rho_w$ (moist air)')
@@ -261,8 +281,8 @@ class MolecularProfile:
         axs[0].legend(loc='best')
         axs[0].axes.tick_params(direction='in')
         
-        axs[1].errorbar(height[0], rel_dif[0], yerr=rel_dif[1], color='#8c564b', ms=2., label=None)
-        ebrd = axs[1].errorbar(height[0], rel_dif[0], yerr=[rel_dif[3], rel_dif[2]], capsize=0.5, ms=2.,
+        axs[1].errorbar(height[0], rel_dif[0], yerr=rel_dif[2], color='#8c564b', ms=2., label=None)
+        ebrd = axs[1].errorbar(height[0], rel_dif[0], yerr=[rel_dif[4], rel_dif[3]], capsize=0.5, ms=2.,
                                color='#8c564b', mec='#8c564b', mfc='#8c564b', label='ECMWF')
         ebrd[-1][0].set_linestyle(':')
 
@@ -405,13 +425,13 @@ class MolecularProfile:
             ax[1].plot(self.x, e_n_exp/avg_n_exp, 'o:', color='b', ms=2.)
 
         else:
-            eb2 = ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=[self.n_exp_avgs[3],
-                                                                                             self.n_exp_avgs[2]],
+            eb2 = ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=[self.n_exp_avgs[4],
+                                                                                             self.n_exp_avgs[3]],
                               fmt='o', color='b', capsize=0.5, mec='b', ms=1., label=self.data_server)
             eb2[-1][0].set_linestyle(':')
-            ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[1], fmt=':',
+            ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[2], fmt=':',
                         color='b', elinewidth=3., label=None)
-            ax[1].plot(self.h_avgs[0], self.n_exp_avgs[1]/self.n_exp_avgs[0], 'o:', color='b', ms=2.)
+            ax[1].plot(self.h_avgs[0], self.n_exp_avgs[2]/self.n_exp_avgs[0], 'o:', color='b', ms=2.)
 
         if model == 'MW':
             ax[0].plot(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs), '-', color='grey',
@@ -466,13 +486,13 @@ class MolecularProfile:
                 ax[1].plot(self.x, e_n_exp/avg_n_exp, 'o:', ms=2., color=color, label=self.data_server+'\_'+e)
 
             else:
-                eb2 = ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=[self.n_exp_avgs[3],
-                                                                                                    self.n_exp_avgs[2]],
+                eb2 = ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[2], yerr=[self.n_exp_avgs[4],
+                                                                                                    self.n_exp_avgs[3]],
                                      fmt='o', color=color, capsize=0.5, ms=1., label=self.data_server+'\_'+e)
                 eb2[-1][0].set_linestyle(':')
-                ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[1],
+                ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[2],
                                fmt=':', color = color, elinewidth=3., label=None)
-                ax[1].plot(self.h_avgs[0], self.n_exp_avgs[1]/self.n_exp_avgs[0], 'o:', ms=2., color=color,
+                ax[1].plot(self.h_avgs[0], self.n_exp_avgs[2]/self.n_exp_avgs[0], 'o:', ms=2., color=color,
                            label=self.data_server+'\_'+e)
 
         if plot_MW:
