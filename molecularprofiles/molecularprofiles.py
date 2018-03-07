@@ -425,11 +425,11 @@ class MolecularProfile:
             ax[1].plot(self.x, e_n_exp/avg_n_exp, 'o:', color='b', ms=2.)
 
         else:
-            eb2 = ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=[self.n_exp_avgs[4],
+            eb2 = ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[2], yerr=[self.n_exp_avgs[4],
                                                                                              self.n_exp_avgs[3]],
                               fmt='o', color='b', capsize=0.5, mec='b', ms=1., label=self.data_server)
             eb2[-1][0].set_linestyle(':')
-            ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[2], fmt=':',
+            ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[2], yerr=self.n_exp_avgs[2], fmt=':',
                         color='b', elinewidth=3., label=None)
             ax[1].plot(self.h_avgs[0], self.n_exp_avgs[2]/self.n_exp_avgs[0], 'o:', color='b', ms=2.)
 
@@ -490,7 +490,7 @@ class MolecularProfile:
                                                                                                     self.n_exp_avgs[3]],
                                      fmt='o', color=color, capsize=0.5, ms=1., label=self.data_server+'\_'+e)
                 eb2[-1][0].set_linestyle(':')
-                ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[1], yerr=self.n_exp_avgs[2],
+                ax[0].errorbar(self.h_avgs[0], self.n_exp_avgs[0], xerr=self.h_avgs[2], yerr=self.n_exp_avgs[2],
                                fmt=':', color = color, elinewidth=3., label=None)
                 ax[1].plot(self.h_avgs[0], self.n_exp_avgs[2]/self.n_exp_avgs[0], 'o:', ms=2., color=color,
                            label=self.data_server+'\_'+e)
