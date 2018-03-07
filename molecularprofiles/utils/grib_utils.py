@@ -126,10 +126,11 @@ def avg_std_dataframe(group, param):
 
     avg = group[param].mean()
     std = group[param].std()
+    mad = group[param].mad()
     p2p_p = np.max(group[param]) - avg
     p2p_m = avg - np.min(group[param])
 
-    return avg, std, p2p_p, p2p_m
+    return avg, std, mad, p2p_p, p2p_m
 
 
 def compute_averages_std(input_array):
@@ -392,6 +393,14 @@ def select_dataframe_epoch(df, epoch_text):
         new_df = df[condition]
     return new_df
 
+def select_dataframe_by_year(df, years):
+    new_df = df[df.year.isin(years)]
+    return new_df
+
+def select_dataframe_by_month(df, months):
+    new_df = df[df.month.isin(months)]
+    return new_df
+
 def readgribfile2text(file_name, observatory, gridstep):
     """
     This function creates a txt file where the information from the get_grib_file_data function is written,
@@ -427,7 +436,7 @@ def readgribfile2text(file_name, observatory, gridstep):
     print('creating the txt file containing the selected data...')
 
     table_file = open(file_name.split('.')[0] + '.txt', 'w')
-    print('Date year month day hour MJD Plevel T_average h n U V RH', file=table_file)
+    print('Date year month day hour MJD P Temp h n U V RH', file=table_file)
 
     pbar = tqdm(total=len(datadict['Temperature']))
     for j in np.arange(len(datadict['Temperature'])):
