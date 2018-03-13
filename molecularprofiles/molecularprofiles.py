@@ -10,6 +10,7 @@ from molecularprofiles.utils.plot_settings import settings
 from molecularprofiles.utils.magic_winter_profile import heightmw, rhomw
 from molecularprofiles.utils.meteorological_constants import *
 from LIDAR_Analysis.humidity import *
+from LIDAR_Analysis.rayleigh import Rayleigh
 import pandas as pd
 
 settings()
@@ -128,17 +129,17 @@ class MolecularProfile:
                 self.dataframe = select_dataframe_by_month(self.dataframe, months)
             else:
                 if epoch != 'all':
-                    self.dataframe = select_dataframe_epoch(self.dataframe, epoch)
+                    self.dataframe = select_new_epochs_dataframe(self.dataframe, epoch)
         else:
             if months:
                 self.dataframe = select_dataframe_by_month(self.dataframe, months)
         if not years and not months:
             if epoch != 'all':
-                self.dataframe = select_dataframe_epoch(self.dataframe, epoch)
+                self.dataframe = select_new_epochs_dataframe(self.dataframe, epoch)
 
         if select_good_weather:
             self.dataframe['W'] = np.sqrt(self.dataframe.U ** 2. + self.dataframe.V ** 2.)
-            h_cond = (self.dataframe.h > 2000.) & (self.dataframe.h < 2300.)
+            h_cond = (self.dataframe.h > 2200.) & (self.dataframe.h < 2500.)
             gw_cond = (self.dataframe.RH < RH_lim) & (self.dataframe.W < W_lim * 1000. / 3600.)
             self.dataframe['datehour'] = self.dataframe.Date.astype(str) + self.dataframe.hour.astype(str)
             good_weather_dates = self.dataframe.datehour[(h_cond) & (gw_cond)]
@@ -147,6 +148,9 @@ class MolecularProfile:
         self.group_by_p = self.dataframe.groupby('P')
         self.dataframe['n_exp'] = self.dataframe.n /self.Ns * np.exp(self.dataframe.h /self.Hs)
         self.h_avgs = avg_std_dataframe(self.group_by_p, 'h')
+        self.n_avgs = avg_std_dataframe(self.group_by_p, 'n')
+        self.Temp_avgs = avg_std_dataframe(self.group_by_p, 'Temp')
+        self.RH_avgs = avg_std_dataframe(self.group_by_p, 'RH')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
         self.x = np.linspace(2200., 25000., num=15, endpoint=True)
 
@@ -534,3 +538,78 @@ class MolecularProfile:
                   self.averages[2][i], self.diff_MAGIC[0][i], self.diff_MAGIC[1][i],
                   self.diff_MAGIC[3][i], self.diff_MAGIC[2][i], file=textfile)
         textfile.close()
+
+    def _refractive_index(self, P, T, RH, wavelength):
+        """Wrapper for Rayleigh.calculate_n()."""
+        rayleigh = Rayleigh(wavelength, P, T, RH)
+        return rayleigh.calculate_n()
+
+    def _interpolate_simple(self, h_in, par, h_interp):
+        func = interp1d(h_in, par, kind='cubic', fill_value='extrapolate')
+        return func(h_interp)
+
+    def write_corsika(self, outfile):
+        """
+        Write an output file in the style of a CORSIKA atmospheric configuration file:
+
+        alt (km)     rho (g/cm^3)   thick (g/cm^2)   (n-1)
+        """
+        mbar2gcm2 = 1.019716213  # conversion from mbar (pressure in SI) to g/cm^2 (pressure in cgs)
+        # Loschmidt constant: number density of particles in an ideal gas at STP in m^-3
+        N0 = 2.079153e25  # Na divided by molar mass of air: 0.0289644
+
+        with open(outfile, 'w') as f:
+            # datedict = {'mjd':   self.dataframe.MJD,
+            #             'year':  self.dataframe.year,
+            #             'month': self.dataframe.month,
+            #             'day':   self.dataframe.day,
+            #             'hour':  self.dataframe.hour}
+            f.write("# Atmospheric Model ECMWF year/month/day   hour h\n")#.format(**datedict))
+            f.write("# Col. #1          #2           #3            #4\n")
+            f.write("# Alt [km]    rho [g/cm^3] thick [g/cm^2]    n-1\n")
+
+            density = self.n_avgs[0].sort_index(ascending=False).values
+            density /= N0*1.0E-3
+            P = np.unique(self.dataframe.P)[::-1]
+            thick = P * mbar2gcm2   # AtcaWizard.mbar2gcm2
+            height = self.h_avgs[0].sort_index(ascending=False).values / 1.e3
+            Temp = self.Temp_avgs[0].sort_index(ascending=False).values
+            RH = self.RH_avgs[0].sort_index(ascending=False).values
+
+            T0 = float(self._interpolate_simple(height, Temp, 0.))
+            RH0 = float(self._interpolate_simple(height, RH, 0.))
+            P0 = float(self._interpolate_simple(height, P, 0.))
+            density0 = float(self._interpolate_simple(height, density, 0.))
+
+            #T0 = self._interpolate_param_to_h('Temp', 0.).mean()
+            #RH0 = self._interpolate_param_to_h('RH', 0.).mean()
+            #P0 = self._interpolate_param_to_h('P', 0.).mean()
+            #density0 = self._interpolate_param_to_h('n', 0.).mean()
+
+            nm0 = self._refractive_index(P0, T0, RH0, 350) - 1
+            outdict = {'height': 0.000, 'rho': density0, 'thick': P0 * mbar2gcm2, 'nm1': nm0}
+            f.write("  {height:7.3f}     {rho:5.5E}  {thick:5.5E}  {nm1:5.5E}\n".format(**outdict))
+
+            for i in np.arange(len(height)):
+                nm1 = self._refractive_index(P[i], Temp[i], RH[i], 350) - 1
+
+                outdict = {'height': height[i], 'rho': density[i], 'thick': thick[i], 'nm1': nm1}
+                f.write("  {height:7.3f}     {rho:5.5E}  {thick:5.5E}  {nm1:5.5E}\n".format(**outdict))
+
+            # FIXME!
+            # concatenate the dummy values of MagicWinter starting from 50.0 km
+            f.write("   50.000     0.11066E-05  0.87176E+00  0.25508E-06\n")
+            f.write("   55.000     0.60722E-06  0.45550E+00  0.13997E-06\n")
+            f.write("   60.000     0.32484E-06  0.22908E+00  0.74880E-07\n")
+            f.write("   65.000     0.16606E-06  0.11024E+00  0.38280E-07\n")
+            f.write("   70.000     0.80685E-07  0.50835E-01  0.18599E-07\n")
+            f.write("   75.000     0.37549E-07  0.22540E-01  0.86557E-08\n")
+            f.write("   80.000     0.15268E-07  0.95236E-02  0.35196E-08\n")
+            f.write("   85.000     0.69409E-08  0.42575E-02  0.16000E-08\n")
+            f.write("   90.000     0.32565E-08  0.18272E-02  0.75069E-09\n")
+            f.write("   95.000     0.14484E-08  0.69690E-03  0.33388E-09\n")
+            f.write("  100.000     0.52180E-09  0.23438E-03  0.12028E-09\n")
+            f.write("  105.000     0.15993E-09  0.80789E-04  0.36866E-10\n")
+            f.write("  110.000     0.53349E-10  0.33136E-04  0.12297E-10\n")
+            f.write("  115.000     0.28310E-10  0.14282E-04  0.65260E-11\n")
+            f.write("  120.000     0.21253E-10  0.00000E+00  0.48990E-11\n")
