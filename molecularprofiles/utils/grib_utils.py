@@ -177,19 +177,19 @@ def get_observatory_coordinates(observatory):
 
 
 def get_winter_months():
-    return np.array([1, 2, 3, 12])
+    return [1, 2, 3, 4, 11, 12]
 
 
 def get_summer_months():
-    return np.array([7, 8, 9])
+    return [6, 7, 8, 9]
 
 
 def get_all_months():
-    return np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 
 def get_intermediate_months():
-    return np.array([4, 5, 6, 10, 11])
+    return [5, 6, 9, 10, 11]
 
 
 def get_epoch(epoch):
@@ -198,6 +198,29 @@ def get_epoch(epoch):
                     'all': get_all_months(),
                     'intermediate': get_intermediate_months()}
     return valid_epochs[epoch]
+
+def select_new_epochs_dataframe(df,epoch_text):
+
+    epoch = get_epoch(epoch_text)
+
+    if epoch_text == 'winter':
+        condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | \
+                    (df.month == epoch[3]) | ((df.month == epoch[4]) & (df.day > 15)) | (df.month == epoch[5])
+        new_df = df[condition]
+
+    elif epoch_text == 'summer':
+        condition = ((df.month == epoch[0]) & (df.day > 20)) | (df.month == epoch[1]) | (df.month == epoch[2]) | \
+                    ((df.month == epoch[3]) & (df.day <=15))
+        new_df = df[condition]
+
+    elif epoch_text == 'intermediate':
+        condition = (df.month == epoch[0]) | ((df.month == epoch[1]) & (df.day <= 20)) | \
+                    ((df.month == epoch[2]) & (df.day > 15)) | (df.month == epoch[3]) | \
+                    ((df.month == epoch[4]) & (df.day <= 15))
+        new_df = df[condition]
+
+    return new_df
+
 
 
 def get_closest_gridpoint(lat, lon, gridstep):
@@ -377,21 +400,23 @@ def select_epoch(file, epoch_text):
     return date, year, month, day, hour, mjd, p, h, n, T, U, V, RH
 
 def select_dataframe_epoch(df, epoch_text):
-
     epoch = get_epoch(epoch_text)
-    if epoch_text == 'winter':
-        condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3])
-        new_df = df[condition]
-
-    elif epoch_text == 'summer':
-        condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2])
-        new_df = df[condition]
-
-    elif epoch_text == 'intermediate':
-        condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3]) | \
-                    (df.month == epoch[4])
-        new_df = df[condition]
+    new_df = df[df.month.isin(epoch)]
     return new_df
+
+    # if epoch_text == 'winter':
+    #     condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3])
+    #     new_df = df[condition]
+    #
+    # elif epoch_text == 'summer':
+    #     condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2])
+    #     new_df = df[condition]
+    #
+    # elif epoch_text == 'intermediate':
+    #     condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3]) | \
+    #                 (df.month == epoch[4])
+    #     new_df = df[condition]
+    # return new_df
 
 def select_dataframe_by_year(df, years):
     new_df = df[df.year.isin(years)]
@@ -612,6 +637,30 @@ def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
             for p in proc:
                 p.join()
 
+def merge_txt_from_grib(txtfile, output_file='merged_from_grib.txt'):
+    lf = open(txtfile, 'r')
+    outfile = open(output_file, 'w')
+
+    line = lf.readline()
+    first = True
+    while line:
+        datafile = open(line[:-1], 'r')
+        if first:
+            dataline = datafile.readline()
+        else:
+            dataline = datafile.readline()
+            dataline = datafile.readline()
+
+        while dataline:
+            print(dataline[:-1], file=outfile)
+            dataline = datafile.readline()
+        first = False
+        datafile.close()
+        line = lf.readline()
+    lf.close()
+    outfile.close()
+
+
 def print_help():
     print("Usage: python grib_utils.py <options>")
     print("Options are:")
@@ -623,6 +672,7 @@ def print_help():
     print("                   and 1.0 deg for GDAS data")
     print("        -mjd       <mjd>")
     print("        -date      <yyyy-mm-dd-hh>")
+    print("        -merge or -m <list_of_txt_files> <output_name>")
     print(" ")
     print("                   Note: with the -r or -rmagic option, if a txt file")
     print("                   containing a list of grib files is passed instead")
@@ -667,8 +717,13 @@ if __name__ == "__main__":
             date = sys.argv[2].split('-')
             print(date2mjd(int(date[0]), int(date[1]), int(date[2]), int(date[3])))
 
+        elif sys.argv[1] == '-merge' or sys.argv[1] == '-m':
+            if len(sys.argv) == 3:
+                merge_txt_from_grib(sys.argv[2])
+            else:
+                merge_txt_from_grib(sys.argv[2], output_file=sys.argv[3])
+
         else:
             print('Wrong option...')
             print_help()
             sys.exit()
-
