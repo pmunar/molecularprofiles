@@ -446,7 +446,7 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
 
     if observatory:
         latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
-    else:
+    elif lat and lon:
         latitude_obs, longitude_obs = lat, lon
 
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
@@ -634,7 +634,7 @@ def runInParallel(function_name, list_of_gribfiles, gridstep, observatory=None, 
             if observatory:
                 p = Process(target=function_name, args=(f, gridstep, observatory))
             elif lat and lon:
-                p = Process(target=function_name, args=(f, gridstep, observatory=None, lat=lat, lon=lon))
+                p = Process(target=function_name, args=(f, gridstep, lat, lon))
             proc.append(p)
             p.start()
         for p in proc:
@@ -646,7 +646,7 @@ def runInParallel(function_name, list_of_gribfiles, gridstep, observatory=None, 
                 if observatory:
                     p = Process(target=function_name, args=(f, gridstep, observatory))
                 elif lat and lon:
-                    p = Process(target=function_name, args=(f, gridstep, observatory=None, lat=lat, lon=lon))
+                    p = Process(target=function_name, args=(f, gridstep, lat, lon))
                 proc.append(p)
                 p.start()
             for p in proc:
