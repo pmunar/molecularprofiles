@@ -756,5 +756,6 @@ if __name__ == "__main__":
 
         else:
             print('Wrong option...')
+            print(len(sys.argv))
             print_help()
             sys.exit()
