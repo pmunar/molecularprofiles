@@ -620,7 +620,7 @@ def runInParallel(function_name, list_of_gribfiles, gridstep, observatory=None, 
     if multiprocessing.cpu_count() == 4:
         max_cpus = 2
     elif multiprocessing.cpu_count() >= 10:
-        max_cpus = 20
+        max_cpus = 10
     elif multiprocessing.cpu_count() == 1:
         max_cpus = 1
     else:
