@@ -449,6 +449,8 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
     elif lat and lon:
         latitude_obs, longitude_obs = lat, lon
 
+    print(latitude_obs, longitude_obs)
+
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
     if len(datadict['Temperature']) != len(datadict['Relativehumidity']):
@@ -706,8 +708,8 @@ if __name__ == "__main__":
                 if len(sys.argv) == 5:
                     readgribfile2text(sys.argv[2], float(sys.argv[3]), sys.argv[4])
                 elif len(sys.argv) == 6:
-                    readgribfile2text(sys.argv[2], float(sys.argv[3]), observatory=None, lat=sys.argv[4],
-                                      lon=sys.argv[5])
+                    readgribfile2text(sys.argv[2], float(sys.argv[3]), observatory=None, lat=float(sys.argv[4]),
+                                      lon=float(sys.argv[5]))
             elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
                 list_file = open(sys.argv[2], 'r')
                 line = list_file.readline()
@@ -719,15 +721,15 @@ if __name__ == "__main__":
                     runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]), sys.argv[4])
                 elif len(sys.argv) == 6:
                     runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]), observatory=None,
-                                  lat=sys.argv[4], lon=sys.argv[5])
+                                  lat=float(sys.argv[4]), lon=float(sys.argv[5]))
 
         elif sys.argv[1] == '-rmagic':
             if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
                 if len(sys.argv) == 5:
                     readgribfile2magic(sys.argv[2], float(sys.argv[3]), sys.argv[4])
                 elif len(sys.argv) == 6:
-                    readgribfile2magic(sys.argv[2], float(sys.argv[3]), observatory=None, lat=sys.argv[4],
-                                      lon=sys.argv[5])
+                    readgribfile2magic(sys.argv[2], float(sys.argv[3]), observatory=None, lat=float(sys.argv[4]),
+                                      lon=float(sys.argv[5]))
             elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
                 list_file = open(sys.argv[2], 'r')
                 line = list_file.readline()
@@ -739,7 +741,7 @@ if __name__ == "__main__":
                     runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]), sys.argv[4])
                 elif len(sys.argv) == 6:
                     runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]), observatory=None,
-                                  lat=sys.argv[4], lon=sys.argv[5])
+                                  lat=float(sys.argv[4]), lon=float(sys.argv[5]))
 
         elif sys.argv[1] == '-mjd':
             print(mjd2date(float(sys.argv[2])))
