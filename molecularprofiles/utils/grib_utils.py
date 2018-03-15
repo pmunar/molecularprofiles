@@ -311,7 +311,7 @@ def get_grib_file_data(file_name):
     vn, vsn = get_gribfile_variables(file_name)
     print('indexing the file %s (this might take a while...)' % (file_name))
     grb = pg.index(file_name, 'shortName', 'typeOfLevel')
-    print('selecting the parameters information for %s ...' % (file_name))
+    print('selecting the parameters information for %s (this might take a while...)' % (file_name))
     data = []
 
     for sn in vsn:
@@ -634,9 +634,9 @@ def runInParallel(function_name, list_of_gribfiles, gridstep, observatory=None, 
         proc = []
         for f in sub_list_of_gribfiles:
             if observatory:
-                p = Process(target=function_name, args=(f, gridstep, observatory))
+                p = Process(target=function_name, args=(f, gridstep, observatory, lat, lon))
             elif lat and lon:
-                p = Process(target=function_name, args=(f, gridstep, lat, lon))
+                p = Process(target=function_name, args=(f, gridstep, observatory, lat, lon))
             proc.append(p)
             p.start()
         for p in proc:
@@ -646,9 +646,9 @@ def runInParallel(function_name, list_of_gribfiles, gridstep, observatory=None, 
             sub_list_of_gribfiles = list_of_gribfiles[first_element:]
             for f in sub_list_of_gribfiles:
                 if observatory:
-                    p = Process(target=function_name, args=(f, gridstep, observatory))
+                    p = Process(target=function_name, args=(f, gridstep, observatory, lat, lon))
                 elif lat and lon:
-                    p = Process(target=function_name, args=(f, gridstep, lat, lon))
+                    p = Process(target=function_name, args=(f, gridstep, observatory, lat, lon))
                 proc.append(p)
                 p.start()
             for p in proc:
@@ -718,9 +718,9 @@ if __name__ == "__main__":
                     list_of_files.append(line[:-1])
                     line = list_file.readline()
                 if len(sys.argv) == 5:
-                    runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]), sys.argv[4])
+                    runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
                 elif len(sys.argv) == 6:
-                    runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]), observatory=None,
+                    runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]),
                                   lat=float(sys.argv[4]), lon=float(sys.argv[5]))
 
         elif sys.argv[1] == '-rmagic':
@@ -738,9 +738,9 @@ if __name__ == "__main__":
                     list_of_files.append(line[:-1])
                     line = list_file.readline()
                 if len(sys.argv) == 5:
-                    runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]), sys.argv[4])
+                    runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
                 elif len(sys.argv) == 6:
-                    runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]), observatory=None,
+                    runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]),
                                   lat=float(sys.argv[4]), lon=float(sys.argv[5]))
 
         elif sys.argv[1] == '-mjd':
