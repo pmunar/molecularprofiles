@@ -154,6 +154,10 @@ class MolecularProfile:
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
         self.x = np.linspace(2200., 25000., num=15, endpoint=True)
 
+    def _interpolate_simple(self, x_param, y_param, new_x_param):
+        func = interp1d(x_param, y_param, kind='cubic', fill_value='extrapolate')
+        return func(new_x_param)
+
     def _interpolate_param_to_h(self, param, height):
 
         interpolated_param = []
@@ -544,10 +548,6 @@ class MolecularProfile:
         rayleigh = Rayleigh(wavelength, P, T, RH)
         return rayleigh.calculate_n()
 
-    def _interpolate_simple(self, h_in, par, h_interp):
-        func = interp1d(h_in, par, kind='cubic', fill_value='extrapolate')
-        return func(h_interp)
-
     def write_corsika(self, outfile):
         """
         Write an output file in the style of a CORSIKA atmospheric configuration file:
@@ -557,46 +557,58 @@ class MolecularProfile:
         mbar2gcm2 = 1.019716213  # conversion from mbar (pressure in SI) to g/cm^2 (pressure in cgs)
         # Loschmidt constant: number density of particles in an ideal gas at STP in m^-3
         N0 = 2.079153e25  # Na divided by molar mass of air: 0.0289644
+        height = np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
+                           21., 22., 23., 24., 25., 26., 27., 28., 29., 30., 32., 34., 36., 38., 40., 42., 44., 46.,
+                           48.])
 
         with open(outfile, 'w') as f:
-            # datedict = {'mjd':   self.dataframe.MJD,
-            #             'year':  self.dataframe.year,
-            #             'month': self.dataframe.month,
-            #             'day':   self.dataframe.day,
-            #             'hour':  self.dataframe.hour}
+
             f.write("# Atmospheric Model ECMWF year/month/day   hour h\n")#.format(**datedict))
             f.write("# Col. #1          #2           #3            #4\n")
-            f.write("# Alt [km]    rho [g/cm^3] thick [g/cm^2]    n-1\n")
+            f.write("# Alt [km]    rho [g/cm^3] thick [g/cm^2]    n-1        T [k]       p [mbar]      pw / p\n")
 
             density = self.n_avgs[0].sort_index(ascending=False).values
             density /= N0*1.0E-3
             P = np.unique(self.dataframe.P)[::-1]
-            thick = P * mbar2gcm2   # AtcaWizard.mbar2gcm2
-            height = self.h_avgs[0].sort_index(ascending=False).values / 1.e3
-            Temp = self.Temp_avgs[0].sort_index(ascending=False).values
-            RH = self.RH_avgs[0].sort_index(ascending=False).values
 
-            T0 = float(self._interpolate_simple(height, Temp, 0.))
-            RH0 = float(self._interpolate_simple(height, RH, 0.))
-            P0 = float(self._interpolate_simple(height, P, 0.))
-            density0 = float(self._interpolate_simple(height, density, 0.))
+            #height = self.h_avgs[0].sort_index(ascending=False).values / 1.e3
+            #Temp = self.Temp_avgs[0].sort_index(ascending=False).values
+            #RH = self.RH_avgs[0].sort_index(ascending=False).values
 
-            #T0 = self._interpolate_param_to_h('Temp', 0.).mean()
-            #RH0 = self._interpolate_param_to_h('RH', 0.).mean()
-            #P0 = self._interpolate_param_to_h('P', 0.).mean()
-            #density0 = self._interpolate_param_to_h('n', 0.).mean()
+            T0 = float(self._interpolate_simple(self.h_avgs[0].sort_index(ascending=False).values / 1e3,
+                                                self.Temp_avgs[0].sort_index(ascending=False).values, 0.))
+            RH0 = float(self._interpolate_simple(self.h_avgs[0].sort_index(ascending=False).values / 1e3,
+                                                self.RH_avgs[0].sort_index(ascending=False).values, 0.))
+            P0 = float(self._interpolate_simple(self.h_avgs[0].sort_index(ascending=False).values / 1e3, P, 0.))
+            density0 = float(self._interpolate_simple(self.h_avgs[0].sort_index(ascending=False).values / 1e3, density,
+                                                      0.))
+            thick0 = P0 * mbar2gcm2
 
-            nm0 = self._refractive_index(P0, T0, RH0, 350) - 1
-            outdict = {'height': 0.000, 'rho': density0, 'thick': P0 * mbar2gcm2, 'nm1': nm0}
-            f.write("  {height:7.3f}     {rho:5.5E}  {thick:5.5E}  {nm1:5.5E}\n".format(**outdict))
+            pw0 = PartialPressureWaterVapor(T0, RH0) / P0
+
+            Temp = self._interpolate_simple(self.h_avgs[0].sort_index(ascending=False).values / 1.e3,
+                                                  self.Temp_avgs[0].sort_index(ascending=False).values, height)
+            RH = self._interpolate_simple(self.h_avgs[0].sort_index(ascending=False).values / 1.e3,
+                                                self.RH_avgs[0].sort_index(ascending=False).values, height)
+            RH[RH < 0.] = 1.e-4
+            Pressure = self._interpolate_simple(self.h_avgs[0].sort_index(ascending=False).values / 1.e3, P, height)
+            density = self._interpolate_simple(self.h_avgs[0].sort_index(ascending=False).values / 1.e3, density,
+                                                     height)
+            thick = Pressure * mbar2gcm2
+            pwp = PartialPressureWaterVapor(Temp, RH) / Pressure
+
+            nm0 = self._refractive_index(P0, T0, RH0, 350.) - 1.
+            outdict = {'height': 0.000, 'rho': density0, 'thick': thick0, 'nm1': nm0, 'T':T0, 'p': P0,
+                       'pw/p': pw0}
+            f.write("  {height:7.3f}     {rho:5.5E}  {thick:5.5E}  {nm1:5.5E}  {T:5.5E}  {p:5.5E}  {pw/p:5.5E}\n".format(**outdict))
 
             for i in np.arange(len(height)):
-                nm1 = self._refractive_index(P[i], Temp[i], RH[i], 350) - 1
+                nm1 = self._refractive_index(Pressure[i], Temp[i], RH[i], 350) - 1
 
-                outdict = {'height': height[i], 'rho': density[i], 'thick': thick[i], 'nm1': nm1}
-                f.write("  {height:7.3f}     {rho:5.5E}  {thick:5.5E}  {nm1:5.5E}\n".format(**outdict))
+                outdict = {'height': height[i], 'rho': density[i], 'thick': thick[i], 'nm1': nm1, 'T': Temp[i],
+                           'p': Pressure[i], 'pw/p': pwp[i]}
+                f.write("  {height:7.3f}     {rho:5.5E}  {thick:5.5E}  {nm1:5.5E}  {T:5.5E}  {p:5.5E}  {pw/p:5.5E}\n".format(**outdict))
 
-            # FIXME!
             # concatenate the dummy values of MagicWinter starting from 50.0 km
             f.write("   50.000     0.11066E-05  0.87176E+00  0.25508E-06\n")
             f.write("   55.000     0.60722E-06  0.45550E+00  0.13997E-06\n")
