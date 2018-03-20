@@ -93,6 +93,14 @@ for y in years:
 
 fig.show()
 
+file = open('list_of_2016txts.txt', 'r')
 
+line = file.readline()[:-1]
+epoch = 'all'
+while line:
+    ecmwf = MolecularProfile(line, data_server='ECMWF', observatory='Krakow')
+    ecmwf.get_data(epoch=epoch)
+    ecmwf.write_corsika(line.split('.')[0]+'_corsika_input.txt')
+    line = file.readline()[:-1]
 
 
