@@ -181,7 +181,7 @@ def get_winter_months():
 
 
 def get_summer_months():
-    return [6, 7, 8, 9]
+    return [6, 7, 8, 9, 10]
 
 
 def get_all_months():
@@ -189,7 +189,7 @@ def get_all_months():
 
 
 def get_intermediate_months():
-    return [5, 6, 9, 10, 11]
+    return [5, 6, 10, 11]
 
 
 def get_epoch(epoch):
@@ -199,7 +199,23 @@ def get_epoch(epoch):
                     'intermediate': get_intermediate_months()}
     return valid_epochs[epoch]
 
-def select_new_epochs_dataframe(df,epoch_text):
+
+def get_south_winter_months():
+    return [5,6,7,8,9,10]
+
+
+def get_south_summer_months():
+    return [1,2,3,4,5,10,11,12]
+
+
+def get_south_epoch(epoch):
+    valid_epochs = {'winter': get_south_winter_months(),
+                    'summer': get_south_summer_months(),
+                    'all': get_all_months()}
+    return valid_epochs[epoch]
+
+
+def select_new_epochs_dataframe_north(df,epoch_text):
 
     epoch = get_epoch(epoch_text)
 
@@ -210,13 +226,29 @@ def select_new_epochs_dataframe(df,epoch_text):
 
     elif epoch_text == 'summer':
         condition = ((df.month == epoch[0]) & (df.day > 20)) | (df.month == epoch[1]) | (df.month == epoch[2]) | \
-                    ((df.month == epoch[3]) & (df.day <=15))
+                    (df.month == epoch[3])
         new_df = df[condition]
 
     elif epoch_text == 'intermediate':
         condition = (df.month == epoch[0]) | ((df.month == epoch[1]) & (df.day <= 20)) | \
-                    ((df.month == epoch[2]) & (df.day > 15)) | (df.month == epoch[3]) | \
-                    ((df.month == epoch[4]) & (df.day <= 15))
+                    ((df.month == epoch[2]) & (df.day > 5)) | ((df.month == epoch[3]) & (df.day <= 15))
+        new_df = df[condition]
+
+    return new_df
+
+def select_new_epochs_dataframe_south(df,epoch_text):
+
+    epoch = get_south_epoch(epoch_text)
+
+    if epoch_text == 'summer':
+        condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3]) |\
+                    ((df.month == epoch[4]) & (df.day < 15)) | ((df.month == epoch[5]) & (df.day > 15)) | \
+                    (df.month == epoch[6]) | (df.month == epoch[7])
+        new_df = df[condition]
+
+    elif epoch_text == 'winter':
+        condition = ((df.month == epoch[0]) & (df.day > 15)) | (df.month == epoch[1]) | (df.month == epoch[2]) | \
+                    (df.month == epoch[3]) | (df.month == epoch[4]) | ((df.month == epoch[5]) & (df.day < 15))
         new_df = df[condition]
 
     return new_df
