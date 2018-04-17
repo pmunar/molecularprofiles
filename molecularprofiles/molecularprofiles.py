@@ -129,13 +129,23 @@ class MolecularProfile:
                 self.dataframe = select_dataframe_by_month(self.dataframe, months)
             else:
                 if epoch != 'all':
-                    self.dataframe = select_new_epochs_dataframe(self.dataframe, epoch)
+                    if self.observatory == 'north':
+                        self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
+                    elif self.observatory == 'south':
+                        self.dataframe = select_new_epochs_dataframe_south(self.dataframe, epoch)
+                    else:
+                        self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
         else:
             if months:
                 self.dataframe = select_dataframe_by_month(self.dataframe, months)
         if not years and not months:
             if epoch != 'all':
-                self.dataframe = select_new_epochs_dataframe(self.dataframe, epoch)
+                if self.observatory == 'north':
+                    self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
+                elif self.observatory == 'south':
+                    self.dataframe = select_new_epochs_dataframe_south(self.dataframe, epoch)
+                else:
+                    self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
 
         if select_good_weather:
             self.dataframe['W'] = np.sqrt(self.dataframe.U ** 2. + self.dataframe.V ** 2.)
