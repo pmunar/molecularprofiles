@@ -11,6 +11,6 @@
 # $ init_molec
 
 echo "Adding molecularprofiles to PATH and PYTHONPATH"
-export PATH=$PATH:$MOLECULARPROFILES_DIR/molecularprofiles/utils/
+export PATH=$PATH:$MOLECULARPROFILES_DIR/molecularprofiles/utils/:$MOLECULARPROFILES_DIR/molecularprofiles/ecmwf_scripts
 export PYTHONPATH=$MOLECULARPROFILES_DIR:$PYTHONPATH
 
