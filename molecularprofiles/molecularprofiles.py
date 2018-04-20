@@ -412,10 +412,10 @@ class MolecularProfile:
                 print('Wrong model name. It must be "MW" for MAGIC Winter model, or "PROD3" for Paranal model. \n Exiting!')
                 sys.exit()
 
-
-            eb2 = ax.errorbar(self.x, diff, yerr=ediff_pp, fmt='o', capsize=0.5, ms=1., label=e)
+            color = next(ax[0]._get_lines.prop_cycler)['color']
+            eb2 = ax.errorbar(self.x, diff, yerr=ediff_pp, fmt='o', capsize=0.5, ms=1., label=e, color=color)
             eb2[-1][0].set_linestyle(':')
-            ax.errorbar(self.x, diff, yerr=ediff, fmt=':', elinewidth=3.1)
+            ax.errorbar(self.x, diff, yerr=ediff, fmt=':', elinewidth=3.1, color=color)
 
         ax.axvline(2000., ls='dotted')
         ax.set_title('Relative Difference %s w.r.t %s model, epoch: %s' % (self.data_server, model, self.epoch))
