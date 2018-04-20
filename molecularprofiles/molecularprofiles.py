@@ -418,7 +418,7 @@ class MolecularProfile:
             ax.errorbar(self.x, diff, yerr=ediff, fmt=':', elinewidth=3.1, color=color)
 
         ax.axvline(2000., ls='dotted')
-        ax.set_title('Relative Difference %s w.r.t %s model, epoch: %s' % (self.data_server, model, self.epoch))
+        ax.set_title('Relative Difference %s w.r.t %s model' % (self.data_server, model))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference')
         ax.set_xlim(0., 25100.)
