@@ -313,7 +313,7 @@ class MolecularProfile:
         fig.savefig('dry_vs_moist_air_density'+self.data_server+'_'+self.epoch+'.png', bbox_inches='tight', dpi=300)
         fig.show()
 
-    def plot_average_at_15km(self):
+    def plot_average_at_15km(self, fmt='pdf'):
         """
         Function that produces a plot of the averaged density at 15 km
         :return: 
@@ -353,7 +353,7 @@ class MolecularProfile:
         ax.set_ylim(np.min(density_at_15km) * 0.98, np.max(density_at_15km) * 1.02)
         ax.set_title('Density over time at h = 15 km (for %s months)' % (self.epoch))
 
-        fig.savefig(self.output_plot_name + '_at_15_km.eps', bbox_inches='tight')
+        fig.savefig(self.output_plot_name + '_at_15_km.'+ fmt, bbox_inches='tight')
         fig.savefig(self.output_plot_name + '_at_15_km.png', bbox_inches='tight', dpi=300)
 
     def plot_differences_wrt_magic(self):
@@ -389,7 +389,7 @@ class MolecularProfile:
         fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.eps', bbox_inches='tight')
         fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_differences_wrt_model(self, epochs, model):
+    def plot_differences_wrt_model(self, epochs, model, fmt='pdf'):
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -428,10 +428,10 @@ class MolecularProfile:
         ax.yaxis.set_major_locator(MultipleLocator(0.02))
         ax.legend(loc='best', numpoints=1)
         ax.grid(which='both', axis='y', color='0.8')
-        fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name + '.eps', bbox_inches='tight')
+        fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name + '.' + fmt, bbox_inches='tight')
         fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_models_comparison(self, model=None, interpolate=False):
+    def plot_models_comparison(self, model=None, interpolate=False, fmt='pdf'):
         fig, ax = plt.subplots(2, 1, sharex=True)
         plt.subplots_adjust(hspace=0)
         if interpolate:
@@ -486,7 +486,7 @@ class MolecularProfile:
         ax[1].set_xlabel('h a.s.l. [m]')
         ax[1].set_ylabel('std/$\\langle n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})} \\rangle$')
 
-        fig.savefig('comparison_' + self.output_plot_name + '.eps', bbox_inches='tight')
+        fig.savefig('comparison_' + self.output_plot_name + '.' + fmt, bbox_inches='tight')
         fig.savefig('model_comparison_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
 
     def plot_epoch_comparison(self, epochs, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
