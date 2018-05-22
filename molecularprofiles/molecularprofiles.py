@@ -418,7 +418,7 @@ class MolecularProfile:
             ax.errorbar(self.x, diff, yerr=ediff, fmt=':', elinewidth=3.1, color=color)
 
         ax.axvline(2000., ls='dotted')
-        ax.set_title('Relative Difference %s w.r.t %s model' % (self.data_server, model))
+        ax.set_title('Relative Difference %s %s w.r.t %s model' % (self.data_server, self.observatory, model))
         ax.set_xlabel('h a.s.l. [m]')
         ax.set_ylabel('Rel. Difference')
         ax.set_xlim(0., 25100.)
@@ -428,8 +428,8 @@ class MolecularProfile:
         ax.yaxis.set_major_locator(MultipleLocator(0.02))
         ax.legend(loc='best', numpoints=1)
         ax.grid(which='both', axis='y', color='0.8')
-        fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name + '.' + fmt, bbox_inches='tight')
-        fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
+        fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name +  '_' + self.observatory + '.' + fmt, bbox_inches='tight')
+        fig.savefig('differences_wrt_'+ model +'_' + self.output_plot_name +  '_' + self.observatory + '.png', bbox_inches='tight', dpi=300)
 
     def plot_models_comparison(self, model=None, interpolate=False, fmt='pdf'):
         fig, ax = plt.subplots(2, 1, sharex=True)
@@ -470,7 +470,7 @@ class MolecularProfile:
             sys.exit()
 
         ax[0].axvline(2000., ls='dotted')
-        ax[0].set_title(self.data_server + ' ' + ' ' + str(self.epoch))
+        ax[0].set_title(self.data_server + ' ' + self.observatory)
         ax[0].set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax[0].set_xlim(0., 25100.)
         ax[0].set_ylim(0.4, 1.2)
@@ -484,10 +484,11 @@ class MolecularProfile:
         ax[1].axvline(2000., ls='dotted')
         ax[1].axes.tick_params(direction='inout', top='on')
         ax[1].set_xlabel('h a.s.l. [m]')
+        ax[1].grid(which='both', axis='y', color='0.8')
         ax[1].set_ylabel('std/$\\langle n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})} \\rangle$')
 
-        fig.savefig('comparison_' + self.output_plot_name + '.' + fmt, bbox_inches='tight')
-        fig.savefig('model_comparison_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
+        fig.savefig('comparison_' + self.output_plot_name + '_' + self.observatory + '.' + fmt, bbox_inches='tight')
+        fig.savefig('model_comparison_' + self.output_plot_name + '_' + self.observatory + '.png', bbox_inches='tight', dpi=300)
 
     def plot_epoch_comparison(self, epochs, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
         fig, ax = plt.subplots(2, 1, sharex=True)
@@ -522,7 +523,7 @@ class MolecularProfile:
                        label='Prod3 ' + self.observatory)
 
         ax[0].axvline(2000., ls='dotted')
-        ax[0].set_title(self.data_server)
+        ax[0].set_title(self.data_server + self.observatory)
         ax[0].set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax[0].set_xlim(0., 25100.)
         ax[0].set_ylim(0.4, 1.2)
@@ -540,7 +541,7 @@ class MolecularProfile:
         ax[1].set_ylim(0., 0.0449)
         ax[1].legend(loc='best', numpoints=1, ncol=2)
         ax[1].grid(which='both', axis='y', color='0.8')
-        fig.savefig('epoch_comparison_' + self.output_plot_name + '.' + format, bbox_inches='tight', dpi=300)
+        fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '.' + format, bbox_inches='tight', dpi=300)
 
 
 
