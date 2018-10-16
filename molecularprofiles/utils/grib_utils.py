@@ -172,8 +172,10 @@ def get_observatory_coordinates(observatory):
         longitude = ddmmss2deg(-70, 18, 58.4712)
         return latitude, longitude
     else:
-        print('wrong observatory!')
-        sys.exit()
+        print('Unknown observatory!')
+        latitude = input('Observatory latitude (in degrees):')
+        longitude = input('Observatory longitude (in degrees):')
+        return latitude, longitude
 
 
 def get_winter_months():
