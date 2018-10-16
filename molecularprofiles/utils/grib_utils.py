@@ -466,9 +466,11 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
     together with date, year, month, day, hour, pressure level, real height and density.
 
     Input: file_name (string)
-           observatory (string). Possible values are 'north' or 'south'
+           observatory (string). Possible values are 'north', 'south' or any other name. If NOT north or south,
+           then the program asks for the coordinates.
            gridstep (float): grid spacing in degrees. Values are 1.0 for GDAS data and 0.75 for ECMWF data.
-
+           lat: (float, optional) latitude of the observatory in degrees
+           lon: (float, optional) longitude of the observatory in degrees
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
 
@@ -501,7 +503,7 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
     print('creating the txt file containing the selected data...')
 
     table_file = open(file_name.split('.')[0] + '.txt', 'w')
-    print('Date year month day hour MJD P Temp h n U V RH', file=table_file)
+    print('Date year month day hour MJD P Temp h n n/Ns U V RH', file=table_file)
 
     pbar = tqdm(total=len(datadict['Temperature']))
     for j in np.arange(len(datadict['Temperature'])):
@@ -533,12 +535,13 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
                                        (datadict['Temperature'][j].data()[2] == lon_gridpoint)])
 
             density = computedensity(datadict['Temperature'][j].level, temperature)
+            density_Ns = density/Ns
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
 
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd, datadict['Temperature'][j].level,
-                  temperature, h, density, datadict['Ucomponentofwind'][j].values,
+                  temperature, h, density, density_Nsdatadict['Ucomponentofwind'][j].values,
                   datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
 
     table_file.close()
