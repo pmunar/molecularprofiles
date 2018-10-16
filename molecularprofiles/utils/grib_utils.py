@@ -171,10 +171,9 @@ def get_observatory_coordinates(observatory):
         latitude = ddmmss2deg(-24, 40, 24.8448)
         longitude = ddmmss2deg(-70, 18, 58.4712)
         return latitude, longitude
-    else:
-        print('Unknown observatory!')
-        latitude = input('Observatory latitude (in degrees):')
-        longitude = input('Observatory longitude (in degrees):')
+    else: print('Unknown observatory!')
+        latitude = np.float(input('Observatory latitude (in degrees):'))
+        longitude = np.float(input('Observatory longitude (in degrees):'))
         return latitude, longitude
 
 
