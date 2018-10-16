@@ -514,6 +514,7 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
             else:
                 h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, latitude_obs)
             density = computedensity(datadict['Temperature'][j].level, datadict['Temperature'][j].values)
+            density_Ns = density / Ns
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year,
