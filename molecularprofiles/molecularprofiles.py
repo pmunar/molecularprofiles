@@ -257,6 +257,8 @@ class MolecularProfile:
         self.diff_PROD3 = compute_averages_std(self.diff_with_prod3)
 
     # =======================================================================================================
+    # Plotting functions:
+    # =======================================================================================================
 
     def plot_moist_dry_comparison(self, min_humidity=0.):
 
