@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from tqdm import *
 from matplotlib.ticker import MultipleLocator
 from scipy.interpolate import interp1d
+from molecularprofiles.utils.observatory import *
 from molecularprofiles.utils.grib_utils import *
 from molecularprofiles.utils.plot_settings import settings
 from molecularprofiles.utils.magic_winter_profile import heightmw, rhomw
@@ -82,6 +83,41 @@ class MolecularProfile:
         self.n_prod3 = nprod3 * 816.347
         self.func_prod3 = interp1d(self.hprod3 * 1000., self.n_prod3 * np.exp(self.hprod3 * 1000. / self.Hs),
                                    kind='cubic')
+
+    def _interpolate_simple(self, x_param, y_param, new_x_param):
+        func = interp1d(x_param, y_param, kind='cubic', fill_value='extrapolate')
+        return func(new_x_param)
+
+    def _interpolate_param_to_h(self, param, height):
+
+        interpolated_param = []
+        group_mjd = self.dataframe.groupby('MJD')
+
+        print("Computing the extrapolation of the values of density:")
+        print("(This is to make it easier to compare ECMWF and GDAS, or any other")
+        print("weather model)")
+        pbar = tqdm(total=len(np.unique(self.dataframe.MJD)))
+
+        for mjd in np.unique(self.dataframe.MJD):
+            pbar.update(1)
+            h_at_mjd = group_mjd.get_group(mjd)['h'].tolist()
+            param_at_mjd = group_mjd.get_group(mjd)[param].tolist()
+            func = interp1d(h_at_mjd, param_at_mjd, kind='cubic', fill_value='extrapolate')
+
+            if type(height) == int or type(height) == float:
+                interpolated_param.append(np.float(func(height)))
+            else:
+                interpolated_param.append(func(height))
+        pbar.close()
+
+        print('\n')
+        interpolated_param = np.asarray(interpolated_param)
+        if type(height) != float:
+            interpolated_param_avgs = compute_averages_std(interpolated_param)
+            return interpolated_param, interpolated_param_avgs[0], interpolated_param_avgs[1], \
+                   interpolated_param_avgs[2], interpolated_param_avgs[3]
+        elif type(height) == float or type(height) == int:
+            return interpolated_param
 
     def get_data(self, epoch='all', years=None, months=None, select_good_weather=False,
                  RH_lim=100., W_lim = 10000.):
@@ -163,41 +199,6 @@ class MolecularProfile:
         self.RH_avgs = avg_std_dataframe(self.group_by_p, 'RH')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
         self.x = np.linspace(2200., 25000., num=15, endpoint=True)
-
-    def _interpolate_simple(self, x_param, y_param, new_x_param):
-        func = interp1d(x_param, y_param, kind='cubic', fill_value='extrapolate')
-        return func(new_x_param)
-
-    def _interpolate_param_to_h(self, param, height):
-
-        interpolated_param = []
-        group_mjd = self.dataframe.groupby('MJD')
-
-        print("Computing the extrapolation of the values of density:")
-        print("(This is to make it easier to compare ECMWF and GDAS, or any other")
-        print("weather model)")
-        pbar = tqdm(total=len(np.unique(self.dataframe.MJD)))
-
-        for mjd in np.unique(self.dataframe.MJD):
-            pbar.update(1)
-            h_at_mjd = group_mjd.get_group(mjd)['h'].tolist()
-            param_at_mjd = group_mjd.get_group(mjd)[param].tolist()
-            func = interp1d(h_at_mjd, param_at_mjd, kind='cubic', fill_value='extrapolate')
-
-            if type(height) == int or type(height) == float:
-                interpolated_param.append(np.float(func(height)))
-            else:
-                interpolated_param.append(func(height))
-        pbar.close()
-
-        print('\n')
-        interpolated_param = np.asarray(interpolated_param)
-        if type(height) != float:
-            interpolated_param_avgs = compute_averages_std(interpolated_param)
-            return interpolated_param, interpolated_param_avgs[0], interpolated_param_avgs[1], \
-                   interpolated_param_avgs[2], interpolated_param_avgs[3]
-        elif type(height) == float or type(height) == int:
-            return interpolated_param
 
 
     def compute_mass_density(self, air='moist', interpolate=False):
@@ -545,7 +546,9 @@ class MolecularProfile:
         ax[1].grid(which='both', axis='y', color='0.8')
         fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '.' + format, bbox_inches='tight', dpi=300)
 
-
+    # =======================================================================================================
+    # printing functions:
+    # =======================================================================================================
 
     def print_to_text_file(self):
         textfile = open(self.output_plot_name + '_to_text_file.txt', 'w')
