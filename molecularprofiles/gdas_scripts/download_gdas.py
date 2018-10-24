@@ -144,7 +144,16 @@ controlfile=''
 controlparms = {}
 cookie_file='auth.rda_ucar_edu'
 loginurl='https://rda.ucar.edu/cgi-bin/login'
-exitstring="\nUsage: \nrdams-client.py -get_summary <dsnnn.n>\nrdams-client.py -get_metadata <dsnnn.n>\nrdams-client.py -get_param_summary <dsnnn.n>\nrdams-client.py -submit [control_file_name]\nrdams-client.py -get_status <RequestIndex> <-proc_status>\nrdams-client.py -download [RequestIndex]\nrdams-client.py -globus_download [RequestIndex]\nrdams-client.py -purge [RequestIndex]\nrdams-client.py -get_control_file_template <dsnnn.n>\nrdams-client.py -help\n\n" 
+exitstring="\nUsage: \ndownload_gdas.py -get_summary <dsnnn.n>\n" \
+           "download_gdas.py -get_metadata <dsnnn.n>\n" \
+           "download_gdas.py -get_param_summary <dsnnn.n>\n" \
+           "download_gdas.py -submit [control_file_name]\n" \
+           "download_gdas.py -get_status <RequestIndex> <-proc_status>\n" \
+           "download_gdas.py -download [RequestIndex]\n" \
+           "download_gdas.py -globus_download [RequestIndex]\n" \
+           "download_gdas.py -purge [RequestIndex]\n" \
+           "download_gdas.py -get_control_file_template <dsnnn.n>\n" \
+           "download_gdas.py -help\n\n" 
 
 if (len(sys.argv)>1):
     if(sys.argv[1]=="-get_summary"):
