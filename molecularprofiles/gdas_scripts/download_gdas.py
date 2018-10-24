@@ -96,7 +96,7 @@ def write_pw_file(pwfile,username,password):
         fo=open(pwfile, "w")
         npwstring=username+','+password
         fo.write(npwstring)
-        fo.close
+        fo.close()
 
 # read_pw_file(pwfile) : Read user information from pw file
 def read_pw_file(pwfile):
