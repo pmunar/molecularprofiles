@@ -252,6 +252,14 @@ def computedensity(p,T):
     return Ns * p / ps * Ts / T
 
 
+def compute_wind_direction(u,v):
+    return np.arctan2(u,v)
+
+
+def compute_wind_speed(u,v):
+    return np.sqrt(u**2. + v**2.)
+
+
 def select_dataframe_epoch(df, epoch_text):
     epoch = get_epoch(epoch_text)
     new_df = df[df.month.isin(epoch)]
@@ -334,12 +342,15 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
                 h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, latitude_obs)
             density = computedensity(datadict['Temperature'][j].level, datadict['Temperature'][j].values)
             density_Ns = density / Ns
+            wind_speed = compute_wind_speed(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
+            wind_direction = compute_wind_direction(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year,
                   datadict['Temperature'][j].month, datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd,
                   datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density, density_Ns,
-                  datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
+                  datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values, wind_speed,
+                  wind_direction, RH[j], file=table_file)
 
         else: # this is just in case the grib file contains more than one grid point
             if 'GeopotentialHeight' in vn:
@@ -355,14 +366,16 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
                                        (datadict['Temperature'][j].data()[2] == lon_gridpoint)])
 
             density = computedensity(datadict['Temperature'][j].level, temperature)
+            wind_speed = compute_wind_speed(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
+            wind_direction = compute_wind_direction(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
             density_Ns = density/Ns
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
 
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd, datadict['Temperature'][j].level,
-                  temperature, h, density, density_Nsdatadict['Ucomponentofwind'][j].values,
-                  datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
+                  temperature, h, density, density_Ns, datadict['Ucomponentofwind'][j].values,
+                  datadict['Vcomponentofwind'][j].values, wind_speed, wind_direction, RH[j], file=table_file)
 
     table_file.close()
     pbar.close()
