@@ -1,5 +1,19 @@
 import numpy as np
 
+def ddmmss2deg(deg, min, sec):
+    """
+    This function computes the value, in degrees, of an angle expressed in degrees, minutes, seconds
+    Input: (integers) degrees, minutes, seconds
+    Output: (float) angle in degrees
+    """
+
+    if deg > 0.:
+        angle = deg + (min / 60.) + (sec / 3600.)
+    else:
+        angle = deg - (min / 60.) - (sec / 3600.)
+    return angle
+
+
 
 def get_observatory_coordinates(observatory):
     if observatory == 'north':
