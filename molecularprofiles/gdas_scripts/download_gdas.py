@@ -85,7 +85,7 @@ def add_http_auth(url,user,pasw):
 def add_http_cookie(url,authstring):
         cj = http.cookiejar.MozillaCookieJar(cookie_file)
         openrf = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-        frequest = urllib.request.Request(url.decode('utf-8'), authstring, headers={'User-Agent': 'Mozilla/5.0'})
+        frequest = urllib.request.Request(url, authstring.encode('utf-8'), headers={'User-Agent': 'Mozilla/5.0'})
         cj.add_cookie_header(frequest)
         response = openrf.open(frequest)
         openerf = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
