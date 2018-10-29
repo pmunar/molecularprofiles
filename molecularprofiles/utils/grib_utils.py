@@ -253,7 +253,10 @@ def computedensity(p,T):
 
 
 def compute_wind_direction(u,v):
-    return np.arctan2(u,v)
+    angle = np.arctan2(-1*u,-1*v)*180./np.pi
+    angle[angle < 0.] += 360.
+    direction = angle
+    return direction
 
 
 def compute_wind_speed(u,v):
@@ -330,7 +333,7 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
     print('creating the txt file containing the selected data...')
 
     table_file = open(file_name.split('.')[0] + '.txt', 'w')
-    print('Date year month day hour MJD P Temp h n n/Ns U V RH', file=table_file)
+    print('Date year month day hour MJD P Temp h n n/Ns U V W_speed W_dir RH', file=table_file)
 
     pbar = tqdm(total=len(datadict['Temperature']))
     for j in np.arange(len(datadict['Temperature'])):
@@ -551,7 +554,7 @@ def merge_txt_from_grib(txtfile, output_file='merged_from_grib.txt'):
 def print_help():
     print("Usage: python grib_utils.py <options>")
     print("Options are:")
-    print("        -r         <grib_file_name> <observatory> <gridstep>")
+    print("        -r         <grib_file_name> <gridstep> <observatory>")
     print("                   note that <gridstep> is 0.75deg for ECMWF data")
     print("                   and 1.0 deg for GDAS data")
     print("        -rmagic    <grib_file_name> <observatory> <gridstep>")
