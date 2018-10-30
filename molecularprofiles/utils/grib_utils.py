@@ -333,7 +333,7 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
     print('creating the txt file containing the selected data...')
 
     table_file = open(file_name.split('.')[0] + '.txt', 'w')
-    print('Date year month day hour MJD P Temp h n n/Ns U V W_speed W_dir RH', file=table_file)
+    print('Date year month day hour MJD P Temp h n n/Ns U V wind_speed wind_direction RH', file=table_file)
 
     pbar = tqdm(total=len(datadict['Temperature']))
     for j in np.arange(len(datadict['Temperature'])):
