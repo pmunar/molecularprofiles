@@ -3,13 +3,14 @@ from LIDAR_Analysis.humidity import *
 epoch='all'
 gdas = MolecularProfile('/home/pmunar/feina/software/pandas_branch/molecularprofiles/molecularprofiles/test_data/gdas_merged_2012-01_2017-08_north.txt',data_server='GDAS', observatory='south')
 gdas.get_data(epoch=epoch)
-ecmwf = MolecularProfile('/home/pmunar/feina/software/pandas_branch/molecularprofiles/molecularprofiles/test_data/ecmwf_interim_merged_2012-01_2017-12_south.txt', data_server='ECMWF', observatory='south')
+ecmwf = MolecularProfile('/home/pmunar/feina/software/pandas_branch/molecularprofiles/molecularprofiles/test_data/ecmwf_interim_merged_2012-01_2017-12_north.txt', data_server='ECMWF', observatory='north')
 ecmwf.get_data(epoch=epoch)
 
 
 fig, ax = plt.subplots(nrows=3, ncols=4, figsize=(6, 6*(np.sqrt(5.)- 1.0)/2.), sharey=True, sharex=True)
 years = np.unique(ecmwf.dataframe.year)
 years = years.astype(int).tolist()
+years = [2012,2013,2014,2015,2016]
 months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
           'November', 'December']
 for y in years:
@@ -52,21 +53,22 @@ for c in range(3):
 
 fig.show()
 
-
+plt.hlines(6.0, mean_lh30 - sigma3_lh30, mean_lh30 + sigma3_lh30)
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6*(np.sqrt(5.)- 1.0)/2.), sharey=True)
 
 epochs = ['winter', 'summer', 'intermediate']
 
 ax.set_color_cycle(clist=['#1f77b4', '#ff7f0e', '#2ca02c'])
 
-for y in years:
-    for e in epochs:
-        months = get_epoch(e)
+#for y in years:
+for e in epochs:
+#    print('year %i, epoch %s' %(y, e))
+    months = get_epoch(e)
 
-        ecmwf.get_data(e, years=[y], select_good_weather=True, RH_lim=95., W_lim=50.)
-        density_at_15km = ecmwf._interpolate_param_to_h('n_exp', 15000.)
-        ax.plot(np.unique(ecmwf.dataframe.MJD), density_at_15km, 'o', markersize=1.2,
-                label=str(e), alpha=0.8)
+    ecmwf.get_data(e, select_good_weather=True, RH_lim=95., W_lim=50.)
+    density_at_15km = ecmwf._interpolate_param_to_h('n_exp', 15000.)
+    ax.plot(np.unique(ecmwf.dataframe.MJD), density_at_15km, 'o', markersize=1.2,
+            label=str(e), alpha=0.8)
 
 ax.set_xlabel('MJD')
 ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')

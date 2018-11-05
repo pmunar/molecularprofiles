@@ -290,6 +290,10 @@ def select_dataframe_by_month(df, months):
     new_df = df[df.month.isin(months)]
     return new_df
 
+def select_dataframe_by_hour(df, hours):
+    new_df = df[df.hour.isin(hours)]
+    return new_df
+
 def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None):
     """
     This function creates a txt file where the information from the get_grib_file_data function is written,

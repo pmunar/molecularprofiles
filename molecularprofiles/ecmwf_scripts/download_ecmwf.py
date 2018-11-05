@@ -43,16 +43,27 @@ def retrieve_interim(date_start, date_end, latitude, longitude, outtag='my_ecmwf
         print('Wrong date! Check input dates')
         exit()
 
+    first = True
+    last = False
     for year in list(range(yearStart, yearEnd + 1)):
-        for month in list(range(monthStart, monthEnd + 1)):
+        if first:
+            month = monthStart
+        else:
+            month = 1
+        while last == False and month < 13:
+        #for month in list(range(monthStart, monthEnd + 1)):
             startDate = '%04d%02d%02d' % (year, month, dayStart)
             if year == yearEnd and month == monthEnd:
+                last == True
                 lastDate = '%04d%02d%02d' % (year, month, dayEnd)
+                break
             else:
                 lastDate = '%04d%02d%02d' % (year, month, calendar.monthrange(year, month)[1])
+            dayStart = 1
             outfile = outtag+'_%04d%02d.grib' % (year, month)
             request_ecwmf(startDate, lastDate, latitude, longitude, outfile)
-
+            first = False
+            month += 1
 
 def request_ecwmf(date_i, date_f, lat, lon, outfile='my_ecmwf_file.grib'):
 

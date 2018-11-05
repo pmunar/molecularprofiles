@@ -3,7 +3,7 @@ from molecularprofiles.utils.grib_utils import date2mjd, get_epoch
 import numpy as np
 
 
-def select_epoch(file, epoch_text):
+def select_dataframe_epoch(file, epoch_text):
     global months, month
     print("loading and selecting data")
     file = open(file)

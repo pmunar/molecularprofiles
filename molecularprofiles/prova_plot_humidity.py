@@ -1,4 +1,5 @@
 from molecularprofiles.molecularprofiles import *
+from LIDAR_Analysis.humidity import *
 
 epoch='intermediate'
 
@@ -68,7 +69,7 @@ ebw[-1][0].set_linestyle(':')
 gbd[-1][0].set_linestyle(':')
 gbw[-1][0].set_linestyle(':')
 
-axs[0].set_ylabel('$\\rho$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
+axs[0].set_ylabel('$\\rho$ $\\cdot$ exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
 axs[0].legend(loc='best')
 axs[0].axes.tick_params(direction='in')
 
@@ -94,7 +95,7 @@ plt.subplots_adjust(hspace=0)
 e_interpolated = ecmwf._interpolate_param_to_h('n_exp', ecmwf.x)
 g_interpolated = gdas._interpolate_param_to_h('n_exp', gdas.x)
 
-rel_dif = (e_interpolated[0] - g_interpolated[0]) / e_interpolated[0] * 100
+rel_dif = (e_interpolated[0][:len(g_interpolated[0])] - g_interpolated[0]) / e_interpolated[0][:len(g_interpolated[0])] * 100
 av_rel_dif = compute_averages_std(rel_dif)
 
 fig, axs = plt.subplots(2,1,sharex=True)
@@ -123,8 +124,17 @@ axs[1].legend(loc='best')
 axs[1].axes.tick_params(direction='inout', top='on')
 axs[1].set_xlabel('height [m]')
 axs[1].set_ylabel('rel. diff [\\%]')
-axs[0].set_ylabel('$\\rho$ * exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
+axs[0].set_ylabel('$\\rho$ $\\cdot$ exp(h/H$_{\\rm s}$) [kg m$^{-3}$]')
+axs[0].set_ylim(0.4, 1.2)
+axs[1].set_ylim(-5.0, 10.)
 axs[0].legend(loc='best')
 axs[0].axes.tick_params(direction='in')
+axs[0].xaxis.set_minor_locator(MultipleLocator(1000))
+axs[0].xaxis.set_major_locator(MultipleLocator(2000))
+axs[0].yaxis.set_major_locator(MultipleLocator(0.1))
+axs[1].yaxis.set_major_locator(MultipleLocator(1.0))
+axs[1].xaxis.set_minor_locator(MultipleLocator(1000))
+axs[1].xaxis.set_major_locator(MultipleLocator(2000))
+
 fig.savefig('ecmwf_vs_gdas_air_particle_density_'+epoch+'.png', bbox_inches='tight', dpi=300)
 fig.show()

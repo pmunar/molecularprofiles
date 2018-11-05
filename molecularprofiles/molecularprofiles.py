@@ -119,7 +119,7 @@ class MolecularProfile:
         elif type(height) == float or type(height) == int:
             return interpolated_param
 
-    def get_data(self, epoch='all', years=None, months=None, select_good_weather=False,
+    def get_data(self, epoch='all', years=None, months=None, hours=None, select_good_weather=False,
                  RH_lim=100., W_lim = 10000.):
 
         """
@@ -152,7 +152,11 @@ class MolecularProfile:
 
         if not os.path.exists((self.data_file).split('.')[0] + '.txt'):
             grib_file = self.data_file
-            readgribfile2text(grib_file, self.observatory, gridstep=0.75)
+            if self.data_server == 'GDAS':
+                gridstep = 1.0
+            elif self.data_server == 'ECMWF':
+                gridstep = 0.75
+            readgribfile2text(grib_file, gridstep, self.observatory, gridstep=0.75)
 
         self.output_plot_name = self.tag_name + '_' + epoch
         self.epoch = epoch
@@ -171,9 +175,10 @@ class MolecularProfile:
                         self.dataframe = select_new_epochs_dataframe_south(self.dataframe, epoch)
                     else:
                         self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
-        else:
-            if months:
-                self.dataframe = select_dataframe_by_month(self.dataframe, months)
+        elif months:
+            self.dataframe = select_dataframe_by_month(self.dataframe, months)
+        elif hours:
+            self.dataframe = select_dataframe_by_hour(self.dataframe, hours)
         if not years and not months:
             if epoch != 'all':
                 if self.observatory == 'north':
@@ -196,6 +201,8 @@ class MolecularProfile:
         self.h_avgs = avg_std_dataframe(self.group_by_p, 'h')
         self.n_avgs = avg_std_dataframe(self.group_by_p, 'n')
         self.Temp_avgs = avg_std_dataframe(self.group_by_p, 'Temp')
+        self.wind_speed_avgs = avg_std_dataframe(self.group_by_p, 'wind_speed')
+        self.wind_direction_avg = avg_std_dataframe(self.group_by_p, 'wind_direction')
         self.RH_avgs = avg_std_dataframe(self.group_by_p, 'RH')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
         self.x = np.linspace(2200., 25000., num=15, endpoint=True)
@@ -493,11 +500,14 @@ class MolecularProfile:
         fig.savefig('comparison_' + self.output_plot_name + '_' + self.observatory + '.' + fmt, bbox_inches='tight')
         fig.savefig('model_comparison_' + self.output_plot_name + '_' + self.observatory + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_epoch_comparison(self, epochs, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
+    def plot_epoch_comparison(self, epochs, hour=None, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
         fig, ax = plt.subplots(2, 1, sharex=True)
         plt.subplots_adjust(hspace=0)
         for e in epochs:
-            self.get_data(e)
+            if hour:
+                self.get_data(e, hours=[hour])
+            else:
+                self.get_data(e)
             color = next(ax[0]._get_lines.prop_cycler)['color']
             if interpolate:
                 raw_n_exp, avg_n_exp, e_n_exp, pp_n_exp, pm_n_exp = self._interpolate_param_to_h('n_exp', self.x)
@@ -544,7 +554,10 @@ class MolecularProfile:
         ax[1].set_ylim(0., 0.0449)
         ax[1].legend(loc='best', numpoints=1, ncol=2)
         ax[1].grid(which='both', axis='y', color='0.8')
-        fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '.' + format, bbox_inches='tight', dpi=300)
+        if hour:
+            fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '_h' + str(hour) + '.' + format, bbox_inches='tight', dpi=300)
+        else:
+            fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '.' + format, bbox_inches='tight', dpi=300)
 
     # =======================================================================================================
     # printing functions:
