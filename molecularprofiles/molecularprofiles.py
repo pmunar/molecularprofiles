@@ -202,7 +202,7 @@ class MolecularProfile:
         self.n_avgs = avg_std_dataframe(self.group_by_p, 'n')
         self.Temp_avgs = avg_std_dataframe(self.group_by_p, 'Temp')
         self.wind_speed_avgs = avg_std_dataframe(self.group_by_p, 'wind_speed')
-        self.wind_direction_avg = avg_std_dataframe(self.group_by_p, 'wind_direction')
+        self.wind_direction_avgs = avg_std_dataframe(self.group_by_p, 'wind_direction')
         self.RH_avgs = avg_std_dataframe(self.group_by_p, 'RH')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
         self.x = np.linspace(2200., 25000., num=15, endpoint=True)
