@@ -121,6 +121,7 @@ def avg_std_dataframe(group, param):
     :return:
         avg: the mean value for each grouped level
         std: the standard deviation for each grouped level
+        mad: the mean absolute deviation for each group level
         p2p_p: the peak-to-peak maximum value for each grouped level
         p2p_m: the peak-to-peak minimum value for each grouped level
     """
@@ -128,6 +129,7 @@ def avg_std_dataframe(group, param):
     avg = group[param].mean()
     std = group[param].std()
     mad = group[param].mad()
+    med = group[param].median()
     p2p_p = np.max(group[param]) - avg
     p2p_m = avg - np.min(group[param])
 
