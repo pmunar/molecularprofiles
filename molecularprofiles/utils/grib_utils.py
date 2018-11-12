@@ -296,6 +296,46 @@ def select_dataframe_by_hour(df, hours):
     new_df = df[df.hour.isin(hours)]
     return new_df
 
+def create_wind_speed_dataframe(df, normalized=False):
+    wd_centre_bins = np.arange(7.5,360, 15)
+    ws_hist = []
+    for d in wd_centre_bins:
+        ws_hist.append(np.histogram(df.wind_speed[(df.wind_direction >= d-7.5) & (df.wind_direction < d + 7.5)],
+                                    bins=[0,5,10,20,30,40,50,100])[0])
+
+    df_winds = pd.DataFrame(columns=['direction', '0-5', '5-10', '10-20', '20-30', '30-40', '40-50', '> 50'])
+    ws_new_list = []
+    for j in range(len(ws_hist[0])):
+        li = []
+        for i in range(len(ws_hist)):
+            li.append(ws_hist[i][j])
+        ws_new_list.append(li)
+
+    for i,j in zip(df_winds.keys()[1:], range(len(ws_new_list))):
+        df_winds[i] = ws_new_list[j]
+    if normalized:
+        df_winds_normalized = df_winds.div(df_winds.sum(axis=1), axis=0)
+        df_winds_normalized['direction'] = wd_centre_bins
+        return df_winds_normalized
+    else:
+        df_winds['direction'] = wd_centre_bins
+        return df_winds
+
+def plot_wind_rose(df, name_tag='my_wind_rose'):
+    data = []
+    counter = 0
+    for col in df.columns:
+        if col != 'direction':
+            data.append(go.Area(t=df['direction'], r=df[col],
+                                marker=dict(color=cl.scales['9']['seq']['YlGnBu'][counter]), name=col+' m/s'))
+            counter+=1
+    print(data)
+
+    fig = go.Figure(data=data, layout=go.Layout(orientation=270., barmode='stack'))
+    pio.write_image(fig, name_tag+'_wind_speed_rose.pdf')
+    plotly.offline.plot(fig)
+
+
 def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None):
     """
     This function creates a txt file where the information from the get_grib_file_data function is written,
