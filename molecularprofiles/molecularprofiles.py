@@ -119,7 +119,7 @@ class MolecularProfile:
         elif type(height) == float or type(height) == int:
             return interpolated_param
 
-    def get_data(self, epoch='all', years=None, months=None, hours=None, select_good_weather=False,
+    def get_data(self, epoch='all', years=None, months=None, hours=None, altitude=[], select_good_weather=False,
                  RH_lim=100., W_lim = 10000.):
 
         """
@@ -156,13 +156,29 @@ class MolecularProfile:
                 gridstep = 1.0
             elif self.data_server == 'ECMWF':
                 gridstep = 0.75
-            readgribfile2text(grib_file, gridstep, self.observatory, gridstep=0.75)
+            readgribfile2text(grib_file, gridstep, self.observatory)
 
         self.output_plot_name = self.tag_name + '_' + epoch
         self.epoch = epoch
 
         self.dataframe = pd.read_csv(self.data_file.split('.')[0] + '.txt', sep=' ', comment='#')
 
+        # Altitude filtering:
+        if altitude != [] and len(altitude) == 2 and altitude[0] < altitude[1]:
+            altitude_cond = (self.dataframe.h >= altitude[0]) & (self.dataframe.h < altitude[1])
+            self.dataframe = self.dataframe[altitude_cond]
+            self.x = np.linspace(altitude[0], altitude[1], num=15, endpoint=True)
+        elif altitude != [] and len(altitude) == 1:
+            altitude_cond = (self.dataframe.h < altitude[0])
+            self.dataframe = self.dataframe[altitude_cond]
+            self.x = np.linspace(2200., altitude[0], num=15, endpoint=True)
+        elif altitude == []:
+            self.x = np.linspace(2200., 25000., num=15, endpoint=True)
+        elif len(altitude) > 2 or altitude[0] > altitude[1]:
+            print('bad altitude filter. Aborting')
+            sys.exit()
+
+        # Filtering by years or months or hours
         if years:
             self.dataframe = select_dataframe_by_year(self.dataframe, years)
             if months:
@@ -188,6 +204,7 @@ class MolecularProfile:
                 else:
                     self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
 
+        # Filtering by good weather conditions:
         if select_good_weather:
             self.dataframe['W'] = np.sqrt(self.dataframe.U ** 2. + self.dataframe.V ** 2.)
             h_cond = (self.dataframe.h > 2200.) & (self.dataframe.h < 2500.)
@@ -196,6 +213,7 @@ class MolecularProfile:
             good_weather_dates = self.dataframe.datehour[(h_cond) & (gw_cond)]
             self.dataframe = self.dataframe[(self.dataframe.datehour.isin(good_weather_dates.tolist()))]
 
+        # Various averaged values obtained after filtering (if no filter, averages are made over the whole dataframe)
         self.group_by_p = self.dataframe.groupby('P')
         self.dataframe['n_exp'] = self.dataframe.n /self.Ns * np.exp(self.dataframe.h /self.Hs)
         self.h_avgs = avg_std_dataframe(self.group_by_p, 'h')
@@ -205,7 +223,6 @@ class MolecularProfile:
         self.wind_direction_avgs = avg_std_dataframe(self.group_by_p, 'wind_direction')
         self.RH_avgs = avg_std_dataframe(self.group_by_p, 'RH')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
-        self.x = np.linspace(2200., 25000., num=15, endpoint=True)
 
 
     def compute_mass_density(self, air='moist', interpolate=False):
@@ -500,7 +517,7 @@ class MolecularProfile:
         fig.savefig('comparison_' + self.output_plot_name + '_' + self.observatory + '.' + fmt, bbox_inches='tight')
         fig.savefig('model_comparison_' + self.output_plot_name + '_' + self.observatory + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_epoch_comparison(self, epochs, hour=None, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
+    def plot_epoch_comparison(self, param, epochs, hour=None, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
         fig, ax = plt.subplots(2, 1, sharex=True)
         plt.subplots_adjust(hspace=0)
         for e in epochs:
