@@ -1,3 +1,19 @@
+#-----------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------
+# This is a class that offers a set of functions to work with meteorological data
+# in txt table format, separated with spaces.
+#
+# It makes use of the pandas dataframe objects in order to be more efficient
+#
+#
+# Created by Pere Munar-Adrover
+# email: pere.munaradrover@gmail.com
+#
+#
+# Version 2.0.1
+#-----------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------
+
 import os
 import os.path
 import sys
