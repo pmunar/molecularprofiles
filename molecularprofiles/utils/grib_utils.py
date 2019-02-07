@@ -4,11 +4,13 @@ from builtins import str
 import numpy as np
 import pygrib as pg
 from molecularprofiles.utils.meteorological_constants import *
+from molecularprofiles.utils.observatory import *
 import sys
 import gc
 import multiprocessing
 from multiprocessing import Process
 import os
+from tqdm import tqdm
 
 def ddmmss2deg(deg, min, sec):
     """
@@ -23,14 +25,14 @@ def ddmmss2deg(deg, min, sec):
         angle = deg - (min / 60.) - (sec / 3600.)
     return angle
 
-def GetAltitudeFromGeopotential(geop_height, observatory):
+def GetAltitudeFromGeopotential(geop_height, latitude_obs):
     """
     Function to compute the real altitude from the geopotential value at a certain coordinates on Earth
     :param geop_height:
-    :param observatory: possible values are 'north' or 'south'
+    :param latitude_obs: geographical latitude of interest in degrees
     :return: real altitude as fGeoidOffset (in m)
     """
-    latitude = np.radians(get_observatory_coordinates(observatory)[0])
+    latitude = np.radians(latitude_obs)
     geop_heightkm = geop_height / 1000. / 9.80665  # dividing by the acceleration of gravity on Earth
     cos2lat = np.cos(2 * latitude)
     # convert from geopotential height to geometric altitude:
@@ -39,14 +41,14 @@ def GetAltitudeFromGeopotential(geop_height, observatory):
     return 1.0E3 * z  # This is fGeoidOffset
 
 
-def GetAltitudeFromGeopotentialHeight(geop, observatory):
+def GetAltitudeFromGeopotentialHeight(geop, latitude_obs):
     """
     Function to compute the real altitude from the geopotential value at a certain coordinates on Earth
     :param geop_height:
-    :param observatory: possible values are 'north' or 'south'
+    :param latitude_obs: geographical latitude of interest in degrees
     :return: real altitude as fGeoidOffset (in m)
     """
-    latitude = np.radians(get_observatory_coordinates(observatory)[0])
+    latitude = np.radians(latitude_obs)
     geop_km = geop / 1000.
     cos2lat = np.cos(2 * latitude)
     # convert from geopotential height to geometric altitude:
@@ -111,6 +113,29 @@ def compute_averages_std_simple(input_array):
     return average, stand_dev, peak_to_peak_p, peak_to_peak_m
 
 
+def avg_std_dataframe(group, param):
+    """
+
+    :param group: dataframe grouped by a certain parameter
+    :param param: the parameter by which the dataframe is grouped
+    :return:
+        avg: the mean value for each grouped level
+        std: the standard deviation for each grouped level
+        mad: the mean absolute deviation for each group level
+        p2p_p: the peak-to-peak maximum value for each grouped level
+        p2p_m: the peak-to-peak minimum value for each grouped level
+    """
+
+    avg = group[param].mean()
+    std = group[param].std()
+    mad = group[param].mad()
+    med = group[param].median()
+    p2p_p = np.max(group[param]) - avg
+    p2p_m = avg - np.min(group[param])
+
+    return avg, std, mad, p2p_p, p2p_m
+
+
 def compute_averages_std(input_array):
     """
     This function computes the average, standard deviation and peak to peak (plus and minus)
@@ -140,6 +165,8 @@ def compute_averages_std(input_array):
     return average, stand_dev, peak_to_peak_p, peak_to_peak_m
 
 
+<<<<<<< HEAD
+=======
 def get_observatory_coordinates(observatory):
     if observatory == 'north':
         latitude = ddmmss2deg(28, 45, 42.462)
@@ -211,6 +238,7 @@ def find_nearest(a, value):  # Function to find the nearest grid position to a g
     return a[np.abs(a-value).argmin()]
 
 
+>>>>>>> 91ed6d748a26e26002cb3bc983af71d0debb4bf8
 def get_gribfile_variables(file_name):
     """
     Function that returns all the different variable names in a grib file
@@ -268,7 +296,7 @@ def get_grib_file_data(file_name):
     vn, vsn = get_gribfile_variables(file_name)
     print('indexing the file %s (this might take a while...)' % (file_name))
     grb = pg.index(file_name, 'shortName', 'typeOfLevel')
-    print('selecting the parameters information for %s ...' % (file_name))
+    print('selecting the parameters information for %s (this might take a while...)' % (file_name))
     data = []
 
     for sn in vsn:
@@ -280,6 +308,7 @@ def get_grib_file_data(file_name):
     data = None
     gc.collect()
     return vn, vsn, datadict
+
 
 def fill_RH_gaps(rhdata):
     """ in case the RH data for Plevels 20 and 50 hPa is not present, this function fills these gaps
@@ -294,18 +323,104 @@ def fill_RH_gaps(rhdata):
             RH = np.insert(RH, (i*23, i*23), 0.0)
     return RH
 
+
 def computedensity(p,T):
     return Ns * p / ps * Ts / T
 
-def readgribfile2text(file_name, observatory, gridstep):
+
+def compute_wind_direction(u,v):
+    angle = np.arctan2(-1*u,-1*v)*180./np.pi
+    angle[angle < 0.] += 360.
+    direction = angle
+    return direction
+
+
+def compute_wind_speed(u,v):
+    return np.sqrt(u**2. + v**2.)
+
+
+def select_dataframe_epoch(df, epoch_text):
+    epoch = get_epoch(epoch_text)
+    new_df = df[df.month.isin(epoch)]
+    return new_df
+
+    # if epoch_text == 'winter':
+    #     condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3])
+    #     new_df = df[condition]
+    #
+    # elif epoch_text == 'summer':
+    #     condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2])
+    #     new_df = df[condition]
+    #
+    # elif epoch_text == 'intermediate':
+    #     condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3]) | \
+    #                 (df.month == epoch[4])
+    #     new_df = df[condition]
+    # return new_df
+
+def select_dataframe_by_year(df, years):
+    new_df = df[df.year.isin(years)]
+    return new_df
+
+def select_dataframe_by_month(df, months):
+    new_df = df[df.month.isin(months)]
+    return new_df
+
+def select_dataframe_by_hour(df, hours):
+    new_df = df[df.hour.isin(hours)]
+    return new_df
+
+def create_wind_speed_dataframe(df, normalized=False):
+    wd_centre_bins = np.arange(7.5,360, 15)
+    ws_hist = []
+    for d in wd_centre_bins:
+        ws_hist.append(np.histogram(df.wind_speed[(df.wind_direction >= d-7.5) & (df.wind_direction < d + 7.5)],
+                                    bins=[0,5,10,20,30,40,50,100])[0])
+
+    df_winds = pd.DataFrame(columns=['direction', '0-5', '5-10', '10-20', '20-30', '30-40', '40-50', '> 50'])
+    ws_new_list = []
+    for j in range(len(ws_hist[0])):
+        li = []
+        for i in range(len(ws_hist)):
+            li.append(ws_hist[i][j])
+        ws_new_list.append(li)
+
+    for i,j in zip(df_winds.keys()[1:], range(len(ws_new_list))):
+        df_winds[i] = ws_new_list[j]
+    if normalized:
+        df_winds_normalized = df_winds.div(df_winds.sum(axis=1), axis=0)
+        df_winds_normalized['direction'] = wd_centre_bins
+        return df_winds_normalized
+    else:
+        df_winds['direction'] = wd_centre_bins
+        return df_winds
+
+def plot_wind_rose(df, name_tag='my_wind_rose'):
+    data = []
+    counter = 0
+    for col in df.columns:
+        if col != 'direction':
+            data.append(go.Area(t=df['direction'], r=df[col],
+                                marker=dict(color=cl.scales['9']['seq']['YlGnBu'][counter]), name=col+' m/s'))
+            counter+=1
+    print(data)
+
+    fig = go.Figure(data=data, layout=go.Layout(orientation=270., barmode='stack'))
+    pio.write_image(fig, name_tag+'_wind_speed_rose.pdf')
+    plotly.offline.plot(fig)
+
+
+def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None):
     """
     This function creates a txt file where the information from the get_grib_file_data function is written,
     together with date, year, month, day, hour, pressure level, real height and density.
 
     Input: file_name (string)
-           observatory (string). Possible values are 'north' or 'south'
+           observatory (string). Possible values are 'north', 'south' or any other name. If NOT north or south,
+           then the program asks for the coordinates.
            gridstep (float): grid spacing in degrees. Values are 1.0 for GDAS data and 0.75 for ECMWF data.
-
+           lat: (float, optional) latitude of the observatory in degrees
+           lon: (float, optional) longitude of the observatory in degrees
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
 
@@ -315,7 +430,13 @@ def readgribfile2text(file_name, observatory, gridstep):
 
     vn, vsn, datadict = get_grib_file_data(file_name)
 
-    latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
+    if observatory:
+        latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
+    elif lat and lon:
+        latitude_obs, longitude_obs = lat, lon
+
+    print(latitude_obs, longitude_obs)
+
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
     if len(datadict['Temperature']) != len(datadict['Relativehumidity']):
@@ -332,53 +453,59 @@ def readgribfile2text(file_name, observatory, gridstep):
     print('creating the txt file containing the selected data...')
 
     table_file = open(file_name.split('.')[0] + '.txt', 'w')
-    print('# Date,     year, month, day, hour, MJD, Plevel, T_average, h,   n,       U,     V,     RH', file=table_file)
-    print('# YYYYMMDD, YYYY, MM,    DD,  HH,      , (hPa),  (K),       (m), (cm^-3), (m/s), (m/s), (%)', file=table_file)
+    print('Date year month day hour MJD P Temp h n n/Ns U V wind_speed wind_direction RH', file=table_file)
 
+    pbar = tqdm(total=len(datadict['Temperature']))
     for j in np.arange(len(datadict['Temperature'])):
+        pbar.update(1)
         if (type(datadict['Temperature'][j].values) == float) or (len(datadict['Temperature'][j].values) == 1):
             if 'GeopotentialHeight' in vn:
-                h = GetAltitudeFromGeopotentialHeight(datadict['GeopotentialHeight'][j].values, observatory)
+                h = GetAltitudeFromGeopotentialHeight(datadict['GeopotentialHeight'][j].values, latitude_obs)
             else:
-                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
+                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, latitude_obs)
             density = computedensity(datadict['Temperature'][j].level, datadict['Temperature'][j].values)
+            density_Ns = density / Ns
+            wind_speed = compute_wind_speed(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
+            wind_direction = compute_wind_direction(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
-            #density = Ns * datadict['Temperature'][j].level / ps * Ts / datadict['Temperature'][j].values
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year,
                   datadict['Temperature'][j].month, datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd,
-                  datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density,
-                  datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
+                  datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density, density_Ns,
+                  datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values, wind_speed,
+                  wind_direction, RH[j], file=table_file)
 
         else: # this is just in case the grib file contains more than one grid point
             if 'GeopotentialHeight' in vn:
                 h = GetAltitudeFromGeopotentialHeight(np.float(datadict['GeopotentialHeight'][j].values[
                                  (datadict['GeopotentialHeight'][j].data()[1] == lat_gridpoint) &
-                                 (datadict['GeopotentialHeight'][j].data()[2] == lon_gridpoint)]), observatory)
+                                 (datadict['GeopotentialHeight'][j].data()[2] == lon_gridpoint)]), latitude_obs)
             else:
                 h = GetAltitudeFromGeopotential(np.float(datadict['Geopotential'][j].values[
                                  (datadict['Geopotential'][j].data()[1] == lat_gridpoint) &
-                                 (datadict['Geopotential'][j].data()[2] == lon_gridpoint)]), observatory)
+                                 (datadict['Geopotential'][j].data()[2] == lon_gridpoint)]), latitude_obs)
             temperature = np.float(datadict['Temperature'][j].values[
                                        (datadict['Temperature'][j].data()[1] == lat_gridpoint) &
                                        (datadict['Temperature'][j].data()[2] == lon_gridpoint)])
 
             density = computedensity(datadict['Temperature'][j].level, temperature)
+            wind_speed = compute_wind_speed(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
+            wind_direction = compute_wind_direction(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
+            density_Ns = density/Ns
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
 
-            #density = Ns * datadict['Temperature'][j].level / ps * Ts / temperature
-
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd, datadict['Temperature'][j].level,
-                  temperature, h, density, datadict['Ucomponentofwind'][j].values,
-                  datadict['Vcomponentofwind'][j].values, RH[j], file=table_file)
+                  temperature, h, density, density_Ns, datadict['Ucomponentofwind'][j].values,
+                  datadict['Vcomponentofwind'][j].values, wind_speed, wind_direction, RH[j], file=table_file)
 
     table_file.close()
+    pbar.close()
     datadict = None
 
 
-def readgribfile2magic(file_name, observatory, gridstep):
+def readgribfile2magic(file_name, gridstep, observatory=None, lat=None, lon=None):
     """
     This function opens a grib file, selects all parameters
     and finally creates a txt file where these parameters, together with date, year, month,
@@ -396,8 +523,13 @@ def readgribfile2magic(file_name, observatory, gridstep):
     vn, vsn, datadict = get_grib_file_data(file_name)
 
     pl, pl_index = get_plevels(datadict['Temperature'])
-    new_pl_index = pl_index * int((len(datadict['Temperature'])/len(pl_index)))
-    latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
+    new_pl_index = pl_index[::-1] * int((len(datadict['Temperature'])/len(pl_index)))
+
+    if observatory:
+        latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
+    else:
+        latitude_obs, longitude_obs = lat, lon
+
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
     # We create the table file and fill it with the information stored in the above variables, plus the height
@@ -407,13 +539,14 @@ def readgribfile2magic(file_name, observatory, gridstep):
     table_file = open(file_name.split('.')[0] + 'MAGIC_format.txt', 'w')
 
     for j in np.arange(len(datadict['Temperature'])):
+
         if (type(datadict['Temperature'][j].values) == float) or (len(datadict['Temperature'][j].values) == 1):
             if new_pl_index[j] == 1:
                 print(str([0.00] * 34)[1:-1].replace(",", " "), file=table_file)
             if 'GeopotentialHeight' in vn:
-                h = GetAltitudeFromGeopotentialHeight(datadict['GeopotentialHeight'][j].values, observatory)
+                h = GetAltitudeFromGeopotentialHeight(datadict['GeopotentialHeight'][j].values, latitude_obs)
             else:
-                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
+                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, latitude_obs)
 
             fields = (datadict['Temperature'][j].year - 2000, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, new_pl_index[j], h,
@@ -422,6 +555,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
             row_str = '{: >6d}{: >6d}{: >6d}{: >6d}{: >6d}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}'
             row_str = row_str.format(*fields)
             table_file.write(row_str + '\n')
+
         else:  # this is just in case the grib file contains more than one grid point
             if new_pl_index[j] == 1:
                 print(str([0.00] * 34)[1:-1].replace(",", " "), file=table_file)
@@ -430,7 +564,7 @@ def readgribfile2magic(file_name, observatory, gridstep):
                                  (datadict['GeopotentialHeight'][j].data()[1] == lat_gridpoint) &
                                  (datadict['GeopotentialHeight'][j].data()[2] == lon_gridpoint)])
             else:
-                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, observatory)
+                h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, latitude_obs)
 
             temperature = np.float(datadict['Temperature'][j].values[
                                        (datadict['Temperature'][j].data()[1] == lat_gridpoint) &
@@ -447,19 +581,41 @@ def readgribfile2magic(file_name, observatory, gridstep):
 
 
 def readgribfile2magic_fromtxt(txt_file):
-#    TODO create the function
     """
     :param txt_file:
     :return:
     """
-    return None
+    input_f = open(txt_file, 'r')
+    output_f = open(txt_file + 'MAGIC_format.txt', 'w')
 
+    date, year, month, day, hour, mjd, p, T, h, n, U, V, RH = np.loadtxt(input_f, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12)
+                                                                         , unpack=True, skiprows=1)
 
-def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
+    pl = np.unique(p)[::-1]
+    pl_index = (np.arange(len(pl))+1).tolist()
+    new_pl_index = pl_index * int((len(T) / len(pl_index)))
+    remaining_index = len(p) - len(new_pl_index)
+    new_pl_index = new_pl_index + pl_index[: remaining_index]
+
+    pbar = tqdm(total=len(T))
+    for j in np.arange(len(T)):
+        pbar.update(1)
+        if new_pl_index[j] == 1:
+            print(str([0.00] * 34)[1:-1].replace(",", " "), file=output_f)
+
+        fields = (int(year[j] - 2000), int(month[j]), int(day[j]), int(hour[j]), int(new_pl_index[j]), h[j], T[j], U[j],
+                  V[j], RH[j])
+        row_str = '{: >6d}{: >6d}{: >6d}{: >6d}{: >6d}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}{: >10.2f}'
+        row_str = row_str.format(*fields)
+        output_f.write(row_str + '\n')
+
+    pbar.close()
+
+def runInParallel(function_name, list_of_gribfiles, gridstep, observatory=None, lat=None, lon=None):
     if multiprocessing.cpu_count() == 4:
         max_cpus = 2
     elif multiprocessing.cpu_count() >= 10:
-        max_cpus = 5
+        max_cpus = 10
     elif multiprocessing.cpu_count() == 1:
         max_cpus = 1
     else:
@@ -470,7 +626,10 @@ def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
         sub_list_of_gribfiles = list_of_gribfiles[first_element:first_element + max_cpus]
         proc = []
         for f in sub_list_of_gribfiles:
-            p = Process(target=function_name, args=(f, observatory, gridstep))
+            if observatory:
+                p = Process(target=function_name, args=(f, gridstep, observatory, lat, lon))
+            elif lat and lon:
+                p = Process(target=function_name, args=(f, gridstep, observatory, lat, lon))
             proc.append(p)
             p.start()
         for p in proc:
@@ -479,16 +638,43 @@ def runInParallel(function_name, list_of_gribfiles, observatory, gridstep):
         if first_element + max_cpus > len(list_of_gribfiles):
             sub_list_of_gribfiles = list_of_gribfiles[first_element:]
             for f in sub_list_of_gribfiles:
-                p = Process(target=readgribfile2text, args=(f, observatory, gridstep))
+                if observatory:
+                    p = Process(target=function_name, args=(f, gridstep, observatory, lat, lon))
+                elif lat and lon:
+                    p = Process(target=function_name, args=(f, gridstep, observatory, lat, lon))
                 proc.append(p)
                 p.start()
             for p in proc:
                 p.join()
 
+def merge_txt_from_grib(txtfile, output_file='merged_from_grib.txt'):
+    lf = open(txtfile, 'r')
+    outfile = open(output_file, 'w')
+
+    line = lf.readline()
+    first = True
+    while line:
+        datafile = open(line[:-1], 'r')
+        if first:
+            dataline = datafile.readline()
+        else:
+            datafile.readline()
+            dataline = datafile.readline()
+
+        while dataline:
+            print(dataline[:-1], file=outfile)
+            dataline = datafile.readline()
+        first = False
+        datafile.close()
+        line = lf.readline()
+    lf.close()
+    outfile.close()
+
+
 def print_help():
     print("Usage: python grib_utils.py <options>")
     print("Options are:")
-    print("        -r         <grib_file_name> <observatory> <gridstep>")
+    print("        -r         <grib_file_name> <gridstep> <observatory>")
     print("                   note that <gridstep> is 0.75deg for ECMWF data")
     print("                   and 1.0 deg for GDAS data")
     print("        -rmagic    <grib_file_name> <observatory> <gridstep>")
@@ -496,6 +682,7 @@ def print_help():
     print("                   and 1.0 deg for GDAS data")
     print("        -mjd       <mjd>")
     print("        -date      <yyyy-mm-dd-hh>")
+    print("        -merge or -m <list_of_txt_files> <output_name>")
     print(" ")
     print("                   Note: with the -r or -rmagic option, if a txt file")
     print("                   containing a list of grib files is passed instead")
@@ -511,7 +698,11 @@ if __name__ == "__main__":
     else:
         if sys.argv[1] == '-r':
             if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
-                readgribfile2text(sys.argv[2], sys.argv[3], float(sys.argv[4]))
+                if len(sys.argv) == 5:
+                    readgribfile2text(sys.argv[2], float(sys.argv[3]), sys.argv[4])
+                elif len(sys.argv) == 6:
+                    readgribfile2text(sys.argv[2], float(sys.argv[3]), observatory=None, lat=float(sys.argv[4]),
+                                      lon=float(sys.argv[5]))
             elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
                 list_file = open(sys.argv[2], 'r')
                 line = list_file.readline()
@@ -519,11 +710,19 @@ if __name__ == "__main__":
                 while line:
                     list_of_files.append(line[:-1])
                     line = list_file.readline()
-                runInParallel(readgribfile2text, list_of_files, sys.argv[3], float(sys.argv[4]))
+                if len(sys.argv) == 5:
+                    runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
+                elif len(sys.argv) == 6:
+                    runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]),
+                                  lat=float(sys.argv[4]), lon=float(sys.argv[5]))
 
         elif sys.argv[1] == '-rmagic':
             if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
-                readgribfile2magic(sys.argv[2], sys.argv[3], float(sys.argv[4]))
+                if len(sys.argv) == 5:
+                    readgribfile2magic(sys.argv[2], float(sys.argv[3]), sys.argv[4])
+                elif len(sys.argv) == 6:
+                    readgribfile2magic(sys.argv[2], float(sys.argv[3]), observatory=None, lat=float(sys.argv[4]),
+                                      lon=float(sys.argv[5]))
             elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
                 list_file = open(sys.argv[2], 'r')
                 line = list_file.readline()
@@ -531,7 +730,11 @@ if __name__ == "__main__":
                 while line:
                     list_of_files.append(line[:-1])
                     line = list_file.readline()
-                runInParallel(readgribfile2magic, list_of_files, sys.argv[3], float(sys.argv[4]))
+                if len(sys.argv) == 5:
+                    runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
+                elif len(sys.argv) == 6:
+                    runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]),
+                                  lat=float(sys.argv[4]), lon=float(sys.argv[5]))
 
         elif sys.argv[1] == '-mjd':
             print(mjd2date(float(sys.argv[2])))
@@ -540,8 +743,14 @@ if __name__ == "__main__":
             date = sys.argv[2].split('-')
             print(date2mjd(int(date[0]), int(date[1]), int(date[2]), int(date[3])))
 
+        elif sys.argv[1] == '-merge' or sys.argv[1] == '-m':
+            if len(sys.argv) == 3:
+                merge_txt_from_grib(sys.argv[2])
+            else:
+                merge_txt_from_grib(sys.argv[2], output_file=sys.argv[3])
+
         else:
             print('Wrong option...')
+            print(len(sys.argv))
             print_help()
             sys.exit()
-

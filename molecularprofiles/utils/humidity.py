@@ -94,7 +94,7 @@ def SaturationVaporPressureDavis(T):
     Returns:
         saturation vapor pressure in hPa
     """
-    E = exp(1.2378847e-5*T*T - 1.9121316e-2*T + 33.93711047 - 6343.1645/T)
+    E = np.exp(1.2378847e-5*T*T - 1.9121316e-2*T + 33.93711047 - 6343.1645/T)
     return E/100   # divide by 100 for hPa
 
 
