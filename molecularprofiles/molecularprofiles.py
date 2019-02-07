@@ -241,7 +241,7 @@ class MolecularProfile:
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
 
 
-    def compute_mass_density(self, air='moist', interpolate=False):
+    def _compute_mass_density(self, air='moist', interpolate=False):
         """
         Uses the functions DensityMoistAir, MolarFractionWaterVapor and Compressibility
         from the LIDAR_analysis module humidity.py
@@ -275,7 +275,7 @@ class MolecularProfile:
         self.dataframe['nexp_mass_' + air] = self.dataframe['n_mass_'+air] / rho_s * np.exp(self.dataframe.h / self.Hs)
 
 
-    def compute_diff_wrt_model(self):
+    def _compute_diff_wrt_model(self):
 
         diff_with_magic = []
         diff_with_prod3 = []
@@ -303,8 +303,8 @@ class MolecularProfile:
 
     def plot_moist_dry_comparison(self, min_humidity=0.):
 
-        self.compute_mass_density(air='dry')
-        self.compute_mass_density(air='moist')
+        self._compute_mass_density(air='dry')
+        self._compute_mass_density(air='moist')
         
         dfmin_rh = self.dataframe[self.dataframe.RH > min_humidity]
         rel_dif = (dfmin_rh.nexp_mass_dry - dfmin_rh.nexp_mass_moist) * 100. / dfmin_rh.nexp_mass_dry
@@ -405,7 +405,7 @@ class MolecularProfile:
         :return:
         """
 
-        self.compute_diff_wrt_model()
+        self._compute_diff_wrt_model()
 
         print('plotting averaged data values for selected epoch')
         fig = plt.figure()
@@ -440,7 +440,7 @@ class MolecularProfile:
         for e in epochs:
             self.get_data(e)
 
-            self.compute_diff_wrt_model()
+            self._compute_diff_wrt_model()
 
             print('plotting averaged data values for selected epoch')
             if model == 'MW':
