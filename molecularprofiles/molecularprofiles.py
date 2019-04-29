@@ -15,17 +15,16 @@
 #-----------------------------------------------------------------------------------
 
 import os
-import os.path
 import sys
 import matplotlib.pyplot as plt
 from tqdm import *
 from matplotlib.ticker import MultipleLocator
 from scipy.interpolate import interp1d
-from molecularprofiles.utils.observatory import *
+#from molecularprofiles.utils.observatory import *
 from molecularprofiles.utils.grib_utils import *
 from molecularprofiles.utils.plot_settings import settings
-from molecularprofiles.utils.magic_winter_profile import heightmw, rhomw
-from molecularprofiles.utils.meteorological_constants import *
+from molecularprofiles.aux.magic_winter_profile import heightmw, rhomw
+from molecularprofiles.aux.meteorological_constants import *
 from LIDAR_Analysis.humidity import *
 from LIDAR_Analysis.rayleigh import Rayleigh
 import pandas as pd
@@ -82,7 +81,7 @@ class MolecularProfile:
         # TODO: change the directory definition. Make an import since everything is now recognised as package
 
         MOLECULARPROFILES_DIR = os.environ.get('MOLECULARPROFILES_DIR')
-        PROD3_DIR = MOLECULARPROFILES_DIR + 'molecularprofiles/Prod3b_simulations/'
+        PROD3_DIR = MOLECULARPROFILES_DIR + '/molecularprofiles/aux/Prod3b_simulations'
         # Prod3 Simulations (based on NRLMSISE)
         if self.observatory == 'north':
             prod3 = open(PROD3_DIR + '/atmprof36_lapalma.dat')
@@ -239,7 +238,6 @@ class MolecularProfile:
         self.wind_direction_avgs = avg_std_dataframe(self.group_by_p, 'wind_direction')
         self.RH_avgs = avg_std_dataframe(self.group_by_p, 'RH')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
-
 
     def _compute_mass_density(self, air='moist', interpolate=False):
         """
@@ -626,7 +624,7 @@ class MolecularProfile:
         with open(outfile, 'w') as f:
 
             f.write("# Atmospheric Model ECMWF year/month/day   hour h\n")#.format(**datedict))
-            f.write("# Col. #1          #2           #3            #4\n")
+            f.write("#Col. #1          #2           #3            #4        [ #5 ]        [ #6 ]       [ # 7 ]\n")
             f.write("# Alt [km]    rho [g/cm^3] thick [g/cm^2]    n-1        T [k]       p [mbar]      pw / p\n")
 
             density = self.n_avgs[0].sort_index(ascending=False).values
