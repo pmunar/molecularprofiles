@@ -12,5 +12,5 @@
 
 echo "Adding molecularprofiles to PATH and PYTHONPATH"
 export PATH=$PATH:$MOLECULARPROFILES_DIR/molecularprofiles/utils/:$MOLECULARPROFILES_DIR/molecularprofiles/ecmwf_scripts/:$MOLECULARPROFILES_DIR/molecularprofiles/gdas_scripts/
-export PYTHONPATH=$MOLECULARPROFILES_DIR:$PYTHONPATH
+export PYTHONPATH=$MOLECULARPROFILES_DIR:$MOLECULARPROFILES_DIR/molecularprofiles/:$MOLECULARPROFILES_DIR/molecularprofiles/utils/$PYTHONPATH
 
