@@ -237,12 +237,11 @@ class MolecularProfile:
 
         # Various averaged values obtained after filtering (if no filter, averages are made over the whole dataframe)
         self.group_by_p = self.dataframe.groupby('P')
-        #self.dataframe['n_exp'] = self.dataframe.n /self.Ns * np.exp(self.dataframe.h /self.Hs)
         self.h_avgs = avg_std_dataframe(self.group_by_p, 'h')
         self.n_avgs = avg_std_dataframe(self.group_by_p, 'n')
         self.Temp_avgs = avg_std_dataframe(self.group_by_p, 'Temp')
-        #self.wind_speed_avgs = avg_std_dataframe(self.group_by_p, 'wind_speed')
-        #self.wind_direction_avgs = avg_std_dataframe(self.group_by_p, 'wind_direction')
+        self.wind_speed_avgs = avg_std_dataframe(self.group_by_p, 'wind_speed')
+        self.wind_direction_avgs = avg_std_dataframe(self.group_by_p, 'wind_direction')
         self.RH_avgs = avg_std_dataframe(self.group_by_p, 'RH')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
 
