@@ -135,7 +135,8 @@ class MolecularProfile:
             return interpolated_param
 
     def get_data(self, epoch='all', years=None, months=None, hours=None, altitude=[], select_good_weather=False,
-                 RH_lim=100., W_lim = 10000.):
+                 RH_lim=100., W_lim = 10000., epoch_by_density=False, n_exp_minvalue=0., n_exp_maxvalue=1.,
+                 epoch_by_density_name='winter'):
 
         """
         Function that reads ECMWF or GDAS txt input files and returns quantities ready to plot.
@@ -177,7 +178,7 @@ class MolecularProfile:
         self.epoch = epoch
 
         self.dataframe = pd.read_csv(self.data_file.split('.')[0] + '.txt', sep=' ', comment='#')
-
+        self.dataframe['n_exp'] = self.dataframe.n / self.Ns * np.exp(self.dataframe.h / self.Hs)
         # Altitude filtering:
         if altitude != [] and len(altitude) == 2 and altitude[0] < altitude[1]:
             altitude_cond = (self.dataframe.h >= altitude[0]) & (self.dataframe.h < altitude[1])
@@ -219,6 +220,12 @@ class MolecularProfile:
                 else:
                     self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
 
+        if epoch_by_density:
+            self.epoch = epoch_by_density_name
+            selection = self.dataframe[(self.dataframe.n_exp > n_exp_minvalue) & (self.dataframe.n_exp < n_exp_maxvalue)
+            & (self.dataframe.P == 125)]
+            self.dataframe = self.dataframe[self.dataframe.MJD.isin(selection.MJD)]
+
         # Filtering by good weather conditions:
         if select_good_weather:
             self.dataframe['W'] = np.sqrt(self.dataframe.U ** 2. + self.dataframe.V ** 2.)
@@ -230,12 +237,12 @@ class MolecularProfile:
 
         # Various averaged values obtained after filtering (if no filter, averages are made over the whole dataframe)
         self.group_by_p = self.dataframe.groupby('P')
-        self.dataframe['n_exp'] = self.dataframe.n /self.Ns * np.exp(self.dataframe.h /self.Hs)
+        #self.dataframe['n_exp'] = self.dataframe.n /self.Ns * np.exp(self.dataframe.h /self.Hs)
         self.h_avgs = avg_std_dataframe(self.group_by_p, 'h')
         self.n_avgs = avg_std_dataframe(self.group_by_p, 'n')
         self.Temp_avgs = avg_std_dataframe(self.group_by_p, 'Temp')
-        self.wind_speed_avgs = avg_std_dataframe(self.group_by_p, 'wind_speed')
-        self.wind_direction_avgs = avg_std_dataframe(self.group_by_p, 'wind_direction')
+        #self.wind_speed_avgs = avg_std_dataframe(self.group_by_p, 'wind_speed')
+        #self.wind_direction_avgs = avg_std_dataframe(self.group_by_p, 'wind_direction')
         self.RH_avgs = avg_std_dataframe(self.group_by_p, 'RH')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
 
