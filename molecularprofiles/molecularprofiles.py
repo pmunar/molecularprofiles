@@ -544,14 +544,14 @@ class MolecularProfile:
         fig.savefig('comparison_' + self.output_plot_name + '_' + self.observatory + '.' + fmt, bbox_inches='tight')
         fig.savefig('model_comparison_' + self.output_plot_name + '_' + self.observatory + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_epoch_comparison(self, param, epochs, hour=None, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
+    def plot_epoch_comparison(self, epochs, epoch_by_density=True, hour=None, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
         fig, ax = plt.subplots(2, 1, sharex=True)
         plt.subplots_adjust(hspace=0)
         for e in epochs:
             if hour:
-                self.get_data(e, hours=[hour])
+                self.get_data(e, hours=[hour], epoch_by_density=epoch_by_density)
             else:
-                self.get_data(e)
+                self.get_data(e, epoch_by_density=epoch_by_density)
             color = next(ax[0]._get_lines.prop_cycler)['color']
             if interpolate:
                 raw_n_exp, avg_n_exp, e_n_exp, pp_n_exp, pm_n_exp = self._interpolate_param_to_h('n_exp', self.x)
