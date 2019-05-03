@@ -211,7 +211,7 @@ class MolecularProfile:
             self.dataframe = select_dataframe_by_month(self.dataframe, months)
         elif hours:
             self.dataframe = select_dataframe_by_hour(self.dataframe, hours)
-        if not years and not months:
+        if not years and not months and not epoch_by_density:
             if epoch != 'all':
                 if self.observatory == 'north':
                     self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
