@@ -114,7 +114,7 @@ def select_new_epochs_dataframe_density_north(df, epoch_text):
     elif epoch_text == 'intermediate':
         condition = df[(df.n_exp < 0.88) & (df.n_exp > 0.8375) & (self.dataframe.P == 125)]
     new_df = df[df.MJD.isin(condition)]
-        return new_df
+    return new_df
 
 def select_new_epochs_dataframe_density_south(df, epoch_text):
     if epoch_text == 'summer':
@@ -122,7 +122,7 @@ def select_new_epochs_dataframe_density_south(df, epoch_text):
     elif epoch_text == 'winter':
         condition = df[(df.n_exp < 0.88) & (self.dataframe.P == 125)]
     new_df = df[df.MJD.isin(condition)]
-        return new_df
+    return new_df
 
 def select_epoch(file, epoch_text):
     global months, month
