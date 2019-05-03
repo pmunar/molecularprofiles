@@ -108,19 +108,19 @@ def select_new_epochs_dataframe_south(df,epoch_text):
 
 def select_new_epochs_dataframe_density_north(df, epoch_text):
     if epoch_text == 'summer':
-        condition = df[(df.n_exp > 0.88) & (self.dataframe.P == 125)]
+        condition = df[(df.n_exp > 0.88) & (df.P == 125)]
     elif epoch_text == 'winter':
-        condition = df[(df.n_exp < 0.8375) & (self.dataframe.P == 125)]
+        condition = df[(df.n_exp < 0.8375) & (df.P == 125)]
     elif epoch_text == 'intermediate':
-        condition = df[(df.n_exp < 0.88) & (df.n_exp > 0.8375) & (self.dataframe.P == 125)]
+        condition = df[(df.n_exp < 0.88) & (df.n_exp > 0.8375) & (df.P == 125)]
     new_df = df[df.MJD.isin(condition)]
     return new_df
 
 def select_new_epochs_dataframe_density_south(df, epoch_text):
     if epoch_text == 'summer':
-        condition = df[(df.n_exp > 0.88) & (self.dataframe.P == 125)]
+        condition = df[(df.n_exp > 0.88) & (df.P == 125)]
     elif epoch_text == 'winter':
-        condition = df[(df.n_exp < 0.88) & (self.dataframe.P == 125)]
+        condition = df[(df.n_exp < 0.88) & (df.P == 125)]
     new_df = df[df.MJD.isin(condition)]
     return new_df
 
