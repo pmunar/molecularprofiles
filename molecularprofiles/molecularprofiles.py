@@ -221,10 +221,17 @@ class MolecularProfile:
                     self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
 
         if epoch_by_density:
-            self.epoch = epoch_by_density_name
-            selection = self.dataframe[(self.dataframe.n_exp > n_exp_minvalue) & (self.dataframe.n_exp < n_exp_maxvalue)
-            & (self.dataframe.P == 125)]
-            self.dataframe = self.dataframe[self.dataframe.MJD.isin(selection.MJD)]
+            if epoch != 'all':
+                if self.observatory == 'north':
+                    self.dataframe = select_new_epochs_dataframe_density_north(self.dataframe, epoch)
+                elif self.observatory == 'south':
+                    self.dataframe = select_new_epochs_dataframe_density_south(self.dataframe, epoch)
+                else:
+                    self.dataframe = select_new_epochs_dataframe_density_north(self.dataframe, epoch)
+            #self.epoch = epoch_by_density_name
+            #selection = self.dataframe[(self.dataframe.n_exp > n_exp_minvalue) & (self.dataframe.n_exp < n_exp_maxvalue)
+            #& (self.dataframe.P == 125)]
+            #self.dataframe = self.dataframe[self.dataframe.MJD.isin(selection.MJD)]
 
         # Filtering by good weather conditions:
         if select_good_weather:
