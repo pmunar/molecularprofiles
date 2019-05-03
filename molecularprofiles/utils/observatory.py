@@ -118,10 +118,10 @@ def select_new_epochs_dataframe_density_north(df, epoch_text):
 
 def select_new_epochs_dataframe_density_south(df, epoch_text):
     if epoch_text == 'summer':
-        condition = (df.n_exp > 0.88)
+        condition = df[(df.n_exp > 0.88) & (self.dataframe.P == 125)]
     elif epoch_text == 'winter':
-        condition = (df.n_exp < 0.88)
-    new_df = df[condition]
+        condition = df[(df.n_exp < 0.88) & (self.dataframe.P == 125)]
+    new_df = df[df.MJD.isin(condition)]
         return new_df
 
 def select_epoch(file, epoch_text):
