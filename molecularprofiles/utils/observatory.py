@@ -100,15 +100,29 @@ def select_new_epochs_dataframe_south(df,epoch_text):
         condition = (df.month == epoch[0]) | (df.month == epoch[1]) | (df.month == epoch[2]) | (df.month == epoch[3]) |\
                     ((df.month == epoch[4]) & (df.day < 15)) | ((df.month == epoch[5]) & (df.day > 15)) | \
                     (df.month == epoch[6]) | (df.month == epoch[7])
-        new_df = df[condition]
-
     elif epoch_text == 'winter':
         condition = ((df.month == epoch[0]) & (df.day > 15)) | (df.month == epoch[1]) | (df.month == epoch[2]) | \
                     (df.month == epoch[3]) | (df.month == epoch[4]) | ((df.month == epoch[5]) & (df.day < 15))
-        new_df = df[condition]
-
+    new_df = df[condition]
     return new_df
 
+def select_new_epochs_dataframe_density_north(df, epoch_text):
+    if epoch_text == 'summer':
+        condition = df[(df.n_exp > 0.88) & (self.dataframe.P == 125)]
+    elif epoch_text == 'winter':
+        condition = df[(df.n_exp < 0.8375) & (self.dataframe.P == 125)]
+    elif epoch_text == 'intermediate':
+        condition = df[(df.n_exp < 0.88) & (df.n_exp > 0.8375) & (self.dataframe.P == 125)]
+    new_df = df[df.MJD.isin(condition)]
+        return new_df
+
+def select_new_epochs_dataframe_density_south(df, epoch_text):
+    if epoch_text == 'summer':
+        condition = (df.n_exp > 0.88)
+    elif epoch_text == 'winter':
+        condition = (df.n_exp < 0.88)
+    new_df = df[condition]
+        return new_df
 
 def select_epoch(file, epoch_text):
     global months, month
