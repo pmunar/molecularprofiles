@@ -11,6 +11,9 @@ import multiprocessing
 from multiprocessing import Process
 import os
 from tqdm import tqdm
+import argparse
+
+
 
 def ddmmss2deg(deg, min, sec):
     """
@@ -24,6 +27,7 @@ def ddmmss2deg(deg, min, sec):
     else:
         angle = deg - (min / 60.) - (sec / 3600.)
     return angle
+
 
 def GetAltitudeFromGeopotential(geop_height, latitude_obs):
     """
@@ -256,7 +260,8 @@ def computedensity(p,T):
 
 def compute_wind_direction(u,v):
     angle = np.arctan2(-1*u,-1*v)*180./np.pi
-    angle[angle < 0.] += 360.
+    if angle < 0.:
+        angle += 360.
     direction = angle
     return direction
 
@@ -284,17 +289,21 @@ def select_dataframe_epoch(df, epoch_text):
     #     new_df = df[condition]
     # return new_df
 
+
 def select_dataframe_by_year(df, years):
     new_df = df[df.year.isin(years)]
     return new_df
+
 
 def select_dataframe_by_month(df, months):
     new_df = df[df.month.isin(months)]
     return new_df
 
+
 def select_dataframe_by_hour(df, hours):
     new_df = df[df.hour.isin(hours)]
     return new_df
+
 
 def create_wind_speed_dataframe(df, normalized=False):
     wd_centre_bins = np.arange(7.5,360, 15)
@@ -320,6 +329,7 @@ def create_wind_speed_dataframe(df, normalized=False):
     else:
         df_winds['direction'] = wd_centre_bins
         return df_winds
+
 
 def plot_wind_rose(df, name_tag='my_wind_rose'):
     data = []
@@ -617,66 +627,93 @@ def print_help():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2 or sys.argv[1] == '-h' or sys.argv[1] == '-help':
-        print_help()
-        sys.exit()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('grib_file', help='the grib file to process')
+    parser.add_argument('gridstep', help='the gridstep in degrees. If GDAS or GFS data, gridstep=0.75 deg; \n'
+                                         'If ECMWF data, gridstep=1.0 deg', type=float)
+    parser.add_argument('-observatory', help='north or south. If no observatory is provided, then the system asks \n'
+                                            'for the coordinates of interest')
+    parser.add_argument('-coordinates', help='latitude and longitude of the place \n '
+                                             'of interest, in degrees', type=tuple)
+    parser.add_argument('-r', help='<grib_file_name> <gridstep> <observatory> \n '
+                                   'note that <gridstep> is 0.75deg for ECMWF data \n'
+                                   'and 1.0 deg for GDAS data. If a txt file containing \n '
+                                   'a list of grib files is passed instead of a single \n '
+                                   'grib file, the processing is run in parallel \n'
+                                   'using a certain number of CPUs')
+    parser.add_argument('-rmagic', help='<grib_file_name> <observatory> <gridstep> \n '
+                                   'note that <gridstep> is 0.75deg for ECMWF data \n '
+                                   'and 1.0 deg for GDAS data.  If a txt file containing \n '
+                                   'a list of grib files is passed instead of a single \n '
+                                   'grib file, the processing is run in parallel \n'
+                                   'using a certain number of CPUs')
+    parser.add_argument('-mjd', help= 'if selected, transforms MJD information into date in YYYY MM DD HH format')
+    parser.add_argument('-date', help='if selected, transforms date information into date in MJD format')
+    parser.add_argument('-merge', '-m', help='followed by a filename containing a list of txt files, \n '
+                                       'it merges them into a single txt file')
+
+    args = parser.parse_args()
+
+#    if len(sys.argv) < 2 or sys.argv[1] == '-h' or sys.argv[1] == '-help':
+#        print_help()
+#        sys.exit()
+
+#    else:
+    if args.r == '-r':
+        if args.grib_file.split('.')[1] == 'grib' or args.grib_file.split('.')[1] == 'grb':
+            if len(sys.argv) == 5:
+                readgribfile2text(sys.argv[2], float(sys.argv[3]), sys.argv[4])
+            elif len(sys.argv) == 6:
+                readgribfile2text(args.grib_file, float(args.gridstep), observatory=None, lat=float(sys.argv[4]), lon=float(sys.argv[5]))
+        elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
+            list_file = open(sys.argv[2], 'r')
+            line = list_file.readline()
+            list_of_files = []
+            while line:
+                list_of_files.append(line[:-1])
+                line = list_file.readline()
+            if len(sys.argv) == 5:
+                runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
+            elif len(sys.argv) == 6:
+                runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]),
+                              lat=float(sys.argv[4]), lon=float(sys.argv[5]))
+
+    elif sys.argv[1] == '-rmagic':
+        if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
+            if len(sys.argv) == 5:
+                readgribfile2magic(sys.argv[2], float(sys.argv[3]), sys.argv[4])
+            elif len(sys.argv) == 6:
+                readgribfile2magic(sys.argv[2], float(sys.argv[3]), observatory=None, lat=float(sys.argv[4]),
+                                  lon=float(sys.argv[5]))
+        elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
+            list_file = open(sys.argv[2], 'r')
+            line = list_file.readline()
+            list_of_files = []
+            while line:
+                list_of_files.append(line[:-1])
+                line = list_file.readline()
+            if len(sys.argv) == 5:
+                runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
+            elif len(sys.argv) == 6:
+                runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]),
+                              lat=float(sys.argv[4]), lon=float(sys.argv[5]))
+
+    elif args.mjd:
+        print(mjd2date(float(sys.argv[2])))
+
+    elif args.date:
+        date = sys.argv[2].split('-')
+        print(date2mjd(int(date[0]), int(date[1]), int(date[2]), int(date[3])))
+
+    elif args.merge:
+        if len(sys.argv) == 3:
+            merge_txt_from_grib(sys.argv[2])
+        else:
+            merge_txt_from_grib(sys.argv[2], output_file=sys.argv[3])
 
     else:
-        if sys.argv[1] == '-r':
-            if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
-                if len(sys.argv) == 5:
-                    readgribfile2text(sys.argv[2], float(sys.argv[3]), sys.argv[4])
-                elif len(sys.argv) == 6:
-                    readgribfile2text(sys.argv[2], float(sys.argv[3]), observatory=None, lat=float(sys.argv[4]),
-                                      lon=float(sys.argv[5]))
-            elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
-                list_file = open(sys.argv[2], 'r')
-                line = list_file.readline()
-                list_of_files = []
-                while line:
-                    list_of_files.append(line[:-1])
-                    line = list_file.readline()
-                if len(sys.argv) == 5:
-                    runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
-                elif len(sys.argv) == 6:
-                    runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]),
-                                  lat=float(sys.argv[4]), lon=float(sys.argv[5]))
-
-        elif sys.argv[1] == '-rmagic':
-            if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
-                if len(sys.argv) == 5:
-                    readgribfile2magic(sys.argv[2], float(sys.argv[3]), sys.argv[4])
-                elif len(sys.argv) == 6:
-                    readgribfile2magic(sys.argv[2], float(sys.argv[3]), observatory=None, lat=float(sys.argv[4]),
-                                      lon=float(sys.argv[5]))
-            elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
-                list_file = open(sys.argv[2], 'r')
-                line = list_file.readline()
-                list_of_files = []
-                while line:
-                    list_of_files.append(line[:-1])
-                    line = list_file.readline()
-                if len(sys.argv) == 5:
-                    runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
-                elif len(sys.argv) == 6:
-                    runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]),
-                                  lat=float(sys.argv[4]), lon=float(sys.argv[5]))
-
-        elif sys.argv[1] == '-mjd':
-            print(mjd2date(float(sys.argv[2])))
-
-        elif sys.argv[1] == '-date':
-            date = sys.argv[2].split('-')
-            print(date2mjd(int(date[0]), int(date[1]), int(date[2]), int(date[3])))
-
-        elif sys.argv[1] == '-merge' or sys.argv[1] == '-m':
-            if len(sys.argv) == 3:
-                merge_txt_from_grib(sys.argv[2])
-            else:
-                merge_txt_from_grib(sys.argv[2], output_file=sys.argv[3])
-
-        else:
-            print('Wrong option...')
-            print(len(sys.argv))
-            print_help()
-            sys.exit()
+        print('Wrong option...')
+        print(len(sys.argv))
+        print_help()
+        sys.exit()
