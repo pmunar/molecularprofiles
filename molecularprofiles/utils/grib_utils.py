@@ -1,4 +1,4 @@
-#!/home/pmunar/anaconda3/bin/python3.6
+#!/usr/bin/env python
 
 from builtins import str
 import numpy as np
@@ -360,8 +360,8 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
     Output: a txt file with the exact name as the input file name, but with .txt as extension
     """
 
-    if os.path.exists((file_name).split('.')[0] + '.txt'):
-        print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + '.txt'))
+    if os.path.exists(os.path.splitext(file_name)[0] + '.txt'):
+        print('Output file %s already exists. Aborting.' % (os.path.splitext(file_name)[0] + '.txt'))
         sys.exit()
 
     vn, vsn, datadict = get_grib_file_data(file_name)
@@ -452,8 +452,8 @@ def readgribfile2magic(file_name, gridstep, observatory=None, lat=None, lon=None
     Output: a txt file with the exact name as the input file name, but with .txt as extension in a format that can be
             read by MARS
     """
-    if os.path.exists((file_name).split('.')[0] + 'MAGIC_format.txt'):
-        print('Output file %s already exists. Aborting.' % ((file_name).split('.')[0] + 'MAGIC_format.txt'))
+    if os.path.exists(os.path.splitext(file_name)[0] + '.txt'):
+        print('Output file %s already exists. Aborting.' % (os.path.splitext(file_name)[0] + '.txt'))
         sys.exit()
 
     vn, vsn, datadict = get_grib_file_data(file_name)
@@ -547,7 +547,7 @@ def readgribfile2magic_fromtxt(txt_file):
 
     pbar.close()
 
-def runInParallel(function_name, list_of_gribfiles, gridstep, observatory=None, lat=None, lon=None):
+def runInParallel(function_name, file_list, gridstep, observatory=None, lat=None, lon=None):
     if multiprocessing.cpu_count() == 4:
         max_cpus = 2
     elif multiprocessing.cpu_count() >= 10:
@@ -556,6 +556,12 @@ def runInParallel(function_name, list_of_gribfiles, gridstep, observatory=None, 
         max_cpus = 1
     else:
         max_cpus = multiprocessing.cpu_count() - 1
+    fname = open(file_list)
+    line = fname.readline()
+    list_of_gribfiles = []
+    while line:
+        list_of_gribfiles.append(line[:-1])
+        line = fname.readline()
 
     first_element = 0
     while first_element + max_cpus <= len(list_of_gribfiles):
@@ -626,94 +632,80 @@ def print_help():
     print("                   using a certain number of CPU's")
 
 
+#if __name__ == "__main__":
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-g', '--grib_file', help='the grib file to process')
+parser.add_argument('-gridstep', nargs=1, help='the gridstep in degrees. If GDAS or GFS data, gridstep=1.0 deg; '
+                                                   'If ECMWF data, gridstep=0.75 deg', type=float)
+parser.add_argument('-o', '--observatory', nargs=1, default='north', help='north or south. If no observatory is provided, '
+                                                                 'then the system asks for the coordinates of interest')
+parser.add_argument('-c', '--coordinates', nargs=2, help='latitude and longitude of the place '
+                                                                               'of interest, in degrees', type=float)
+parser.add_argument('-r', action='store_true', help='<grib_file_name> <gridstep> <observatory> \n '
+                               'note that <gridstep> is 0.75deg for ECMWF data \n'
+                               'and 1.0 deg for GDAS data. If a txt file containing \n '
+                               'a list of grib files is passed instead of a single \n '
+                               'grib file, the processing is run in parallel \n'
+                               'using a certain number of CPUs')
+parser.add_argument('-rmagic', action='store_true', help='<grib_file_name> <observatory> <gridstep> \n '
+                               'note that <gridstep> is 0.75deg for ECMWF data \n '
+                               'and 1.0 deg for GDAS data.  If a txt file containing \n '
+                               'a list of grib files is passed instead of a single \n '
+                               'grib file, the processing is run in parallel \n'
+                               'using a certain number of CPUs')
+parser.add_argument('--parallel', action='store_true', help='if a txt file containing a list of grib files is passed as -g option,'
+                                             'it opens them and extracts information in parallel, one grib file per'
+                                             'CPU')
+parser.add_argument('-mjd', help= 'if selected, transforms MJD information into date in YYYY MM DD HH format', type=float)
+parser.add_argument('-date', help='if selected, transforms date information into MJD format', type=str)
+parser.add_argument('-m', '-merge', nargs='+', help='followed by a filename containing a list of txt files, \n '
+                                   'it merges them into a single txt file')
+
+
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('grib_file', help='the grib file to process')
-    parser.add_argument('gridstep', help='the gridstep in degrees. If GDAS or GFS data, gridstep=0.75 deg; \n'
-                                         'If ECMWF data, gridstep=1.0 deg', type=float)
-    parser.add_argument('-observatory', help='north or south. If no observatory is provided, then the system asks \n'
-                                            'for the coordinates of interest')
-    parser.add_argument('-coordinates', help='latitude and longitude of the place \n '
-                                             'of interest, in degrees', type=tuple)
-    parser.add_argument('-r', help='<grib_file_name> <gridstep> <observatory> \n '
-                                   'note that <gridstep> is 0.75deg for ECMWF data \n'
-                                   'and 1.0 deg for GDAS data. If a txt file containing \n '
-                                   'a list of grib files is passed instead of a single \n '
-                                   'grib file, the processing is run in parallel \n'
-                                   'using a certain number of CPUs')
-    parser.add_argument('-rmagic', help='<grib_file_name> <observatory> <gridstep> \n '
-                                   'note that <gridstep> is 0.75deg for ECMWF data \n '
-                                   'and 1.0 deg for GDAS data.  If a txt file containing \n '
-                                   'a list of grib files is passed instead of a single \n '
-                                   'grib file, the processing is run in parallel \n'
-                                   'using a certain number of CPUs')
-    parser.add_argument('-mjd', help= 'if selected, transforms MJD information into date in YYYY MM DD HH format')
-    parser.add_argument('-date', help='if selected, transforms date information into date in MJD format')
-    parser.add_argument('-merge', '-m', help='followed by a filename containing a list of txt files, \n '
-                                       'it merges them into a single txt file')
-
     args = parser.parse_args()
-
-#    if len(sys.argv) < 2 or sys.argv[1] == '-h' or sys.argv[1] == '-help':
-#        print_help()
-#        sys.exit()
-
-#    else:
-    if args.r == '-r':
-        if args.grib_file.split('.')[1] == 'grib' or args.grib_file.split('.')[1] == 'grb':
-            if len(sys.argv) == 5:
-                readgribfile2text(sys.argv[2], float(sys.argv[3]), sys.argv[4])
-            elif len(sys.argv) == 6:
-                readgribfile2text(args.grib_file, float(args.gridstep), observatory=None, lat=float(sys.argv[4]), lon=float(sys.argv[5]))
-        elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
-            list_file = open(sys.argv[2], 'r')
-            line = list_file.readline()
-            list_of_files = []
-            while line:
-                list_of_files.append(line[:-1])
-                line = list_file.readline()
-            if len(sys.argv) == 5:
-                runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
-            elif len(sys.argv) == 6:
-                runInParallel(readgribfile2text, list_of_files, float(sys.argv[3]),
-                              lat=float(sys.argv[4]), lon=float(sys.argv[5]))
-
-    elif sys.argv[1] == '-rmagic':
-        if sys.argv[2].split('.')[1] == 'grib' or sys.argv[2].split('.')[1] == 'grb':
-            if len(sys.argv) == 5:
-                readgribfile2magic(sys.argv[2], float(sys.argv[3]), sys.argv[4])
-            elif len(sys.argv) == 6:
-                readgribfile2magic(sys.argv[2], float(sys.argv[3]), observatory=None, lat=float(sys.argv[4]),
-                                  lon=float(sys.argv[5]))
-        elif sys.argv[2].split('.')[1] == 'txt' or sys.argv[2].split('.')[1] == 'dat':
-            list_file = open(sys.argv[2], 'r')
-            line = list_file.readline()
-            list_of_files = []
-            while line:
-                list_of_files.append(line[:-1])
-                line = list_file.readline()
-            if len(sys.argv) == 5:
-                runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]), observatory=sys.argv[4])
-            elif len(sys.argv) == 6:
-                runInParallel(readgribfile2magic(), list_of_files, float(sys.argv[3]),
-                              lat=float(sys.argv[4]), lon=float(sys.argv[5]))
+    print(args)
+    if args.grib_file:
+        if args.observatory:
+            if args.grib_file.lower().endswith(('.grib','.grb', '.txt', '.dat')):
+                if args.r:
+                    readgribfile2text(args.grib_file, args.gridstep, observatory=args.observatory)
+                elif args.rmagic:
+                    readgribfile2magic(args.grib_file, args.gridstep, observatory=args.observatory)
+                elif args.r and args.parallel:
+                    runInParallel(readgribfile2text, args.grib_file, args.gridstep, observatory=args.observatory)
+                elif args.rmagic and args.p:
+                    runInParallel(readgribfile2magic, args.grib_file, args.gridstep, observatory=args.observatory)
+            else:
+                print('file extension not recognized. Exiting')
+                sys.exit()
+        elif not args.observatory and args.coordinates:
+            lat, lon = args.coordinates
+            if args.grib_file.lower().endswith(('.grib','.grb', '.txt', '.dat')):
+                if args.r:
+                    readgribfile2text(args.grib_file, args.gridstep, lat=lat, lon=lon)
+                elif args.rmagic:
+                    readgribfile2magic(args.grib_file, args.gridstep, lat=lat, lon=lon)
+                elif args.r and args.parallel:
+                    runInParallel(readgribfile2text, args.grib_file, args.gridstep, lat=lat, lon=lon)
+                elif args.rmagic and args.parallel:
+                    runInParallel(readgribfile2magic, args.grib_file, args.gridstep, lat=lat, lon=lon)
+            else:
+                print('file extension not recognized. Exiting')
+                sys.exit()
+        else:
+            print('Too many options. Please specify or observatory only, or coordinates only')
 
     elif args.mjd:
-        print(mjd2date(float(sys.argv[2])))
+        print(mjd2date(args.mjd))
 
     elif args.date:
-        date = sys.argv[2].split('-')
+        date = args.date.split('-')
         print(date2mjd(int(date[0]), int(date[1]), int(date[2]), int(date[3])))
 
     elif args.merge:
-        if len(sys.argv) == 3:
-            merge_txt_from_grib(sys.argv[2])
+        if type(args.merge) == list and len(args.merge) == 2:
+            merge_txt_from_grib(args.merge[0], output_file=args.merge[1])
         else:
-            merge_txt_from_grib(sys.argv[2], output_file=sys.argv[3])
-
-    else:
-        print('Wrong option...')
-        print(len(sys.argv))
-        print_help()
-        sys.exit()
+            merge_txt_from_grib(args.merge)
