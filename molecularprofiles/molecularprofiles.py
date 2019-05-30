@@ -25,6 +25,7 @@ from molecularprofiles.utils.grib_utils import *
 from molecularprofiles.utils.plot_settings import settings
 from molecularprofiles.aux.magic_winter_profile import heightmw, rhomw
 from molecularprofiles.aux.meteorological_constants import *
+from molecularprofiles.utils.dataframe_ops import *
 from LIDAR_Analysis.humidity import *
 from LIDAR_Analysis.rayleigh import Rayleigh
 import pandas as pd
@@ -135,8 +136,8 @@ class MolecularProfile:
             return interpolated_param
 
     def get_data(self, epoch='all', years=None, months=None, hours=None, altitude=[], select_good_weather=False,
-                 RH_lim=100., W_lim = 10000., epoch_by_density=False, n_exp_minvalue=0., n_exp_maxvalue=1.,
-                 epoch_by_density_name='winter'):
+                 RH_lim=100., W_lim = 10000., filter_by_density=False, n_exp_minvalue=0., n_exp_maxvalue=1.,
+                 filter_by_density_name='winter'):
 
         """
         Function that reads ECMWF or GDAS txt input files and returns quantities ready to plot.
@@ -166,7 +167,7 @@ class MolecularProfile:
             self.averages (
         """
 
-        if not os.path.exists((self.data_file).split('.')[0] + '.txt'):
+        if not os.path.exists(os.path.splitext(self.data_file)[0] + '.txt'):
             grib_file = self.data_file
             if self.data_server == 'GDAS':
                 gridstep = 1.0
@@ -177,8 +178,9 @@ class MolecularProfile:
         self.output_plot_name = self.tag_name + '_' + epoch
         self.epoch = epoch
 
-        self.dataframe = pd.read_csv(self.data_file.split('.')[0] + '.txt', sep=' ', comment='#')
+        self.dataframe = pd.read_csv(os.path.splitext(self.data_file)[0] + '.txt', sep=' ', comment='#')
         self.dataframe['n_exp'] = self.dataframe.n / self.Ns * np.exp(self.dataframe.h / self.Hs)
+
         # Altitude filtering:
         if altitude != [] and len(altitude) == 2 and altitude[0] < altitude[1]:
             altitude_cond = (self.dataframe.h >= altitude[0]) & (self.dataframe.h < altitude[1])
@@ -197,41 +199,30 @@ class MolecularProfile:
         # Filtering by years or months or hours
         if years:
             self.dataframe = select_dataframe_by_year(self.dataframe, years)
-            if months:
-                self.dataframe = select_dataframe_by_month(self.dataframe, months)
-            else:
-                if epoch != 'all':
-                    if self.observatory == 'north':
-                        self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
-                    elif self.observatory == 'south':
-                        self.dataframe = select_new_epochs_dataframe_south(self.dataframe, epoch)
-                    else:
-                        self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
-        elif months:
+        if months:
             self.dataframe = select_dataframe_by_month(self.dataframe, months)
-        elif hours:
+        if hours:
             self.dataframe = select_dataframe_by_hour(self.dataframe, hours)
-        if not years and not months and not epoch_by_density:
-            if epoch != 'all':
-                if self.observatory == 'north':
-                    self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
-                elif self.observatory == 'south':
-                    self.dataframe = select_new_epochs_dataframe_south(self.dataframe, epoch)
-                else:
-                    self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
 
-        if epoch_by_density:
+        # Filtering by epoch
+        elif epoch != 'all' and not years and not months:
+            if self.observatory == 'north':
+                self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
+            elif self.observatory == 'south':
+                self.dataframe = select_new_epochs_dataframe_south(self.dataframe, epoch)
+            else:
+                self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
+
+        # Filtering by n_exp density value
+        elif filter_by_density:
             if epoch != 'all':
                 if self.observatory == 'north':
                     self.dataframe = select_new_epochs_dataframe_density_north(self.dataframe, epoch)
                 elif self.observatory == 'south':
-                    self.dataframe = select_new_epochs_dataframe_density_south(self.dataframe, epoch)
+                     self.dataframe = select_new_epochs_dataframe_density_south(self.dataframe, epoch)
                 else:
-                    self.dataframe = select_new_epochs_dataframe_density_north(self.dataframe, epoch)
-            #self.epoch = epoch_by_density_name
-            #selection = self.dataframe[(self.dataframe.n_exp > n_exp_minvalue) & (self.dataframe.n_exp < n_exp_maxvalue)
-            #& (self.dataframe.P == 125)]
-            #self.dataframe = self.dataframe[self.dataframe.MJD.isin(selection.MJD)]
+                     self.dataframe = select_new_epochs_dataframe_density_north(self.dataframe, epoch)
+            self.epoch = filter_by_density_name
 
         # Filtering by good weather conditions:
         if select_good_weather:
@@ -381,6 +372,8 @@ class MolecularProfile:
         ax.plot(np.unique(self.dataframe.MJD), density_at_15km, 'o', color='#99CCFF', markersize=1.2,
                 label=self.data_server + ' ' + self.observatory, alpha=0.8)
 
+        # This is just to draw vertical lines at the beginning of each year and at half year, and put the
+        # value of the year
         xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
         yspan = ax.get_ylim()[1] - ax.get_ylim()[0]
 
@@ -544,14 +537,11 @@ class MolecularProfile:
         fig.savefig('comparison_' + self.output_plot_name + '_' + self.observatory + '.' + fmt, bbox_inches='tight')
         fig.savefig('model_comparison_' + self.output_plot_name + '_' + self.observatory + '.png', bbox_inches='tight', dpi=300)
 
-    def plot_epoch_comparison(self, epochs, epoch_by_density=True, hour=None, interpolate=False, plot_MW=False, plot_PROD3=False, format='png'):
+    def plot_epoch_comparison(self, epochs, interpolate=False, plot_MW=False, plot_PROD3=False, format='png', **args):
         fig, ax = plt.subplots(2, 1, sharex=True)
         plt.subplots_adjust(hspace=0)
         for e in epochs:
-            if hour:
-                self.get_data(e, hours=[hour], epoch_by_density=epoch_by_density)
-            else:
-                self.get_data(e, epoch_by_density=epoch_by_density)
+            self.get_data(**args)
             color = next(ax[0]._get_lines.prop_cycler)['color']
             if interpolate:
                 raw_n_exp, avg_n_exp, e_n_exp, pp_n_exp, pm_n_exp = self._interpolate_param_to_h('n_exp', self.x)
