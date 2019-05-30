@@ -1,0 +1,196 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Setup &#8212; molecularprofiles 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tutorial" href="tutorial.html" />
+    <link rel="prev" title="Welcome to molecularprofiles’ documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="setup">
+<span id="id1"></span><h1>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h1>
+<p>In order to have molecularprofiles ready to run, the steps you need to do are:</p>
+<ul class="simple">
+<li>Install or check for a Python installation in your system</li>
+<li>Install or check for installation of needed Python libraries</li>
+<li>Install molecularprofiles</li>
+</ul>
+<div class="section" id="install-or-check-for-a-python-installation-in-your-system">
+<h2>Install or check for a Python installation in your system<a class="headerlink" href="#install-or-check-for-a-python-installation-in-your-system" title="Permalink to this headline">¶</a></h2>
+<p>If you are using Linux, it is probable that you already have a Python installation ready in your system. However, I recommend you to make a parallel installation using <a class="reference external" href="https://www.anaconda.com/">Anaconda</a> distribution. This is an open-source Python distribution which allows the user to easily install packages in a clean and transparent way.</p>
+<p>I will assume you have this distribution installed from now on. For other ways to install Python and associated packages, there is a lot of information around in the net.</p>
+</div>
+<div class="section" id="install-or-check-for-installation-of-needed-python-libraries">
+<h2>Install or check for installation of needed Python libraries<a class="headerlink" href="#install-or-check-for-installation-of-needed-python-libraries" title="Permalink to this headline">¶</a></h2>
+<p>The additional needed Python libraries that molecularprofiles needs to run properly are:</p>
+<ul class="simple">
+<li>os</li>
+<li>sys</li>
+<li>gc</li>
+<li>configparser</li>
+<li>datetime</li>
+<li>contextlib</li>
+<li>argparse</li>
+<li>multiprocessing</li>
+<li>tqdm</li>
+<li>pandas</li>
+<li>scipy</li>
+<li>matplotlib</li>
+</ul>
+<p>You can install them either by using <a class="reference external" href="https://pypi.org/project/pip/">pip</a> or <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a>, depending on your Python installation. In order to install the missing library (sys, in the next example) you can install it by typing:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>pip install sys
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>conda install sys
+</pre></div>
+</div>
+<p>Once you have all the needed Python libraries you can proceed to install molecularprofiles.</p>
+</div>
+<div class="section" id="install-molecularprofiles">
+<h2>Install molecularprofiles<a class="headerlink" href="#install-molecularprofiles" title="Permalink to this headline">¶</a></h2>
+<p>You can get the molecularprofiles package from the GitHub repository. In order to download it, just type:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; git clone https://github.com/pmunar/molecularprofiles
+</pre></div>
+</div>
+<p>Once downloaded, put the molecularprofiles folder in the directory where you want to
+install it (if you downloaded it elsewhere):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; mv molecularprofiles /path/where/you/want/to/install/it
+</pre></div>
+</div>
+<p>With the package in place, cd to the molecularprofiles directory:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; <span class="nb">cd</span> molecularprofiles
+</pre></div>
+</div>
+<p>and install it with the pip command:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; pip install .
+</pre></div>
+</div>
+<p>Note the “.” at the end of the order. It is important!</p>
+<p>Once installed (it takes a few seconds) it is almost ready to run.</p>
+<p>Before running, the init-molecularprofiles.sh script must be executed. It sets some
+usefull and important environment variables. But before running this script
+there is one environment variable that needs to be set:</p>
+<p>1- export the molecularprofiles_DIR variable. You can do it from the terminal:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; <span class="nb">export</span> <span class="nv">MOLECULARPROFILES_DIR</span><span class="o">=</span>/example/path/molecularprofiles
+</pre></div>
+</div>
+<p>In order to make the process more confortable for you, we recommend you to put this export within your .bashrc file.</p>
+<p>Once it is done, the script can be executed:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; ./molecularprofiles-init.sh
+</pre></div>
+</div>
+<p>This script must be executed every time that the molecularprofiles package wants to be
+used. An easy solution is to make an alias and put it into the .bashrc file.
+An example of the line that would go into the .bashrc file:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">alias</span> init-molecularprofiles<span class="o">=</span><span class="s2">&quot;. /path/where/you/installed/it/molecularprofiles/init-molecularprofiles.sh&quot;</span>
+</pre></div>
+</div>
+<p>After that, before using the software, type:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; init-molecularprofiles
+</pre></div>
+</div>
+<p>from wherever directory and the package will be ready.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">molecularprofiles</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install-or-check-for-a-python-installation-in-your-system">Install or check for a Python installation in your system</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-or-check-for-installation-of-needed-python-libraries">Install or check for installation of needed Python libraries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-molecularprofiles">Install molecularprofiles</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to molecularprofiles’ documentation!</a></li>
+      <li>Next: <a href="tutorial.html" title="next chapter">Tutorial</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Pere Munar-Adrover.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/setup.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
