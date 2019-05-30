@@ -18,6 +18,12 @@ The library helps the user to perform several tasks:
 	* Generate input cards for the CORSIKA software for simulation of air showers
 	* It also has some utilities to compute times and dates
 
+
+* Code: https://github.com/pmunar/molecularprofiles
+* Issues: https://github.com/pmunar/molecularprofiles/issues
+* Documentation: http://molecularprofiles.readthedocs.org/
+* Contact: pere.munar@uab.cat
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
