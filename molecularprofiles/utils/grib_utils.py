@@ -211,7 +211,7 @@ def get_plevels(variable):
 def get_grib_file_data(file_name):
     """
     This function opens a grib file, selects the parameters (all available: Temperature, Geopotential, RH, ...),
-    and creates a dictionary variable where these parameters. It also returns the variable name (vn) and variable
+    and creates a dictionary variable with these parameters. It also returns the variable name (vn) and variable
     short name (vsn)
 
     Input: file_name (string)
