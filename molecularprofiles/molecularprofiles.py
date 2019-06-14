@@ -588,10 +588,10 @@ class MolecularProfile:
         ax[1].set_ylim(0., 0.0449)
         ax[1].legend(loc='best', numpoints=1, ncol=2)
         ax[1].grid(which='both', axis='y', color='0.8')
-        if hour:
-            fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '_h' + str(hour) + '.' + format, bbox_inches='tight', dpi=300)
-        else:
-            fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '.' + format, bbox_inches='tight', dpi=300)
+#        if hour:
+#            fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '_h' + str(hour) + '.' + format, bbox_inches='tight', dpi=300)
+#        else:
+        fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '.' + format, bbox_inches='tight', dpi=300)
 
     # =======================================================================================================
     # printing functions:
