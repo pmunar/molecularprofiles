@@ -541,7 +541,7 @@ class MolecularProfile:
         fig, ax = plt.subplots(2, 1, sharex=True)
         plt.subplots_adjust(hspace=0)
         for e in epochs:
-            self.get_data(**args)
+            self.get_data(epoch=e, **args)
             color = next(ax[0]._get_lines.prop_cycler)['color']
             if interpolate:
                 raw_n_exp, avg_n_exp, e_n_exp, pp_n_exp, pm_n_exp = self._interpolate_param_to_h('n_exp', self.x)
