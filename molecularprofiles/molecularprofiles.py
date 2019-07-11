@@ -79,8 +79,6 @@ class MolecularProfile:
 
     def _get_prod3sim_data(self):
 
-        # TODO: change the directory definition. Make an import since everything is now recognised as package
-
         MOLECULARPROFILES_DIR = os.environ.get('MOLECULARPROFILES_DIR')
         PROD3_DIR = MOLECULARPROFILES_DIR + '/molecularprofiles/aux/Prod3b_simulations'
         # Prod3 Simulations (based on NRLMSISE)
