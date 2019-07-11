@@ -4,23 +4,16 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>download GDAS &#8212; molecularprofiles 1.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="download ECMWF" href="download ECMWF.html" />
@@ -31,21 +24,35 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="download-gdas">
 <h1>download GDAS<a class="headerlink" href="#download-gdas" title="Permalink to this headline">¶</a></h1>
+<p>In order to download GDAS data we need to modify the ds083.2_test file that resides in the /molecularprofile/gdas_scripts folder.</p>
+<p>In this file we have to modify the following lines:</p>
+<ul class="simple">
+<li>date=201607010000/to/201607150000</li>
+</ul>
+<p>where the data format is YYYYMMDDhhmm</p>
+<p><a href="#id1"><span class="problematic" id="id2">*</span></a>nlat, slat, wlon, elon lines: this lines are the coordinates of our location of interest. As of now, the software only allows for processing single grid point data, meaning that the nlat and slat values must be the same, and wlon and elon must be the same.</p>
+<p>Once this is set we can execute the main download_gdas script:</p>
+<p>This will print a lot of text and will send us an email when the data is ready to be downloaded. Alternatively, we can execute the command</p>
+<p>in order to see if the data is ready or not. requestindex is a unique identifier for your query, that appears at the end of the block of text printed in the first command execution.</p>
+<p>Once the data is ready to be retrieved, we can download it with the following command:</p>
+<p>Once the download has finished you will have your data ready to be processed.</p>
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -65,7 +72,6 @@
 <li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">download GDAS</a></li>
 <li class="toctree-l1"><a class="reference internal" href="download ECMWF.html">download ECMWF</a></li>
-<li class="toctree-l1"><a class="reference internal" href="extract grib file information.html">extract grib file information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="the MolecularProfile class.html">the MolecularProfile class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 </ul>
@@ -81,14 +87,24 @@
 </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -97,8 +113,8 @@
       &copy;2019, Pere Munar-Adrover.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/download GDAS.rst.txt"

@@ -4,26 +4,19 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Setup &#8212; molecularprofiles 1.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Tutorial" href="tutorial.html" />
+    <link rel="next" title="download GDAS" href="download GDAS.html" />
     <link rel="prev" title="Welcome to molecularprofiles’ documentation!" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -31,13 +24,14 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="setup">
@@ -71,11 +65,11 @@
 <li>matplotlib</li>
 </ul>
 <p>You can install them either by using <a class="reference external" href="https://pypi.org/project/pip/">pip</a> or <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a>, depending on your Python installation. In order to install the missing library (sys, in the next example) you can install it by typing:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>pip install sys
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install sys
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>conda install sys
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda install sys
 </pre></div>
 </div>
 <p>Once you have all the needed Python libraries you can proceed to install molecularprofiles.</p>
@@ -83,20 +77,20 @@
 <div class="section" id="install-molecularprofiles">
 <h2>Install molecularprofiles<a class="headerlink" href="#install-molecularprofiles" title="Permalink to this headline">¶</a></h2>
 <p>You can get the molecularprofiles package from the GitHub repository. In order to download it, just type:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; git clone https://github.com/pmunar/molecularprofiles
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; git clone https://github.com/pmunar/molecularprofiles
 </pre></div>
 </div>
 <p>Once downloaded, put the molecularprofiles folder in the directory where you want to
 install it (if you downloaded it elsewhere):</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; mv molecularprofiles /path/where/you/want/to/install/it
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; mv molecularprofiles /path/where/you/want/to/install/it
 </pre></div>
 </div>
 <p>With the package in place, cd to the molecularprofiles directory:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; <span class="nb">cd</span> molecularprofiles
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; <span class="nb">cd</span> molecularprofiles
 </pre></div>
 </div>
 <p>and install it with the pip command:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; pip install .
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; pip install .
 </pre></div>
 </div>
 <p>Note the “.” at the end of the order. It is important!</p>
@@ -105,22 +99,22 @@ install it (if you downloaded it elsewhere):</p>
 usefull and important environment variables. But before running this script
 there is one environment variable that needs to be set:</p>
 <p>1- export the molecularprofiles_DIR variable. You can do it from the terminal:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; <span class="nb">export</span> <span class="nv">MOLECULARPROFILES_DIR</span><span class="o">=</span>/example/path/molecularprofiles
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; <span class="nb">export</span> <span class="nv">MOLECULARPROFILES_DIR</span><span class="o">=</span>/example/path/molecularprofiles
 </pre></div>
 </div>
 <p>In order to make the process more confortable for you, we recommend you to put this export within your .bashrc file.</p>
 <p>Once it is done, the script can be executed:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; ./molecularprofiles-init.sh
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; ./molecularprofiles-init.sh
 </pre></div>
 </div>
 <p>This script must be executed every time that the molecularprofiles package wants to be
 used. An easy solution is to make an alias and put it into the .bashrc file.
 An example of the line that would go into the .bashrc file:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">alias</span> init-molecularprofiles<span class="o">=</span><span class="s2">&quot;. /path/where/you/installed/it/molecularprofiles/init-molecularprofiles.sh&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span> init-molecularprofiles<span class="o">=</span><span class="s2">&quot;. /path/where/you/installed/it/molecularprofiles/init-molecularprofiles.sh&quot;</span>
 </pre></div>
 </div>
 <p>After that, before using the software, type:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; init-molecularprofiles
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; init-molecularprofiles
 </pre></div>
 </div>
 <p>from wherever directory and the package will be ready.</p>
@@ -129,6 +123,7 @@ An example of the line that would go into the .bashrc file:</p>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -151,6 +146,9 @@ An example of the line that would go into the .bashrc file:</p>
 <li class="toctree-l2"><a class="reference internal" href="#install-molecularprofiles">Install molecularprofiles</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="download GDAS.html">download GDAS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="download ECMWF.html">download ECMWF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="the MolecularProfile class.html">the MolecularProfile class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 </ul>
 
@@ -159,20 +157,30 @@ An example of the line that would go into the .bashrc file:</p>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="index.html" title="previous chapter">Welcome to molecularprofiles’ documentation!</a></li>
-      <li>Next: <a href="tutorial.html" title="next chapter">Tutorial</a></li>
+      <li>Next: <a href="download GDAS.html" title="next chapter">download GDAS</a></li>
   </ul></li>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -181,8 +189,8 @@ An example of the line that would go into the .bashrc file:</p>
       &copy;2019, Pere Munar-Adrover.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/setup.rst.txt"

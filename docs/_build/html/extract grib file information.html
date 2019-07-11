@@ -4,23 +4,16 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>extract grib file information &#8212; molecularprofiles 1.0 documentation</title>
+    <title>Extract grib file information &#8212; molecularprofiles 1.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="the MolecularProfile class" href="the MolecularProfile class.html" />
@@ -31,21 +24,77 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="extract-grib-file-information">
-<h1>extract grib file information<a class="headerlink" href="#extract-grib-file-information" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>Extract grib file information<a class="headerlink" href="#extract-grib-file-information" title="Permalink to this headline">¶</a></h1>
+<p>In this section we will cover how to extract the information contained in the grib files (either from GDAS or from ECMWF) that we downloaded.
+For this purpose we will use the grib_utils.py program.</p>
+<div class="section" id="grib-utils-py">
+<h2>grib_utils.py<a class="headerlink" href="#grib-utils-py" title="Permalink to this headline">¶</a></h2>
+<p>This program contains a series of functions that will allow us to extract and interact with the information from grib files.
+In order to see what can be done with this program one just needs to type:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; grib_utils.py --help
+</pre></div>
+</div>
+<p>and the help will be displayed.</p>
+<p>The first time we want to extract the information from a grib file we simply need to execute:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; grib_utils.py -r the_grib_file_name.grb gridstep observatory
+</pre></div>
+</div>
+<p>where <em>gridstep</em> is a value of 0.75 or 1.0, for ECMWF or GDAS, respectively, and observatory is <em>North</em> or <em>South</em>.</p>
+<p>This will take some time, specially if the gribfile file is large. The output of this task is a txt file containing the grib file information but in a simpler way, as a text table that is more easily accessible. The final table will contain the following fields or columns:</p>
+<blockquote>
+<div><ul class="simple">
+<li><strong>Date</strong>: date of the entry, in YYYYMMDD format</li>
+<li><strong>year</strong>: the year of the format in YYYY format \</li>
+<li><strong>month</strong>: the month of the entry</li>
+<li><strong>day</strong>: the day of the entry</li>
+<li><strong>hour</strong>: the hour of the entry, in UTC</li>
+<li><strong>MJD</strong>: the Modified Julian Day of the entry</li>
+<li><strong>P</strong>: the barometric pressure of the entry, in hPa</li>
+<li><strong>Temp</strong>: the temperature of the entry, in Kelvin</li>
+<li><strong>h</strong>: the height of the entry, in meters</li>
+<li><strong>n</strong>: the molecular density of the entry, in particles per cubic centimeter</li>
+<li><strong>U</strong>: the U component of the wind, in m/s</li>
+<li><strong>V</strong>: the V component of the wind, in m/s</li>
+<li><strong>RH</strong>: the relative humidity, in values between 0 and 1</li>
+<li><strong>n_exp</strong>: the molecular density divided by the standard density (Ns) and multiplied by the exponential of the height divided by the standard height (Hs)</li>
+<li><strong>wind_direction</strong>: the direction of the wind, in degrees, where 0 degrees correspond to North direction</li>
+<li><strong>wind_speed</strong>: the module of wind speed, in m/s</li>
+</ul>
+</div></blockquote>
+<p>Then, this new file can be loaded with the MolecularProfiles class and analyzed.</p>
+<p>The grib_utils.py program can also perform other tasks:
+If one wants to process several grib files, the process can be speeded up by running it in parallel.
+For this purpose, the user can create a file containing the list of grib files to process</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; ls files*grb &gt;&gt; list_of_girb_files.txt
+</pre></div>
+</div>
+<p>and then call the program with another flag:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; grib_utils.py -r list_of_grib_files.txt -p
+</pre></div>
+</div>
+<p>where the -p flag activates the parallel processing. If the computer where it is executed has N CPUs, the process will use N-1 CPUs. It will process one file per CPU untill all the files in the list_of_files.txt are processed.</p>
+<p>Finally, if we have processed several grib files, either linearly or in parallel, we can merge the results to a single file, for more commodity while analyzing it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; grib_utils.py -m list_of_txt_files.txt
+</pre></div>
+</div>
+<p>where list_of_txt_files.txt is a file containing all the txt files created in previous steps.</p>
+</div>
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -65,7 +114,10 @@
 <li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="download GDAS.html">download GDAS</a></li>
 <li class="toctree-l1"><a class="reference internal" href="download ECMWF.html">download ECMWF</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">extract grib file information</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Extract grib file information</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#grib-utils-py">grib_utils.py</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="the MolecularProfile class.html">the MolecularProfile class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 </ul>
@@ -81,14 +133,24 @@
 </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -97,8 +159,8 @@
       &copy;2019, Pere Munar-Adrover.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/extract grib file information.rst.txt"

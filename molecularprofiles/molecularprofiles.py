@@ -171,6 +171,8 @@ class MolecularProfile:
                 gridstep = 1.0
             elif self.data_server == 'ECMWF':
                 gridstep = 0.75
+            else:
+                gridstep = 0.75
             readgribfile2text(grib_file, gridstep, self.observatory)
 
         self.output_plot_name = self.tag_name + '_' + epoch
