@@ -546,7 +546,7 @@ if __name__ == "__main__":
                 print('file extension not recognized. Exiting')
                 sys.exit()
         else:
-            print('Too many options. Please specify or observatory only, or coordinates only')
+            print('Too many options. Please specify either observatory only, or coordinates only')
 
     elif args.mjd:
         print(mjd2date(args.mjd))
