@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-#import colorlover as cl
+import colorlover as cl
 #import plotly.plotly as py
 #import plotly.io as pio
 #import plotly.graph_objs as go
