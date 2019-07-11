@@ -26,8 +26,8 @@ from molecularprofiles.utils.plot_settings import settings
 from molecularprofiles.aux.magic_winter_profile import heightmw, rhomw
 from molecularprofiles.aux.meteorological_constants import *
 from molecularprofiles.utils.dataframe_ops import *
-from LIDAR_Analysis.humidity import *
-from LIDAR_Analysis.rayleigh import Rayleigh
+from molecularprofiles.utils.humidity import *
+#from LIDAR_Analysis.rayleigh import Rayleigh
 import pandas as pd
 
 settings()

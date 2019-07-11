@@ -510,7 +510,7 @@ parser.add_argument('--parallel', action='store_true', help='if a txt file conta
                                              'CPU')
 parser.add_argument('-mjd', help= 'if selected, transforms MJD information into date in YYYY MM DD HH format', type=float)
 parser.add_argument('-date', help='if selected, transforms date information into MJD format', type=str)
-parser.add_argument('-m', '-merge', nargs='+', help='followed by a filename containing a list of txt files, \n '
+parser.add_argument('-m', '--merge', nargs='+', help='followed by a filename containing a list of txt files, \n '
                                    'it merges them into a single txt file')
 
 
