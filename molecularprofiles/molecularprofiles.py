@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from tqdm import *
 from matplotlib.ticker import MultipleLocator
 from scipy.interpolate import interp1d
+import pandas as pd
 #from molecularprofiles.utils.observatory import *
 from molecularprofiles.utils.grib_utils import *
 from molecularprofiles.utils.plot_settings import settings
@@ -27,8 +28,7 @@ from molecularprofiles.aux.magic_winter_profile import heightmw, rhomw
 from molecularprofiles.aux.meteorological_constants import *
 from molecularprofiles.utils.dataframe_ops import *
 from molecularprofiles.utils.humidity import *
-#from LIDAR_Analysis.rayleigh import Rayleigh
-import pandas as pd
+from molecularprofiles.utils.rayleigh import Rayleigh
 
 settings()
 
