@@ -44,9 +44,18 @@
 <p>where the data format is YYYYMMDDhhmm</p>
 <p><a href="#id1"><span class="problematic" id="id2">*</span></a>nlat, slat, wlon, elon lines: this lines are the coordinates of our location of interest. As of now, the software only allows for processing single grid point data, meaning that the nlat and slat values must be the same, and wlon and elon must be the same.</p>
 <p>Once this is set we can execute the main download_gdas script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;download_gdas.py -submit ds083.2_test
+</pre></div>
+</div>
 <p>This will print a lot of text and will send us an email when the data is ready to be downloaded. Alternatively, we can execute the command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;download_gdas.py -get_status requestindex
+</pre></div>
+</div>
 <p>in order to see if the data is ready or not. requestindex is a unique identifier for your query, that appears at the end of the block of text printed in the first command execution.</p>
 <p>Once the data is ready to be retrieved, we can download it with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>download_gdas.py -download <span class="o">[</span>RequestIndex<span class="o">]</span>
+</pre></div>
+</div>
 <p>Once the download has finished you will have your data ready to be processed.</p>
 </div>
 
@@ -72,6 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">download GDAS</a></li>
 <li class="toctree-l1"><a class="reference internal" href="download ECMWF.html">download ECMWF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extract grib file information.html">Extract grib file information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="the MolecularProfile class.html">the MolecularProfile class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 </ul>

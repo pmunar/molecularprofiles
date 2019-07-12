@@ -16,8 +16,8 @@
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Tutorial" href="tutorial.html" />
-    <link rel="prev" title="download ECMWF" href="download ECMWF.html" />
+    <link rel="next" title="Other functionalities of the package" href="other functionalities.html" />
+    <link rel="prev" title="Extract grib file information" href="extract grib file information.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -36,6 +36,62 @@
             
   <div class="section" id="the-molecularprofile-class">
 <h1>the MolecularProfile class<a class="headerlink" href="#the-molecularprofile-class" title="Permalink to this headline">¶</a></h1>
+<p>In this section we will explore the MolecularProfile class within the molecularprofiles python package.</p>
+<p>This is a class that allows the user to load data from a meteorological data assimilation system (GDAS or ECMWF) and analyze it.</p>
+<p>This class is supposed to work within a python environment. It works with Python 3.6.</p>
+<p>The class object can be created as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">ecmwf</span> <span class="o">=</span> <span class="n">MolecularProfile</span><span class="p">(</span><span class="s1">&#39;input_grib_file.grb&#39;</span><span class="p">,</span> <span class="n">data_server</span><span class="o">=</span><span class="s1">&#39;ECMWF&#39;</span><span class="p">,</span> <span class="n">observatory</span><span class="o">=</span><span class="s1">&#39;north&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This creates the object <strong>ecmwf</strong> and from here we can start working and analyzing its data. The first thing we need to do is to load the data:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">ecmwf</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This call will check if there is any file named as the input filename but with ‘txt’ extension in the working directory. If there is not, it will call grib_utils.py and extract the information from the input grib file and create a new file, contaning a table of data, and named as the input file but with the extension changed to ‘txt’. If there is such a file in the working directory, the program simply reads it and loads its data.</p>
+<p>The <em>get_data</em> function has many options to filter the data: by year, month, day, good weather conditions, epochs (predefined group of months: winter, summer and intermediate for north; winter and summer for south; etc.).</p>
+<p>Once the data is read and loaded, the ecmwf object will have a dataframe instance, that actually contains the data table. It can be read and operated with by means of the Pandas package and its functions. We can see this dataframe by doing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">ecmwf</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>When the data is loaded, other instances are created within the object:</p>
+<ul class="simple">
+<li>ecmwf.h_avgs</li>
+<li>ecmwf.n_avgs</li>
+<li>ecmwf.n_exp_avgs</li>
+<li>ecmwf.RH_avgs</li>
+</ul>
+<p>These quantities are multidimensional arrays containing the average over all the dataframe of each quantity, its standard deviation and its maximum and minimum (extreme) values. There is a value for each of the pressure (P) levels.</p>
+<p>Now that we have the data, we can make some plots by means of the several plotting functions present in the class:</p>
+<ul class="simple">
+<li><strong>plot_moist_dry_comparison</strong>: makes a plot of the molecular profile comparing the density computed without taking into account the relative humidity and the molecular profile that has taken into account the relative humidity</li>
+<li><strong>plot_average_at_15km</strong>: plots the average density at 15 km above sea level versus time, in MJD. At his height the changes in density are wider than at other altitudes</li>
+<li><strong>plot_differences_wrt_model</strong>: plots the difference, in %, between the server data and the standard model (either PROD3 or MAGIC_Winter) for each of the altitude levels</li>
+<li><strong>plot_models_comparison</strong>: plots the server data together with the predefined models (PROD3 or MAGIC_winter) in a single plot</li>
+<li><strong>plot_epoch_comparison</strong>: plots the different predefined epochs (winter, summer, intermediate) together for comparison. In a lower panel, the coefficient of variation for each epoch is also plotted</li>
+</ul>
+<p>For instance, in order to produce a comparison between the PROD3 model and three different predefined epochs we can type:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="o">&gt;</span> <span class="n">epochs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;winter&#39;</span><span class="p">,</span> <span class="s1">&#39;summer&#39;</span><span class="p">,</span> <span class="s1">&#39;intermediate&#39;</span><span class="p">]</span>
+<span class="o">&gt;</span> <span class="n">ecmwf</span><span class="o">.</span><span class="n">plot_epoch_comparison</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">plot_PROD3</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will generate the following plot:</p>
+<img alt="GDAS north epoch comparison" class="align-center" src="_images/epoch_comparison_GDAS_north.png" />
+<p>where we have a data point at the average height that has the average molecular density, its standard deviation as a thick errorbar and the peak-to-peak values as a thin errorbar, and also the PROD3 dashed line to compare (top panel). The coefficient of variation is plotted in the bottom panel for each of the epochs.</p>
+<p>The class also allows the user to produce txt files that are compliant with what CORSIKA (the software for air showers simulation) expects as the molecular profile information.
+In order to produce such file, the user needs to call this function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">ecmwf</span><span class="o">.</span><span class="n">write_corsika</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>A txt file table will be produced and it is ready for its use within CORSIKA.</p>
+<p>Other methods within the class (which are not directly called by the final user, normally) are:</p>
+<ul class="simple">
+<li>ecmwf._compute_diff_wrt_model</li>
+<li>ecmwf._compute_mas_density</li>
+<li>ecmwf._get_prod3sim_data</li>
+<li>ecmwf._interpolate_param_to_h</li>
+<li>ecmwf._interpolate_simple</li>
+<li>ecmwf._refractive_index</li>
+</ul>
 </div>
 
 
@@ -60,7 +116,9 @@
 <li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="download GDAS.html">download GDAS</a></li>
 <li class="toctree-l1"><a class="reference internal" href="download ECMWF.html">download ECMWF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extract grib file information.html">Extract grib file information</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">the MolecularProfile class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="other functionalities.html">Other functionalities of the package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 </ul>
 
@@ -68,8 +126,8 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="download ECMWF.html" title="previous chapter">download ECMWF</a></li>
-      <li>Next: <a href="tutorial.html" title="next chapter">Tutorial</a></li>
+      <li>Previous: <a href="extract grib file information.html" title="previous chapter">Extract grib file information</a></li>
+      <li>Next: <a href="other functionalities.html" title="next chapter">Other functionalities of the package</a></li>
   </ul></li>
 </ul>
 </div>

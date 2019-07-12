@@ -16,7 +16,7 @@
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="the MolecularProfile class" href="the MolecularProfile class.html" />
+    <link rel="next" title="Extract grib file information" href="extract grib file information.html" />
     <link rel="prev" title="download GDAS" href="download GDAS.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -37,8 +37,11 @@
   <div class="section" id="download-ecmwf">
 <h1>download ECMWF<a class="headerlink" href="#download-ecmwf" title="Permalink to this headline">¶</a></h1>
 <p>In order to download ECMWF data we need to execute the download_ecmwf script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;download_ecmwf.py date_start date_end latitude longitude
+</pre></div>
+</div>
 <p>where date_stard and date_end must be in YYYY-MM-DD format and latitude and longitude must be in degrees.</p>
-<p>This will prepare and download the data in files that contain as much one month of data. For time periods longer than one month, separate files will be downloaded.</p>
+<p>This will prepare and download the data in files that contain one month of data as a maximum amount of data. For time periods longer than one month, separate files will be downloaded.</p>
 <p>Once the download has finished you will have your data ready to be processed.</p>
 </div>
 
@@ -64,6 +67,7 @@
 <li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="download GDAS.html">download GDAS</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">download ECMWF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extract grib file information.html">Extract grib file information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="the MolecularProfile class.html">the MolecularProfile class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 </ul>
@@ -73,7 +77,7 @@
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="download GDAS.html" title="previous chapter">download GDAS</a></li>
-      <li>Next: <a href="the MolecularProfile class.html" title="next chapter">the MolecularProfile class</a></li>
+      <li>Next: <a href="extract grib file information.html" title="next chapter">Extract grib file information</a></li>
   </ul></li>
 </ul>
 </div>

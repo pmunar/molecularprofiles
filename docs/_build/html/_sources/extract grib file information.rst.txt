@@ -72,4 +72,4 @@ Finally, if we have processed several grib files, either linearly or in parallel
 
 where list_of_txt_files.txt is a file containing all the txt files created in previous steps.
 
-
+Once the final file is created it can be read in whichever program or app the user prefers. 

@@ -16,18 +16,21 @@ where the data format is YYYYMMDDhhmm
 Once this is set we can execute the main download_gdas script:
 
 .. code-block:: bash
-	>download_gdas.py -submit ds083.2_test
+
+    >download_gdas.py -submit ds083.2_test
 
 This will print a lot of text and will send us an email when the data is ready to be downloaded. Alternatively, we can execute the command 
 
 .. code-block:: bash
-	>download_gdas.py -get_status requestindex
+
+    >download_gdas.py -get_status requestindex
 
 in order to see if the data is ready or not. requestindex is a unique identifier for your query, that appears at the end of the block of text printed in the first command execution.
 
 Once the data is ready to be retrieved, we can download it with the following command:
 
 .. code-block:: bash
-	download_gdas.py -download [RequestIndex]
+
+    download_gdas.py -download [RequestIndex]
 
 Once the download has finished you will have your data ready to be processed.
