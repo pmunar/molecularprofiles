@@ -8,7 +8,7 @@ Welcome to molecularprofiles' documentation!
 
 This is molecularprofiles, a Python package that will help in the analysis of molecular profile data obtained from global data assimilation systems, like GFS, GDAS, ECMWF or more processed data from WRF.
 
-This library works only with grib file format and is specifically designed for the analysis of molecular content above the CTA sites, at El Roque de los Muchachos in the island of La Palma, and at Paranal in Chile. Other locations can be used as well, but **some functions may not work as intended**.
+This library works only with grib file format or txt table format and is specifically designed for the analysis of molecular content above the CTA sites, at El Roque de los Muchachos in the island of La Palma, and at Paranal in Chile. Other locations can be used as well, but **some functions may not work as intended**.
 
 The library helps the user to perform several tasks:
 
