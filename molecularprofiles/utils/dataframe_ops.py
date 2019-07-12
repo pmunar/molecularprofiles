@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 import colorlover as cl
-#import plotly.plotly as py
-#import plotly.io as pio
-#import plotly.graph_objs as go
+import plotly.plotly as py
+import plotly.io as pio
+import plotly.graph_objs as go
 from molecularprofiles.utils.observatory import *
 
 
