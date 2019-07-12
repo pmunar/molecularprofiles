@@ -215,27 +215,31 @@ class MolecularProfile:
         If the input filename does not exist, the program searches for the same
         input name with .grib extension and extracts the data from it
 
-        Input: epoch: (str) can be "winter", "summer", "intermediate", "all". Default is "all"
+        Input: epoch:  (str) can be "winter", "summer", "intermediate", "all". Default is "all"
+               years:  (list) a sequence of years to filter the data
+               months: (list) a sequence of months to filter the data (elements values must be
+                       between 1 and 12)
+               hours:  (list) a sequence of hours to filter the data (elements values must be
+                       either 0,6,12 or 18)
+               altitude: (list) a sequence of altitudes to filter the data (in meters)
+               select_good_weather: (bool) if True it uses RH_lim and W_lim parameters to filter the
+                                    data by good weather conditions
+               RH_lim: (float) if select_good_weather is True, this is the RH upper limit value to use
+                       to filter the data
+               W_lim: (float) if select_good_weather is True, this is the Wind speed upper limit value
+                      to use to filter the data
+               filter_by_density: (bool) if set to True it filters the data by density values instead of
+                                  filtering by epoch
 
         :return:
-            self.date (YYYYMMDD)
-            self.year (YYYY)
-            self.month (MM)
-            self.day (DD)
-            self.hour (HH)
-            self.mjd (DDDD.D)
-            self.p (hPa)
-            self.h (m)
-            self.n (cm^-3)
-            self.Temp (K)
-            self.U (m s^-1)
-            self.V (m s^-1)
-            self.RH (%)
-            self.interpolated_density (cm^-3)
-            self.x (m)
-            self.density_at_15km (cm^-3)
-            self.mjd_at_15km (DDDD.D)
-            self.averages (
+            self.dataframe
+            self.h_avgs
+            self.n_avgs
+            self.Temp_avgs
+            self.wind_speed_avgs
+            self.wind_direction_avgs
+            self.RH_avgs
+            self.n_exp_avgs
         """
 
         if not os.path.exists(os.path.splitext(self.data_file)[0] + '.txt'):
