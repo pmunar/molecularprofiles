@@ -37,23 +37,36 @@ class MolecularProfile:
     def __init__(self, data_file, data_server='server', tag_name='myplots', observatory='north'):
 
         """
-        This class provides with a series of functions to analyze the quality of the data for both
+        This class provides a series of functions to analyze the quality of the data for both
         CTA-North and CTA-South.
 
         :param data_file: txt file containing the data (string)
         :param tag_name: name to be given to the output files (string)
         :param data_server: label to be put in some of the output plots (string)
-        :param observatory: valid options are: "north", "south"
+        :param observatory: valid options are: "north", "south", "other"
 
-        Functions within this class:
+        Methods within this class:
 
-        retrievedatafromfile: same as retrievedata but in this case it also performs the calculation of the averages
-                              for several variables
-        plot_average_at_15km
-        plot_differences_wrt_magic
-        plot_differences_wrt_prod3
-        plot_models_comparison
-        print_to_text_file
+        get_data:                   it retrieves the data from the input file. If the input file
+                                    is a grib file and there is no file in the working directory
+                                    with the same name but with .txt extension the program extracts
+                                    the data from the grib file through the grib_utils program. If
+                                    there is such a txt file, it reads it directly
+        plot_moist_dry_comparison:  plots a comparison between the number density (scaled by an exponential)
+                                    without the contribution of the humidity and the density that has
+                                    taken into account the effect of the humidity
+        plot_density_at_15km:       plots the number density of molecules at 15 km, where the changes due to
+                                    seasonal variations are at maximum
+        plot_differences_wrt_model: plots the difference between the number density from the data assimilation
+                                    systems (GDAS, ECMWF, WRF, ...) and the standard atmospheric models used
+                                    in CTA (PROD3 or MW), in %.
+        plot_models_comparison:     plots the comparison between the number density multiplied by an exponential
+                                    and the adopted standard model of atmosphere (either PROD3 or MW). It plots in
+                                    a bottom panel the coefficient of variation of the number density. It can also
+                                    compare different epochs (or seasonal periods)
+        print_to_text_file:         prints the data into a txt file
+        write_corsika:              pints the data into a txt file which format is compliant with the input card
+                                    for the CORSIKA air shower simulation software
 
         """
 
@@ -76,7 +89,9 @@ class MolecularProfile:
         self.n_mw = rhomw * 816.347
         self.func_magic = interp1d(self.heightmw * 1000., self.n_mw * np.exp(self.heightmw * 1000. / self.Hs),
                                    kind='cubic')
-
+#=============================================================================================================
+# Private functions
+#=============================================================================================================
     def _get_prod3sim_data(self):
 
         MOLECULARPROFILES_DIR = os.environ.get('MOLECULARPROFILES_DIR')
@@ -110,9 +125,9 @@ class MolecularProfile:
         print("Computing the extrapolation of the values of density:")
         print("(This is to make it easier to compare ECMWF and GDAS, or any other")
         print("weather model)")
-        pbar = tqdm(total=len(np.unique(self.dataframe.MJD)))
+        pbar = tqdm(total=len(self.dataframe.MJD.unique()))
 
-        for mjd in np.unique(self.dataframe.MJD):
+        for mjd in self.dataframe.MJD.unique():
             pbar.update(1)
             h_at_mjd = group_mjd.get_group(mjd)['h'].tolist()
             param_at_mjd = group_mjd.get_group(mjd)[param].tolist()
@@ -133,6 +148,64 @@ class MolecularProfile:
         elif type(height) == float or type(height) == int:
             return interpolated_param
 
+    def _compute_mass_density(self, air='moist', interpolate=False):
+        """
+        Uses the functions DensityMoistAir, MolarFractionWaterVapor and Compressibility
+        from the LIDAR_analysis module humidity.py
+        input:
+            air: (str, optional) must be 'moist' or 'dry'
+
+        :return: density [kg/m^3], std_dev(density) [kg/m^3], peak2peak_minus, peak2peak_plus
+        """
+        C = 415 # CO2 average global concentration in ppm
+        rho_s = 1.225 # kg/m^3 standard air mass density (sea level, 15 degrees C)
+        rho = []
+
+        pbar = tqdm(total=len(self.dataframe.P))
+        for i in np.arange(len(self.dataframe.P)):
+            pbar.update(1)
+            if air == 'moist':
+                Xw = MolarFractionWaterVapor(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i],
+                                                  self.dataframe.RH.iloc[i])
+                Z = Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], Xw)
+                rho.append(DensityMoistAir(self.dataframe.P.iloc[i] * 100., self.dataframe.Temp.iloc[i], Z, Xw, C))
+
+            elif air == 'dry':
+                Z = Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], 0.0)
+                rho.append(DensityMoistAir(self.dataframe.P.iloc[i]*100., self.dataframe.Temp.iloc[i], Z, 0.0, C))
+            else:
+                print('Wrong air condition. It must be "moist" or "dry". Aborting!')
+                sys.exit()
+        pbar.close()
+
+        self.dataframe['n_mass_'+air] = rho
+        self.dataframe['nexp_mass_' + air] = self.dataframe['n_mass_'+air] / rho_s * np.exp(self.dataframe.h / self.Hs)
+
+    def _compute_diff_wrt_model(self):
+
+        diff_with_magic = []
+        diff_with_prod3 = []
+
+        interpolated_density = self._interpolate_param_to_h('n_exp', self.x)[0]
+
+        self._get_prod3sim_data()
+        x = np.linspace(1000., 25000., num=15, endpoint=True)
+
+        print("Computing the differences of the values of density:")
+        for i in tqdm(np.arange(len(interpolated_density))):
+            diff_with_magic.append((interpolated_density[i] - self.func_magic(x))
+                                         / interpolated_density[i])
+            diff_with_prod3.append((interpolated_density[i] - self.func_prod3(x))
+                                         / interpolated_density[i])
+
+        self.diff_with_magic = np.asarray(diff_with_magic)
+        self.diff_with_prod3 = np.asarray(diff_with_prod3)
+        self.diff_MAGIC = compute_averages_std(self.diff_with_magic)
+        self.diff_PROD3 = compute_averages_std(self.diff_with_prod3)
+
+# =============================================================================================================
+# Main get data function
+# =============================================================================================================
     def get_data(self, epoch='all', years=None, months=None, hours=None, altitude=[], select_good_weather=False,
                  RH_lim=100., W_lim = 10000., filter_by_density=False, n_exp_minvalue=0., n_exp_maxvalue=1.,
                  filter_by_density_name='winter'):
@@ -243,65 +316,11 @@ class MolecularProfile:
         self.RH_avgs = avg_std_dataframe(self.group_by_p, 'RH')
         self.n_exp_avgs = avg_std_dataframe(self.group_by_p, 'n_exp')
 
-    def _compute_mass_density(self, air='moist', interpolate=False):
-        """
-        Uses the functions DensityMoistAir, MolarFractionWaterVapor and Compressibility
-        from the LIDAR_analysis module humidity.py
-        input:
-            air: (str, optional) must be 'moist' or 'dry'
-
-        :return: density [kg/m^3], std_dev(density) [kg/m^3], peak2peak_minus, peak2peak_plus
-        """
-        C = 415 # CO2 average global concentration in ppm
-        rho_s = 1.225 # kg/m^3 standard air mass density (sea level, 15ºC)
-        rho = []
-
-        pbar = tqdm(total=len(self.dataframe.P))
-        for i in np.arange(len(self.dataframe.P)):
-            pbar.update(1)
-            if air == 'moist':
-                Xw = MolarFractionWaterVapor(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i],
-                                                  self.dataframe.RH.iloc[i])
-                Z = Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], Xw)
-                rho.append(DensityMoistAir(self.dataframe.P.iloc[i] * 100., self.dataframe.Temp.iloc[i], Z, Xw, C))
-
-            elif air == 'dry':
-                Z = Compressibility(self.dataframe.P.iloc[i], self.dataframe.Temp.iloc[i], 0.0)
-                rho.append(DensityMoistAir(self.dataframe.P.iloc[i]*100., self.dataframe.Temp.iloc[i], Z, 0.0, C))
-            else:
-                print('Wrong air condition. It must be "moist" or "dry". Aborting!')
-                sys.exit()
-        pbar.close()
-
-        self.dataframe['n_mass_'+air] = rho
-        self.dataframe['nexp_mass_' + air] = self.dataframe['n_mass_'+air] / rho_s * np.exp(self.dataframe.h / self.Hs)
 
 
-    def _compute_diff_wrt_model(self):
-
-        diff_with_magic = []
-        diff_with_prod3 = []
-
-        interpolated_density = self._interpolate_param_to_h('n_exp', self.x)[0]
-
-        self._get_prod3sim_data()
-        x = np.linspace(1000., 25000., num=15, endpoint=True)
-
-        print("Computing the differences of the values of density:")
-        for i in tqdm(np.arange(len(interpolated_density))):
-            diff_with_magic.append((interpolated_density[i] - self.func_magic(x))
-                                         / interpolated_density[i])
-            diff_with_prod3.append((interpolated_density[i] - self.func_prod3(x))
-                                         / interpolated_density[i])
-
-        self.diff_with_magic = np.asarray(diff_with_magic)
-        self.diff_with_prod3 = np.asarray(diff_with_prod3)
-        self.diff_MAGIC = compute_averages_std(self.diff_with_magic)
-        self.diff_PROD3 = compute_averages_std(self.diff_with_prod3)
-
-    # =======================================================================================================
-    # Plotting functions:
-    # =======================================================================================================
+# =======================================================================================================
+# Plotting functions:
+# =======================================================================================================
 
     def plot_moist_dry_comparison(self, min_humidity=0.):
 
@@ -358,7 +377,7 @@ class MolecularProfile:
         fig.savefig('dry_vs_moist_air_density'+self.data_server+'_'+self.epoch+'.png', bbox_inches='tight', dpi=300)
         fig.show()
 
-    def plot_average_at_15km(self, fmt='pdf'):
+    def plot_density_at_15km(self, fmt='pdf'):
         """
         Function that produces a plot of the averaged density at 15 km
         :return: 
@@ -369,7 +388,7 @@ class MolecularProfile:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         density_at_15km = self._interpolate_param_to_h('n_exp', 15000.)
-        ax.plot(np.unique(self.dataframe.MJD), density_at_15km, 'o', color='#99CCFF', markersize=1.2,
+        ax.plot(self.dataframe.MJD.unique(), density_at_15km, 'o', color='#99CCFF', markersize=1.2,
                 label=self.data_server + ' ' + self.observatory, alpha=0.8)
 
         # This is just to draw vertical lines at the beginning of each year and at half year, and put the
@@ -377,17 +396,17 @@ class MolecularProfile:
         xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
         yspan = ax.get_ylim()[1] - ax.get_ylim()[0]
 
-        for y in np.unique(self.dataframe.year):
+        for y in self.dataframe.year.unique():
             mjd_start_year = date2mjd(y, 1, 1, 0)
             mjd_half_year = date2mjd(y, 7, 1, 0)
             year_plot = y
 
-            if 1 in np.unique(self.dataframe.month):
+            if 1 in self.dataframe.month.unique():
                 ax.axvline(mjd_start_year, color='0.7', linewidth=1., linestyle='dotted', zorder=100)
                 ax.text(mjd_start_year - xspan * 0.018, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot), rotation=90,
                         color='0.7')
 
-            if 7 in np.unique(self.dataframe.month):
+            if 7 in self.dataframe.month.unique():
                 ax.axvline(mjd_half_year, color='0.7', linewidth=1., linestyle='dotted', zorder=100)
                 ax.text(mjd_half_year - xspan * 0.018, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot + 0.5),
                         rotation=90, color='0.7')
@@ -403,40 +422,7 @@ class MolecularProfile:
         fig.savefig(self.output_plot_name + '_at_15_km.'+ fmt, bbox_inches='tight')
         fig.savefig(self.output_plot_name + '_at_15_km.png', bbox_inches='tight', dpi=300)
 
-    def plot_differences_wrt_magic(self):
-        """
-        Function that plots the difference between density models w.r.t the MAGIC Winter model
-        :return:
-        """
-
-        self._compute_diff_wrt_model()
-
-        print('plotting averaged data values for selected epoch')
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-        eb2 = ax.errorbar(self.x + 175., self.diff_MAGIC[0], yerr=[self.diff_MAGIC[3],
-                                                                         self.diff_MAGIC[2]], fmt='o', color='b',
-                          capsize=0.5, mec='b', ms=1., label=self.data_server)
-        eb2[-1][0].set_linestyle(':')
-        ax.errorbar(self.x + 175., self.diff_MAGIC[0], yerr=self.diff_MAGIC[1], fmt=':', color='b',
-                    elinewidth=3.1)
-
-        ax.axvline(2000., ls='dotted')
-        ax.set_title('Relative Difference w.r.t MAGIC W model, for %s months' % (self.epoch))
-        ax.set_xlabel('h a.s.l. [m]')
-        ax.set_ylabel('Rel. Difference (model - MW)')
-        ax.set_xlim(0., 25100.)
-        ax.set_ylim(-0.11, 0.09)
-        ax.xaxis.set_minor_locator(MultipleLocator(1000))
-        ax.xaxis.set_major_locator(MultipleLocator(2000))
-        ax.yaxis.set_major_locator(MultipleLocator(0.02))
-        ax.legend(loc='best', numpoints=1)
-        ax.grid(which='both', axis='y', color='0.8')
-        fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.eps', bbox_inches='tight')
-        fig.savefig('differences_wrt_MAGIC_' + self.output_plot_name + '.png', bbox_inches='tight', dpi=300)
-
-    def plot_differences_wrt_model(self, epochs, model, fmt='pdf'):
+    def plot_differences_wrt_model(self, epochs=['all'], model='PROD3', fmt='pdf'):
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -593,9 +579,9 @@ class MolecularProfile:
 #        else:
         fig.savefig('epoch_comparison_' + self.output_plot_name + '_' + self.observatory + '.' + format, bbox_inches='tight', dpi=300)
 
-    # =======================================================================================================
-    # printing functions:
-    # =======================================================================================================
+# =======================================================================================================
+# printing functions:
+# =======================================================================================================
 
     def print_to_text_file(self):
         textfile = open(self.output_plot_name + '_to_text_file.txt', 'w')
@@ -632,7 +618,7 @@ class MolecularProfile:
 
             density = self.n_avgs[0].sort_index(ascending=False).values
             density /= N0*1.0E-3
-            P = np.unique(self.dataframe.P)[::-1]
+            P = self.dataframe.P.unique()[::-1]
 
             #height = self.h_avgs[0].sort_index(ascending=False).values / 1.e3
             #Temp = self.Temp_avgs[0].sort_index(ascending=False).values

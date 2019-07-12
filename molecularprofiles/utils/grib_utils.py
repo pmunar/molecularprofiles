@@ -217,6 +217,8 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
 
     vn, vsn, datadict = get_grib_file_data(file_name)
 
+    latitude_obs, longitude_obs = None, None
+
     if observatory:
         latitude_obs, longitude_obs = get_observatory_coordinates(observatory)
     elif lat and lon:
