@@ -21,7 +21,7 @@ from tqdm import *
 from matplotlib.ticker import MultipleLocator
 from scipy.interpolate import interp1d
 import pandas as pd
-#from molecularprofiles.utils.observatory import *
+from molecularprofiles.utils.observatory import *
 from molecularprofiles.utils.grib_utils import *
 from molecularprofiles.utils.plot_settings import settings
 from molecularprofiles.aux.magic_winter_profile import heightmw, rhomw
