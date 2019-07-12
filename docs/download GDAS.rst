@@ -3,7 +3,15 @@
 download GDAS
 =============
 
-In order to download GDAS data we need to modify the ds083.2_test file that resides in the /molecularprofile/gdas_scripts folder. 
+If we want to download GDAS data the first thing we need to do is to `register at the Research Data Archive site <https://rda.ucar.edu/index.html?hash=data_user&action=register>`__ . Then you need to create a text file containing a single line with
+
+.. code-block:: bash
+
+    your_email, your_password
+
+name it rdamspw.txt and place it within the folder $MOLECULARPROFILES_DIR/molecularprofile/gdas_scripts
+
+Then we need to modify the ds083.2_test file that resides in the $MOLECULARPROFILES_DIR/molecularprofile/gdas_scripts folder. 
 
 In this file we have to modify the following lines:
 
