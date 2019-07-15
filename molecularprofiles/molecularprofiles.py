@@ -182,7 +182,12 @@ class MolecularProfile:
         self.dataframe['nexp_mass_' + air] = self.dataframe['n_mass_'+air] / rho_s * np.exp(self.dataframe.h / self.Hs)
 
     def _compute_diff_wrt_model(self):
-
+        """
+        Method to compute the statistical difference between the data and the model (either MW or PROD3)
+        It interpolates the data in order to have the same data  points as the model and computes
+        the difference, in %
+        :return:
+        """
         diff_with_magic = []
         diff_with_prod3 = []
 
