@@ -43,6 +43,13 @@ def select_dataframe_by_hour(df, hours):
 
 
 def create_wind_speed_dataframe(df, normalized=False):
+    """
+    Function to create a wind speed dataframe in order to plot it afterwards as a wind rose plot
+
+    :param df: dataframe containing wind direction information
+    :param normalized (optional):
+    :return: df_winds
+    """
     wd_centre_bins = np.arange(7.5,360, 15)
     ws_hist = []
     for d in wd_centre_bins:
@@ -69,6 +76,13 @@ def create_wind_speed_dataframe(df, normalized=False):
 
 
 def plot_wind_rose(df, name_tag='my_wind_rose'):
+    """
+    Function to plot a wind rose graphic from a pandas dataframe object that contains wind direction
+    information
+    :param df: a pandas dataframe created with the function create_wind_speed_dataframe
+    :param name_tag (optional):
+    :return:
+    """
     data = []
     counter = 0
     for col in df.columns:
