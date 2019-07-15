@@ -106,6 +106,7 @@ def select_new_epochs_dataframe_south(df,epoch_text):
     new_df = df[condition]
     return new_df
 
+
 def select_new_epochs_dataframe_density_north(df, epoch_text):
     if epoch_text == 'summer':
         condition = df[(df.n_exp > 0.88) & (df.P == 125)]
@@ -116,6 +117,7 @@ def select_new_epochs_dataframe_density_north(df, epoch_text):
     new_df = df[df.MJD.isin(condition.MJD)]
     return new_df
 
+
 def select_new_epochs_dataframe_density_south(df, epoch_text):
     if epoch_text == 'summer':
         condition = df[(df.n_exp > 0.88) & (df.P == 125)]
@@ -123,6 +125,7 @@ def select_new_epochs_dataframe_density_south(df, epoch_text):
         condition = df[(df.n_exp < 0.88) & (df.P == 125)]
     new_df = df[df.MJD.isin(condition.MJD)]
     return new_df
+
 
 def select_epoch(file, epoch_text):
     global months, month
@@ -211,6 +214,11 @@ def select_dataframe_by_year(df, years):
 
 def select_dataframe_by_month(df, months):
     new_df = df[df.month.isin(months)]
+    return new_df
+
+
+def select_dataframe_by_hour(df, hours):
+    new_df = df[df.hour.isin(hours)]
     return new_df
 
 
