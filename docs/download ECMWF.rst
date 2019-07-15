@@ -3,7 +3,9 @@
 download ECMWF
 ==============
 
-In order to download ECMWF data we need to execute the download_ecmwf script:
+In order to download ECMWF data first we need to `register at the ECMWF site <https://apps.ecmwf.int/registration/>`__ and follow `these instructions <https://confluence.ecmwf.int/display/WEBAPI/Accessing+ECMWF+data+servers+in+batch#AccessingECMWFdataserversinbatch-key>`__ in order to set the appropriate key and environment for the ECMWF api to work.
+
+Once we have these steps covered, we need to execute the download_ecmwf script from within our working directory:
 
 .. code-block:: bash
 
