@@ -44,6 +44,7 @@ Now that we have the data, we can make some plots by means of the several plotti
 
 - **plot_moist_dry_comparison**: makes a plot of the molecular profile comparing the density computed without taking into account the relative humidity and the molecular profile that has taken into account the relative humidity
 - **plot_average_at_15km**: plots the average density at 15 km above sea level versus time, in MJD. At his height the changes in density are wider than at other altitudes
+- **plot_wind_by_altitude**: plots, in polar coordinates, the wind speed and direction at a given epoch and altitude
 - **plot_differences_wrt_model**: plots the difference, in %, between the server data and the standard model (either PROD3 or MAGIC_Winter) for each of the altitude levels
 - **plot_models_comparison**: plots the server data together with the predefined models (PROD3 or MAGIC_winter) in a single plot
 - **plot_epoch_comparison**: plots the different predefined epochs (winter, summer, intermediate) together for comparison. In a lower panel, the coefficient of variation for each epoch is also plotted
