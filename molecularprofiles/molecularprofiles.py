@@ -431,6 +431,30 @@ class MolecularProfile:
         fig.savefig(self.output_plot_name + '_at_15_km.'+ fmt, bbox_inches='tight')
         fig.savefig(self.output_plot_name + '_at_15_km.png', bbox_inches='tight', dpi=300)
 
+
+    def plot_wind_by_altitude(self, altitude, epochs='all', name_tag='my_polar_plot')
+        fig = plt.figure()
+        ax = plt.subplot(111, projection='polar')
+        ax.set_theta_direction(-1)
+        ax.set_theta_zero_location("N")
+        if type(epochs) == str:
+            epochs = list(epochs)
+        for e in epochs:
+            self.get_data(epoch=e)
+            wind_speed_at_h = self._interpolate_param_to_h('wind_speed', altitude)
+            wind_dir_at_h = self._interpolate_param_to_h('wind_direction', altitude)
+            ax.scatter(wind_dir_at_h * np.pi / 180., wind_speed_at_h,
+                       marker='o', s=1.5, alpha=0.4, label=e, color=next(ax._get_lines.prop_cycler)['color'])
+            # ccb = plt.colorbar(cb)
+            # ccb.set_label('month of year')
+        ax.set_rmax(100.)
+        ax.set_rlabel_position(-22.5)
+        ax.set_title('Wind direction and speed at altitude = %s' % (altitude))
+        ax.legend(frameon=True, fancybox=True, framealpha=0.7)
+        ax.grid(True)
+        fig.savefig(name_tag + '_' + '_h' + str(h) + '.pdf', bbox_inches='tight')
+
+
     def plot_differences_wrt_model(self, epochs=['all'], model='PROD3', fmt='pdf'):
 
         fig = plt.figure()

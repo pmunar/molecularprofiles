@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 import colorlover as cl
-import plotly.plotly as py
+import plotly
+plotly.offline.init_notebook_mode()
 import plotly.io as pio
 import plotly.graph_objs as go
 from molecularprofiles.utils.observatory import *
@@ -74,6 +75,26 @@ def create_wind_speed_dataframe(df, normalized=False):
         df_winds['wind_direction'] = wd_centre_bins
         return df_winds
 
+def plot_winds_polar(, epoch='all', name_tag='my_polar_plot')
+    if type(epoch) == str:
+        epoch = list(epoch)
+    for e in epoch:
+        ecmwf.get_data(epoch=e)
+        wind_speed_at_h = ecmwf._interpolate_param_to_h('wind_speed', h)
+        wind_dir_at_h = ecmwf._interpolate_param_to_h('wind_direction', h)
+        ax.scatter(wind_dir_at_h*np.pi/180., wind_speed_at_h,
+                   marker='o', s=1.5, alpha=0.4, label=e, color = next(ax._get_lines.prop_cycler)['color'])
+        #ccb = plt.colorbar(cb)
+        #ccb.set_label('month of year')
+    ax.set_rmax(100.)
+    ax.set_rlabel_position(-22.5)
+    ax.set_title('Wind direction and speed at altitude = %s'%(h))
+    ax.legend(frameon=True, fancybox=True, framealpha=0.7)
+    ax.grid(True)
+    fig.savefig(name_tag, bbox_inches='tight')
+#   fig.show()
+    fig.clf()
+
 
 def plot_wind_rose(df, name_tag='my_wind_rose'):
     """
@@ -90,11 +111,11 @@ def plot_wind_rose(df, name_tag='my_wind_rose'):
             data.append(go.Area(t=df['wind_direction'], r=df[col],
                                 marker=dict(color=cl.scales['9']['seq']['YlGnBu'][counter]), name=col+' m/s'))
             counter+=1
-    print(data)
+    #print(data)
 
     fig = go.Figure(data=data, layout=go.Layout(orientation=270., barmode='stack'))
     pio.write_image(fig, name_tag+'_wind_speed_rose.pdf')
-    py.offline.plot(fig)
+    plotly.plotly.plot(fig)
 
 
 def compute_averages_std_simple(input_array):
