@@ -141,11 +141,13 @@ class MolecularProfile:
 
         print('\n')
         interpolated_param = np.asarray(interpolated_param)
-        if type(height) != float:
+        if len(interpolated_param.shape) == 1:
+            interpolated_param = np.array([interpolated_param])
+        if isinstance(height,float):
             interpolated_param_avgs = compute_averages_std(interpolated_param)
             return interpolated_param, interpolated_param_avgs[0], interpolated_param_avgs[1], \
                    interpolated_param_avgs[2], interpolated_param_avgs[3]
-        elif type(height) == float or type(height) == int:
+        elif isinstance(height, float) or isinstance(height,int):
             return interpolated_param
 
     def _compute_mass_density(self, air='moist', interpolate=False):
@@ -205,6 +207,7 @@ class MolecularProfile:
 
         self.diff_with_magic = np.asarray(diff_with_magic)
         self.diff_with_prod3 = np.asarray(diff_with_prod3)
+        print('DIFF PROD3',self.diff_with_prod3)
         self.diff_MAGIC = compute_averages_std(self.diff_with_magic)
         self.diff_PROD3 = compute_averages_std(self.diff_with_prod3)
 
@@ -448,22 +451,24 @@ class MolecularProfile:
         ax = plt.subplot(111, projection='polar')
         ax.set_theta_direction(-1)
         ax.set_theta_zero_location("N")
-        if type(epochs) == str:
-            epochs = list(epochs)
+        if isinstance(epochs, str):
+            epochs = [epochs]
         for e in epochs:
             self.get_data(epoch=e)
             wind_speed_at_h = self._interpolate_param_to_h('wind_speed', altitude)
             wind_dir_at_h = self._interpolate_param_to_h('wind_direction', altitude)
+            self.winddirath = wind_dir_at_h
+            print('wind_dir_at_h: ', wind_dir_at_h, type(wind_dir_at_h), np.shape(wind_dir_at_h))
             ax.scatter(wind_dir_at_h * np.pi / 180., wind_speed_at_h,
                        marker='o', s=1.5, alpha=0.4, label=e, color=next(ax._get_lines.prop_cycler)['color'])
             # ccb = plt.colorbar(cb)
             # ccb.set_label('month of year')
         ax.set_rmax(100.)
         ax.set_rlabel_position(-22.5)
-        ax.set_title('Wind direction and speed at altitude = %s' % (altitude))
+        ax.set_title('Wind direction and speed at %s m altitude' % (altitude))
         ax.legend(frameon=True, fancybox=True, framealpha=0.7)
         ax.grid(True)
-        fig.savefig(name_tag + '_' + '_h' + str(h) + '.' + fmt, bbox_inches='tight')
+        fig.savefig(name_tag + '_' + '_h' + str(altitude) + '.' + fmt, bbox_inches='tight')
 
     def plot_differences_wrt_model(self, epochs=['all'], model='PROD3', fmt='pdf'):
 
