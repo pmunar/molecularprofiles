@@ -431,7 +431,6 @@ class MolecularProfile:
         fig.savefig(self.output_plot_name + '_at_15_km.'+ fmt, bbox_inches='tight')
         fig.savefig(self.output_plot_name + '_at_15_km.png', bbox_inches='tight', dpi=300)
 
-
     def plot_wind_by_altitude(self, altitude, epochs='all', name_tag='my_polar_plot')
         """
         Function to plot, in a polar coordinate system, the wind direction and wind speed
@@ -464,7 +463,6 @@ class MolecularProfile:
         ax.legend(frameon=True, fancybox=True, framealpha=0.7)
         ax.grid(True)
         fig.savefig(name_tag + '_' + '_h' + str(h) + '.pdf', bbox_inches='tight')
-
 
     def plot_differences_wrt_model(self, epochs=['all'], model='PROD3', fmt='pdf'):
 
