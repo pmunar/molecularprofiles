@@ -26,6 +26,6 @@ Once we have loaded the data we can start interacting with the dataframe that is
 
 The result of these actions will be a plot, that is saved into the working directory, similar to this:
 
-.. image:: images/epoch_comparison_GDAS_north.png
+.. image:: images/my_wind_rose_wind_speed_rose.png
     :align: center
     :alt: GDAS north epoch comparison
