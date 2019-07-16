@@ -21,8 +21,8 @@ Once we have loaded the data we can start interacting with the dataframe that is
 
 	> ecmwf = MolecularProfile('input_grib_file.grb', data_server='ECMWF', observatory='north')
 	> ecmwf.get_data()
-	> df = ecmwf.dataframe
-	> plot_wind_rose(df)
+	> dfw = create_wind_speed_dataframe(ecmwf.dataframe)
+	> plot_wind_rose(dfw)
 
 The result of these actions will be a plot, that is saved into the working directory, similar to this:
 
