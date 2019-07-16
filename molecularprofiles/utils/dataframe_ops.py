@@ -76,7 +76,7 @@ def create_wind_speed_dataframe(df, normalized=False):
         return df_winds
 
 
-def plot_wind_rose(df, name_tag='my_wind_rose'):
+def plot_wind_rose(df, name_tag='my_wind_rose', fmt='png'):
     """
     Function to plot a wind rose graphic from a pandas dataframe object that contains wind direction
     information
@@ -94,7 +94,7 @@ def plot_wind_rose(df, name_tag='my_wind_rose'):
     #print(data)
 
     fig = go.Figure(data=data, layout=go.Layout(orientation=270., barmode='stack'))
-    pio.write_image(fig, name_tag+'_wind_speed_rose.pdf')
+    pio.write_image(fig, name_tag+'_wind_speed_rose.'+ fmt)
     plotly.plotly.plot(fig)
 
 
