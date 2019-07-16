@@ -81,3 +81,12 @@ Other methods within the class (which are not directly called by the final user,
 - ecmwf._interpolate_param_to_h
 - ecmwf._interpolate_simple
 - ecmwf._refractive_index
+
+**Example of filtering the data:**
+
+.. code-block:: python
+
+    > ecmwf = MolecularProfile('input_grib_file.grb', data_server='ECMWF', observatory='north')
+    > ecmwf.get_data(epoch=['summer', 'intermediate'], altitude=[2000, 2200], years=[2013, 2015])
+
+With these instructions, the final dataset will contain only data from years 2013 and 2015, for epochs called 'summer' and 'intermediate' and only for altitude levels between 2000 and 2200 m above sea level.

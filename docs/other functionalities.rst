@@ -29,3 +29,5 @@ The result of these actions will be a plot, that is saved into the working direc
 .. image:: images/my_wind_rose_wind_speed_rose.png
     :align: center
     :alt: GDAS north epoch comparison
+
+In this plot, the radial axis represent the number of occurrences and the angular axis represents the direction of the wind. If the user filters the data by altitude, for instance, another plot can be made counting only the data at this particular altitude. It applies to any kind of filter that the user may apply within the **ecmwf.get_data()** method. See :doc:`the MolecularProfile class`. for more information about filtering the data.
