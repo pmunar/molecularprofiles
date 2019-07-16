@@ -226,7 +226,8 @@ class MolecularProfile:
                        between 1 and 12)
                hours:  (list) a sequence of hours to filter the data (elements values must be
                        either 0,6,12 or 18)
-               altitude: (list) a sequence of altitudes to filter the data (in meters)
+               altitude: (2-element list) boundaries for the minimum and maximum altitude, in meters, between
+                         which the final dataframe will be filtered
                select_good_weather: (bool) if True it uses RH_lim and W_lim parameters to filter the
                                     data by good weather conditions
                RH_lim: (float) if select_good_weather is True, this is the RH upper limit value to use
