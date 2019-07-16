@@ -457,8 +457,6 @@ class MolecularProfile:
             self.get_data(epoch=e)
             wind_speed_at_h = self._interpolate_param_to_h('wind_speed', altitude)
             wind_dir_at_h = self._interpolate_param_to_h('wind_direction', altitude)
-            self.winddirath = wind_dir_at_h
-            print('wind_dir_at_h: ', wind_dir_at_h, type(wind_dir_at_h), np.shape(wind_dir_at_h))
             ax.scatter(wind_dir_at_h * np.pi / 180., wind_speed_at_h,
                        marker='o', s=1.5, alpha=0.4, label=e, color=next(ax._get_lines.prop_cycler)['color'])
             # ccb = plt.colorbar(cb)
