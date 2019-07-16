@@ -76,6 +76,8 @@ we will obtain the following polar plot:
     :align: center
     :alt: ECMWF north wind direction and speed
 
+Where the radial axis represents the wind speed, in m/s, and the polar axis the wind direction, where 0 degrees is the North and increases towards East.
+
 The class also allows the user to produce txt files that are compliant with what CORSIKA (the software for air showers simulation) expects as the molecular profile information.
 In order to produce such file, the user needs to call this function:
 
