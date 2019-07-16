@@ -13,4 +13,6 @@ In order to load them one needs to import these functions within a Python interp
 
 This will load all the functions contained within the dataframe_ops.py script.
 
-For instance, once we have successfully loaded some data using the steps described in :ref:`the MolecularProfile class`. 
+For instance, once we have successfully loaded some data using the steps described in :doc:`the MolecularProfile class`. 
+
+Once we have loaded the data we can start interacting with the dataframe that is created and, for instance, use a function to plot a wind-rose graphic of the direction and speed of the wind
