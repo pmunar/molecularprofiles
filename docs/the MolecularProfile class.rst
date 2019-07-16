@@ -53,7 +53,7 @@ For instance, in order to produce a comparison between the PROD3 model and three
 
 .. code-block:: python
 
-	> epochs = ['winter', 'summer', 'intermediate']
+    > epochs = ['winter', 'summer', 'intermediate']
     > ecmwf.plot_epoch_comparison(epochs, plot_PROD3=True)
 
 This will generate the following plot:
@@ -63,6 +63,18 @@ This will generate the following plot:
     :alt: GDAS north epoch comparison
 
 where we have a data point at the average height that has the average molecular density, its standard deviation as a thick errorbar and the peak-to-peak values as a thin errorbar, and also the PROD3 dashed line to compare (top panel). The coefficient of variation is plotted in the bottom panel for each of the epochs.
+
+If we type:
+
+.. code-block:: python
+
+    > ecmwf.plot_wind_by_altitude(12000, epochs=['winter', 'intermediate'])
+
+we will obtain the following polar plot:
+
+.. image:: images/my_polar_plot__h12000.png
+    :align: center
+    :alt: ECMWF north wind direction and speed
 
 The class also allows the user to produce txt files that are compliant with what CORSIKA (the software for air showers simulation) expects as the molecular profile information.
 In order to produce such file, the user needs to call this function:
