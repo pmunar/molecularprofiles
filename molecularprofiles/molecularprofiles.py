@@ -433,6 +433,17 @@ class MolecularProfile:
 
 
     def plot_wind_by_altitude(self, altitude, epochs='all', name_tag='my_polar_plot')
+        """
+        Function to plot, in a polar coordinate system, the wind direction and wind speed
+        of the data
+        
+        :param altitude: float or integer, altitude above sea level in meters 
+        :param epochs: (optional), string or list of strings. Possible values are 'winter', 'summer',
+                       'intermediate' for north, and 'summer', 'winter for south obsevatory
+        :param name_tag: (optional), string, tag that will appear in the final plot file name
+        :return: 
+        """
+
         fig = plt.figure()
         ax = plt.subplot(111, projection='polar')
         ax.set_theta_direction(-1)
