@@ -490,7 +490,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-g', '--grib_file', help='the grib file to process')
 parser.add_argument('-gridstep', help='the gridstep in degrees. If GDAS or GFS data, gridstep=1.0 deg; '
                                                    'If ECMWF data, gridstep=0.75 deg', type=float)
-parser.add_argument('-o', '--observatory', default='north', help='north or south. If no observatory is provided, '
+parser.add_argument('-o', '--observatory', help='north or south. If no observatory is provided, '
                                                                  'then the system asks for the coordinates of interest')
 parser.add_argument('-c', '--coordinates', nargs=2, help='latitude and longitude of the place '
                                                                                'of interest, in degrees', type=float)
