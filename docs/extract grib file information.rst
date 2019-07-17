@@ -38,7 +38,7 @@ This will take some time, specially if the gribfile file is large. The output of
 
 
  -	**Date**: date of the entry, in YYYYMMDD format
- - 	**year**: the year of the format in YYYY format \\
+ - 	**year**: the year of the format in YYYY format
  -	**month**: the month of the entry
  -	**day**: the day of the entry
  -	**hour**: the hour of the entry, in UTC
