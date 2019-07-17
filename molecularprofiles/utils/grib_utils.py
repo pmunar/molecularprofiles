@@ -225,7 +225,6 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
         latitude_obs, longitude_obs = lat, lon
 
     print(latitude_obs, longitude_obs)
-
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
     if len(datadict['Temperature']) != len(datadict['Relativehumidity']):
@@ -253,14 +252,14 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
             else:
                 h = GetAltitudeFromGeopotential(datadict['Geopotential'][j].values, latitude_obs)
             density = computedensity(datadict['Temperature'][j].level, datadict['Temperature'][j].values)
-            density_Ns = density / Ns
+            density_exp = density / Ns * np.exp(h/Hs)
             wind_speed = compute_wind_speed(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
             wind_direction = compute_wind_direction(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year,
                   datadict['Temperature'][j].month, datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd,
-                  datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density, density_Ns,
+                  datadict['Temperature'][j].level, datadict['Temperature'][j].values, h, density, density_exp,
                   datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values, wind_speed,
                   wind_direction, RH[j], file=table_file)
 
@@ -280,13 +279,13 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
             density = computedensity(datadict['Temperature'][j].level, temperature)
             wind_speed = compute_wind_speed(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
             wind_direction = compute_wind_direction(datadict['Ucomponentofwind'][j].values, datadict['Vcomponentofwind'][j].values)
-            density_Ns = density/Ns
+            density_exp = density/Ns * np.exp(h/Hs)
             mjd = date2mjd(datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                            datadict['Temperature'][j].day, datadict['Temperature'][j].hour)
 
             print(int(datadict['Temperature'][j].dataDate), datadict['Temperature'][j].year, datadict['Temperature'][j].month,
                   datadict['Temperature'][j].day, datadict['Temperature'][j].hour, mjd, datadict['Temperature'][j].level,
-                  temperature, h, density, density_Ns, datadict['Ucomponentofwind'][j].values,
+                  temperature, h, density, density_exp, datadict['Ucomponentofwind'][j].values,
                   datadict['Vcomponentofwind'][j].values, wind_speed, wind_direction, RH[j], file=table_file)
 
     table_file.close()
@@ -489,9 +488,9 @@ def print_help():
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-g', '--grib_file', help='the grib file to process')
-parser.add_argument('-gridstep', nargs=1, help='the gridstep in degrees. If GDAS or GFS data, gridstep=1.0 deg; '
+parser.add_argument('-gridstep', help='the gridstep in degrees. If GDAS or GFS data, gridstep=1.0 deg; '
                                                    'If ECMWF data, gridstep=0.75 deg', type=float)
-parser.add_argument('-o', '--observatory', nargs=1, default='north', help='north or south. If no observatory is provided, '
+parser.add_argument('-o', '--observatory', default='north', help='north or south. If no observatory is provided, '
                                                                  'then the system asks for the coordinates of interest')
 parser.add_argument('-c', '--coordinates', nargs=2, help='latitude and longitude of the place '
                                                                                'of interest, in degrees', type=float)

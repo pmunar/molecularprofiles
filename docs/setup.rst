@@ -34,6 +34,7 @@ The additional needed Python libraries that molecularprofiles needs to run prope
 * pandas
 * scipy
 * matplotlib
+* ecmwf-api-client
 
 You can install them either by using `pip <https://pypi.org/project/pip/>`__ or `conda <https://docs.conda.io/en/latest/>`__, depending on your Python installation. In order to install the missing library (sys, in the next example) you can install it by typing:
 

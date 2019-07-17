@@ -22,9 +22,17 @@ The first time we want to extract the information from a grib file we simply nee
 
 .. code-block:: bash
 
-    > grib_utils.py -r the_grib_file_name.grb gridstep observatory
+    > grib_utils.py -g the_grib_file_name.grb -gridstep gridstep -o observatory
 
-where *gridstep* is a value of 0.75 or 1.0, for ECMWF or GDAS, respectively, and observatory is *North* or *South*.
+where *gridstep* is a value that must be either 0.75 or 1.0, for ECMWF or GDAS, respectively, and observatory is *North* or *South*.
+If you want to download data for other coordinates other than the ones of the CTA sites, you can specify your coordinates with the -c flag:
+
+.. code-block:: bash
+
+    > grib_utils.py -g the_grib_file_name.grb -gridstep gridstep -c lat lon
+
+where lat and lon are the geographycal latitude and longitude, in degrees, respectively.
+
 
 This will take some time, specially if the gribfile file is large. The output of this task is a txt file containing the grib file information but in a simpler way, as a text table that is more easily accessible. The final table will contain the following fields or columns:
 
