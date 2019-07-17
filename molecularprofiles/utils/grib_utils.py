@@ -224,7 +224,6 @@ def readgribfile2text(file_name, gridstep, observatory=None, lat=None, lon=None)
     elif lat and lon:
         latitude_obs, longitude_obs = lat, lon
 
-    print(latitude_obs, longitude_obs)
     lat_gridpoint, lon_gridpoint = get_closest_gridpoint(latitude_obs, longitude_obs, gridstep)
 
     if len(datadict['Temperature']) != len(datadict['Relativehumidity']):
