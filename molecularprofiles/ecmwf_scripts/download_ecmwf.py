@@ -2,10 +2,11 @@
 
 import numpy as np
 from ecmwfapi import ECMWFDataServer
+import datetime
 import sys
 import calendar
 
-def retrieve_interim(date_start, date_end, latitude, longitude, outtag='my_ecmwf_interim_data'):
+def retrieve_interim(date_start, date_end, latitude, longitude, days=6, outtag='my_ecmwf_interim_data'):
     """
        A function to demonstrate how to iterate efficiently over several years and months etc
        for a particular interim_request.
@@ -28,44 +29,78 @@ def retrieve_interim(date_start, date_end, latitude, longitude, outtag='my_ecmwf
             and another one containing the first 5 days of March data)
 
     """
-    date_start_split = date_start.split('-')
-    yearStart = int(date_start_split[0])
-    monthStart = int(date_start_split[1])
-    dayStart = int(date_start_split[2])
+    date_start = list(map(int, date_start.split('-')))
+    date_end = list(map(int, date_end.split('-')))
+    yearStart, monthStart, dayStart = date_start
+    yearEnd, monthEnd, dayEnd = date_end
 
-    date_end_split = date_end.split('-')
-    yearEnd = int(date_end_split[0])
-    monthEnd = int(date_end_split[1])
-    dayEnd = int(date_end_split[2])
+    date_start = datetime.datetime(yearStart, monthStart, dayStart)
+    date_end = datetime.datetime(yearEnd, monthEnd, dayEnd)
 
     if dayStart > calendar.monthrange(yearStart, monthStart)[1] or \
                     dayEnd > calendar.monthrange(yearEnd, monthEnd)[1]:
         print('Wrong date! Check input dates')
         exit()
+    if date_start > date_end:
+        print('Wrong date. Date Start must be prior to Date End')
 
-    first = True
-    last = False
-    for year in list(range(yearStart, yearEnd + 1)):
-        if first:
-            month = monthStart
+    while True:
+        date_end_e = date_start + datetime.timedelta(days=days)
+        if date_end_e < date_end:
+            start_date = '%04d%02d%02d' % (date_start.year, date_start.month, date_start.day)
+            end_date = '%04d%02d%02d' % (date_end_e.year, date_end_e.month, date_end_e.day)
+            print('Downloading data between {} and {}'.format(start_date, end_date))
+            outfile = outtag + '_%04d%02d.grib' % (date_start.year, date_start.month)
+            request_ecwmf(start_date, end_date, latitude, longitude, outfile)
+            date_start = date_end_e
         else:
-            month = 1
-        while last == False and month < 13:
-        #for month in list(range(monthStart, monthEnd + 1)):
-            startDate = '%04d%02d%02d' % (year, month, dayStart)
-            if year == yearEnd and month == monthEnd:
-                last == True
-                lastDate = '%04d%02d%02d' % (year, month, dayEnd)
-                outfile = outtag + '_%04d%02d.grib' % (year, month)
-                request_ecwmf(startDate, lastDate, latitude, longitude, outfile)
-                break
-            else:
-                lastDate = '%04d%02d%02d' % (year, month, calendar.monthrange(year, month)[1])
-            dayStart = 1
-            outfile = outtag+'_%04d%02d.grib' % (year, month)
-            request_ecwmf(startDate, lastDate, latitude, longitude, outfile)
-            first = False
-            month += 1
+            date_end_e = date_end
+            start_date = '%04d%02d%02d' % (date_start.year, date_start.month, date_start.day)
+            end_date = '%04d%02d%02d' % (date_end_e.year, date_end_e.month, date_end_e.day)
+            print('Downloading data between {} and {}'.format(start_date, end_date))
+            outfile = outtag + '_%04d%02d.grib' % (date_start.year, date_start.month)
+            request_ecwmf(start_date, end_date, latitude, longitude, outfile)
+            break
+
+    # date_start_split = date_start.split('-')
+    # yearStart = int(date_start_split[0])
+    # monthStart = int(date_start_split[1])
+    # dayStart = int(date_start_split[2])
+    #
+    # date_end_split = date_end.split('-')
+    # yearEnd = int(date_end_split[0])
+    # monthEnd = int(date_end_split[1])
+    # dayEnd = int(date_end_split[2])
+    #
+    # if dayStart > calendar.monthrange(yearStart, monthStart)[1] or \
+    #                 dayEnd > calendar.monthrange(yearEnd, monthEnd)[1]:
+    #     print('Wrong date! Check input dates')
+    #     exit()
+    #
+    # first = True
+    # last = False
+    # for year in list(range(yearStart, yearEnd + 1)):
+    #     if first:
+    #         month = monthStart
+    #     else:
+    #         month = 1
+    #     while last == False and month < 13:
+    #     #for month in list(range(monthStart, monthEnd + 1)):
+    #         startDate = '%04d%02d%02d' % (year, month, dayStart)
+    #         if year == yearEnd and month == monthEnd:
+    #             last = True
+    #             lastDate = '%04d%02d%02d' % (year, month, dayEnd)
+    #             outfile = outtag + '_%04d%02d.grib' % (year, month)
+    #             request_ecwmf(startDate, lastDate, latitude, longitude, outfile)
+    #             break
+    #         else:
+    #             lastDate = '%04d%02d%02d' % (year, month, calendar.monthrange(year, month)[1])
+    #         dayStart = 1
+    #         outfile = outtag+'_%04d%02d.grib' % (year, month)
+    #         request_ecwmf(startDate, lastDate, latitude, longitude, outfile)
+    #         first = False
+    #        month += 1
+
 
 def request_ecwmf(date_i, date_f, lat, lon, outfile='my_ecmwf_file.grib'):
 
