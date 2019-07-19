@@ -556,7 +556,7 @@ if __name__ == "__main__":
         print(date2mjd(int(date[0]), int(date[1]), int(date[2]), int(date[3])))
 
     elif args.merge:
-        if type(args.merge) == list and len(args.merge) == 2:
+        if isinstance(args.merge, list) and len(args.merge) == 2:
             merge_txt_from_grib(args.merge[0], output_file=args.merge[1])
         else:
-            merge_txt_from_grib(args.merge)
+            merge_txt_from_grib(args.merge[0])
