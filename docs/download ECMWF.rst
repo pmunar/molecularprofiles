@@ -13,6 +13,14 @@ Once we have these steps covered, we need to execute the download_ecmwf script f
 
 where date_stard and date_end must be in YYYY-MM-DD format and latitude and longitude must be in degrees.
 
-This will prepare and download the data in files that contain one month of data as a maximum amount of data. For time periods longer than one month, separate files will be downloaded.
+This will prepare and download the data in files that will contain by default 7 days of data. The user can specify other grouping, by introducing a new argument, called *days*:
+
+.. code-block:: bash
+
+	>download_ecmwf.py date_start date_end latitude longitude -days 10
+
+In this example, now the files would contain 10 days of data each one. The final file may not contain this amount of data, because it will contain up to the end date selected.
+
+** It is strongly recommended to keep the amount of dates in each data file low (7 days is enough) since it will improve the RAM usage in the reading step, with grib_utils.py**
 
 Once the download has finished you will have your data ready to be processed.

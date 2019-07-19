@@ -60,3 +60,4 @@ Once the data is ready to be retrieved, we can download it with the following co
     download_gdas.py -download [RequestIndex]
 
 Once the download has finished you will have your data ready to be processed.
+Alternatively, the user can go to the mail that will be sent by the RDA, click into the link and download the data manually from the website.

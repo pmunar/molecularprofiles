@@ -34,7 +34,7 @@ If you want to download data for other coordinates other than the ones of the CT
 where *lat* and *lon* are the geographycal latitude and longitude, in degrees, respectively.
 
 
-This will take some time, specially if the gribfile file is large. It will also use a huge amount of RAM (it is due to the pygrib library and how it access the data) so the user should have a machine with at least 8 Gb of RAM. The output of this task is a txt file containing the grib file information but in a simpler way, as a text table that is more easily accessible. The final table will contain the following fields or columns:
+This will take some time, specially if the gribfile file is large. It will also **use a huge amount of RAM** (it is due to the pygrib library and how it access the data) so the **user should have a machine with at least 8 Gb of RAM**. The output of this task is a txt file containing the grib file information but in a simpler way, as a text table that is more easily accessible. The final table will contain the following fields or columns:
 
 
  -	**Date**: date of the entry, in YYYYMMDD format
