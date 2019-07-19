@@ -6,7 +6,7 @@ import datetime
 import sys
 import calendar
 
-def retrieve_interim(date_start, date_end, latitude, longitude, days=6, outtag='my_ecmwf_interim_data'):
+def retrieve_interim(date_start, date_end, latitude, longitude, days=7, outtag='my_ecmwf_interim_data'):
     """
        A function to demonstrate how to iterate efficiently over several years and months etc
        for a particular interim_request.
@@ -45,12 +45,12 @@ def retrieve_interim(date_start, date_end, latitude, longitude, days=6, outtag='
         print('Wrong date. Date Start must be prior to Date End')
 
     while True:
-        date_end_e = date_start + datetime.timedelta(days=days)
+        date_end_e = date_start + datetime.timedelta(days=days-1)
         if date_end_e < date_end:
             start_date = '%04d%02d%02d' % (date_start.year, date_start.month, date_start.day)
             end_date = '%04d%02d%02d' % (date_end_e.year, date_end_e.month, date_end_e.day)
             print('Downloading data between {} and {}'.format(start_date, end_date))
-            outfile = outtag + '_%04d%02d.grib' % (date_start.year, date_start.month)
+            outfile = '{}_{}_to_{}.grib'.format(outtag, start_date, end_date)
             request_ecwmf(start_date, end_date, latitude, longitude, outfile)
             date_start = date_end_e
         else:
@@ -58,7 +58,7 @@ def retrieve_interim(date_start, date_end, latitude, longitude, days=6, outtag='
             start_date = '%04d%02d%02d' % (date_start.year, date_start.month, date_start.day)
             end_date = '%04d%02d%02d' % (date_end_e.year, date_end_e.month, date_end_e.day)
             print('Downloading data between {} and {}'.format(start_date, end_date))
-            outfile = outtag + '_%04d%02d.grib' % (date_start.year, date_start.month)
+            outfile = '{}_{}_to_{}.grib'.format(outtag, start_date, end_date)
             request_ecwmf(start_date, end_date, latitude, longitude, outfile)
             break
 
