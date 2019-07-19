@@ -22,14 +22,14 @@ The first time we want to extract the information from a grib file we simply nee
 
 .. code-block:: bash
 
-    > grib_utils.py -g the_grib_file_name.grb -gridstep gridstep -o observatory
+    > grib_utils.py -r -g the_grib_file_name.grb -gridstep gridstep -o observatory
 
 where *gridstep* is a value that must be either 0.75 or 1.0, for ECMWF or GDAS, respectively, and *observatory* is *North* or *South*.
 If you want to download data for other coordinates other than the ones of the CTA sites, you can specify your coordinates with the -c flag:
 
 .. code-block:: bash
 
-    > grib_utils.py -g the_grib_file_name.grb -gridstep gridstep -c lat lon
+    > grib_utils.py -r -g the_grib_file_name.grb -gridstep gridstep -c lat lon
 
 where *lat* and *lon* are the geographycal latitude and longitude, in degrees, respectively.
 
@@ -68,7 +68,7 @@ and then call the program with another flag:
 
 .. code-block:: bash
 
-    > grib_utils.py -r list_of_grib_files.txt -p
+    > grib_utils.py -r -g list_of_grib_files.txt -p -gridstep 1.0 -o north
 
 where the -p flag activates the parallel processing. If the computer where it is executed has N CPUs, the process will use N-1 CPUs. It will process one file per CPU untill all the files in the list_of_files.txt are processed.
 

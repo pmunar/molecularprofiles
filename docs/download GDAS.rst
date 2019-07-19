@@ -45,7 +45,7 @@ This will print a lot of text and will send us an email when the data is ready t
 
     >download_gdas.py -get_status requestindex
 
-in order to see if the data is ready or not. *requestindex* is a unique identifier for your query, that appears at the end of the block of text printed in the first command execution. The user needs to look for *Index* at the last lines of the text block that was printed in the previous command. Here there is an example:
+in order to see if the data is ready or not. *requestindex* is a unique identifier for your query, that appears at the end of the block of text printed in the first command execution and also in the email that is received once the data is ready. The user needs to look for *Index* at the last lines of the text block that was printed in the previous command. Here there is an example:
 
 .. code-block:: bash
 

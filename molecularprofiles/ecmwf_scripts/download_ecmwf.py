@@ -56,6 +56,8 @@ def retrieve_interim(date_start, date_end, latitude, longitude, outtag='my_ecmwf
             if year == yearEnd and month == monthEnd:
                 last == True
                 lastDate = '%04d%02d%02d' % (year, month, dayEnd)
+                outfile = outtag + '_%04d%02d.grib' % (year, month)
+                request_ecwmf(startDate, lastDate, latitude, longitude, outfile)
                 break
             else:
                 lastDate = '%04d%02d%02d' % (year, month, calendar.monthrange(year, month)[1])
