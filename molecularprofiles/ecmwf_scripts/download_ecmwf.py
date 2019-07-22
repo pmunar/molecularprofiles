@@ -5,6 +5,7 @@ from ecmwfapi import ECMWFDataServer
 import datetime
 import sys
 import calendar
+import argparse
 
 def retrieve_interim(date_start, date_end, latitude, longitude, days=7, outtag='my_ecmwf_interim_data'):
     """
@@ -176,24 +177,26 @@ def request_ecwmf(date_i, date_f, lat, lon, outfile='my_ecmwf_file.grib'):
 def find_nearest(a, num):  # Function to find the nearest grid position to a given latitude or longitude
     return a[np.abs(a-num).argmin()]
 
-def print_help():
-    print('The call of this function must be:')
-    print('')
-    print('python download_ecmwf.py date_start date_end latitude longitude (outtag)')
-    print('where:')
-    print('date_start and date_end must be in YYYY-MM-DD format')
-    print('latitude and longitude must be in degrees')
-    print('outtag is optional tag for the downloaded data files')
+
+parser = argparse.ArgumentParser()
+parser.add_argument('date start', help='the starting date of the dataset to download, in YYYY-MM-DD format')
+parser.add_argument('date end', help='the ending date of the dataset to download, in YYYY-MM-DD format')
+parser.add_argument('latitude', help='the latitude of the location of interest, in degrees')
+parser.add_argument('longitude', help='the longitude of the location of interest, in degrees')
+
+parser.add_argument('-d', '--days', help='number of days contained in each data file to download. '
+                                         'Usual values are 7 or 30 days. Best value for RAM usage '
+                                         'is 7 days')
+parser.add_argument('-t', '--tag', help='the output tag to put in the downloaded data files')
 
 if __name__ == '__main__':
-    if len(sys.argv) == 5:
+    args = parser.parse_args()
+    if not args.days and not args.tag:
         retrieve_interim(sys.argv[1], sys.argv[2], np.float(sys.argv[3]), np.float(sys.argv[4]))
-    elif len(sys.argv) == 6:
-        retrieve_interim(sys.argv[1], sys.argv[2], np.float(sys.argv[3]), np.float(sys.argv[4]), sys.argv[5])
-    elif len(sys.argv) == 2:
-        if sys.argv[1] == '-h' or sys.argv[1] == '-help' or sys.argv[1] == '-man':
-            print_help()
-    else:
-        print('Wrong number of arguments!')
-        print_help()
-        exit()
+    elif args.days:
+        retrieve_interim(sys.argv[1], sys.argv[2], np.float(sys.argv[3]), np.float(sys.argv[4]), days=args.days)
+    elif args.tag:
+        retrieve_interim(sys.argv[1], sys.argv[2], np.float(sys.argv[3]), np.float(sys.argv[4]), outtag=args.tag)
+    elif args.tag and args.days:
+        retrieve_interim(sys.argv[1], sys.argv[2], np.float(sys.argv[3]), np.float(sys.argv[4]), outtag=args.tag,
+                         days=args.days)
