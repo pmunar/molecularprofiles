@@ -157,19 +157,19 @@ exitstring="\nUsage: \ndownload_gdas.py -get_summary <dsnnn.n>\n" \
 
 if (len(sys.argv)>1):
     if(sys.argv[1]=="-get_summary"):
-        print('\nGetting summary information.  Please wait as this may take awhile.\n')
+        print('\nGetting summary information.  Please wait as this may take a while.\n')
         theurl = base+'summary'
         if(len(sys.argv)>2):
                 theurl = base+'summary/'+sys.argv[2]
     elif(sys.argv[1]=="-get_metadata"):
-        print('\nGetting metadata.  Please wait as this may take awhile.\n')
+        print('\nGetting metadata.  Please wait as this may take a while.\n')
         theurl = base+'metadata'
         if(len(sys.argv)==3):
             theurl = base+'metadata/'+sys.argv[2]
         elif(len(sys.argv)==4):
             theurl = base+'metadata/'+sys.argv[2]+'/formatted'
     elif(sys.argv[1]=="-get_param_summary"):
-                print('\nGetting parameter summary.  Please wait as this may take awhile.\n')
+                print('\nGetting parameter summary.  Please wait as this may take a while.\n')
                 theurl = base+'paramsummary'
                 if(len(sys.argv)==3):
                         theurl = base+'paramsummary/'+sys.argv[2]
@@ -219,7 +219,7 @@ if (len(sys.argv)>1):
                                 jsondata+='"'+k+'"'+":"+'"'+controlparms[k]+'",'
                     jsondata = jsondata[:-1]
                     jsondata+='}'
-                    print('\nSubmitting request.  Please wait as this may take awhile.\n')
+                    print('\nSubmitting request.  Please wait as this may take a while.\n')
                 else:
                     sys.exit("\nUsage: \nrdams-client.py -submit [control_file_name]\n")
     else:
