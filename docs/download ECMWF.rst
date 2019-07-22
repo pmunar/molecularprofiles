@@ -21,6 +21,6 @@ This will prepare and download the data in files that will contain by default 7 
 
 In this example, now the files would contain 10 days of data each one. The last file may not contain this amount of data, because it will contain up to the end date selected.
 
-**It is strongly recommended to keep the amount of dates in each data file low (7 days is enough) since it will improve the RAM usage in the reading step, with grib_utils.py**
+**It is strongly recommended to keep the amount of days in each data file low (7 days is enough) since it will improve the RAM usage in the reading step, with grib_utils.py**
 
 Once the download has finished you will have your data ready to be processed.
