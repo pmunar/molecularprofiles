@@ -428,7 +428,6 @@ class MolecularProfile:
         ax.set_xlabel('MJD')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax.set_ylim(np.min(density_at_15km) * 0.98, np.max(density_at_15km) * 1.02)
-        ax.set_ylim(0.75, 0.95)
         ax.set_title('Density over time at h = 15 km (for %s months)' % (self.epoch))
 
         fig.savefig(self.output_plot_name + '_at_15_km.'+ fmt, bbox_inches='tight')
