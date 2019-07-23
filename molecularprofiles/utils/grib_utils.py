@@ -40,6 +40,7 @@ def GetAltitudeFromGeopotential(geop_height, latitude_obs):
     geop_heightkm = geop_height / 1000. / 9.80665  # dividing by the acceleration of gravity on Earth
     cos2lat = np.cos(2 * latitude)
     # convert from geopotential height to geometric altitude:
+    # Uses expression 20 from http://www.earth.sinica.edu.tw/~bfchao/publication/eng/2005-Boy&Chao_JGR2005_precise%20evaluation%20of%20atmospheric%20loading%20effects%20on%20earths%20time-variable%20gravity%20field.pdf
     z = (1. + 0.002644 * cos2lat) * geop_heightkm + (1 + 0.0089 * cos2lat) * geop_heightkm * geop_heightkm / 6245.
     # convert Z to meter
     return 1.0E3 * z  # This is fGeoidOffset
@@ -56,6 +57,7 @@ def GetAltitudeFromGeopotentialHeight(geop, latitude_obs):
     geop_km = geop / 1000.
     cos2lat = np.cos(2 * latitude)
     # convert from geopotential height to geometric altitude:
+    # Uses expression 20 from http://www.earth.sinica.edu.tw/~bfchao/publication/eng/2005-Boy&Chao_JGR2005_precise%20evaluation%20of%20atmospheric%20loading%20effects%20on%20earths%20time-variable%20gravity%20field.pdf
     z = (1. + 0.002644 * cos2lat) * geop_km + (1 + 0.0089 * cos2lat) * geop_km * geop_km / 6245.
     # convert Z to meter
     return 1.0E3 * z  # This is fGeoidOffset
@@ -520,13 +522,14 @@ if __name__ == "__main__":
     if args.grib_file:
         if args.observatory:
             if args.grib_file.lower().endswith(('.grib','.grb', '.txt', '.dat')):
-                if args.r:
+                if args.r and not args.parallel:
                     readgribfile2text(args.grib_file, args.gridstep, observatory=args.observatory)
                 elif args.rmagic:
                     readgribfile2magic(args.grib_file, args.gridstep, observatory=args.observatory)
                 elif args.r and args.parallel:
+                    print('EXECUTING THIS')
                     runInParallel(readgribfile2text, args.grib_file, args.gridstep, observatory=args.observatory)
-                elif args.rmagic and args.p:
+                elif args.rmagic and args.parallel:
                     runInParallel(readgribfile2magic, args.grib_file, args.gridstep, observatory=args.observatory)
             else:
                 print('file extension not recognized. Exiting')

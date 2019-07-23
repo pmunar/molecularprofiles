@@ -72,8 +72,8 @@ class MolecularProfile:
 
         self.data_file = data_file
         self.data_server = data_server
-        self.tag_name = tag_name + '_' + self.data_server
         self.observatory = observatory
+        self.tag_name = tag_name + '_' + self.data_server + '_' + self.observatory
 
         self.Ns = Ns  # [cm^-3] molecular number density for standard air conditions
         self.ps = ps  # [hPa]   standard air pressure
@@ -133,17 +133,15 @@ class MolecularProfile:
             param_at_mjd = group_mjd.get_group(mjd)[param].tolist()
             func = interp1d(h_at_mjd, param_at_mjd, kind='cubic', fill_value='extrapolate')
 
-            if type(height) == int or type(height) == float:
+            if isinstance(height,int) or isinstance(height,float):
                 interpolated_param.append(np.float(func(height)))
             else:
                 interpolated_param.append(func(height))
         pbar.close()
-
-        print('\n')
-        interpolated_param = np.asarray(interpolated_param)
+        interpolated_param = np.array(interpolated_param)
         if len(interpolated_param.shape) == 1:
-            interpolated_param = np.array([interpolated_param])
-        if isinstance(height,float):
+            interpolated_param = np.array(interpolated_param)
+        if isinstance(height,list):
             interpolated_param_avgs = compute_averages_std(interpolated_param)
             return interpolated_param, interpolated_param_avgs[0], interpolated_param_avgs[1], \
                    interpolated_param_avgs[2], interpolated_param_avgs[3]
@@ -424,12 +422,13 @@ class MolecularProfile:
                 ax.text(mjd_half_year - xspan * 0.018, ax.get_ylim()[0] + 0.095 * yspan, str(year_plot + 0.5),
                         rotation=90, color='0.7')
 
-        ax.axhline(np.mean(density_at_15km), color='#336699', linestyle='solid', lw=1., zorder=10)
+        ax.axhline(np.mean(density_at_15km), color='C2', linestyle='dashed', lw=1., zorder=10)
 
         ax.legend(loc='best', numpoints=1)
         ax.set_xlabel('MJD')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax.set_ylim(np.min(density_at_15km) * 0.98, np.max(density_at_15km) * 1.02)
+        ax.set_ylim(0.75, 0.95)
         ax.set_title('Density over time at h = 15 km (for %s months)' % (self.epoch))
 
         fig.savefig(self.output_plot_name + '_at_15_km.'+ fmt, bbox_inches='tight')

@@ -158,11 +158,18 @@ def compute_averages_std(input_array):
     peak_to_peak_p = []
     peak_to_peak_m = []
 
-    for i in np.arange(len(input_array[0])):
-        average.append(np.average(input_array[:, i]))
-        stand_dev.append(robust.mad(input_array[:, i]))
-        peak_to_peak_p.append(np.max(input_array[:, i] - np.average(input_array[:, i])))
-        peak_to_peak_m.append(np.average(input_array[:, i]) - np.min(input_array[:, i]))
+    if len(np.shape(input_array)) == 1:
+        average.append(np.average(input_array))
+        stand_dev.append(robust.mad(input_array))
+        peak_to_peak_p.append(np.max(input_array - np.average(input_array)))
+        peak_to_peak_m.append(np.average(input_array) - np.min(input_array))
+    else:
+        r = len(input_array[0])
+        for i in np.arange(r):
+            average.append(np.average(input_array[:, i]))
+            stand_dev.append(robust.mad(input_array[:, i]))
+            peak_to_peak_p.append(np.max(input_array[:, i] - np.average(input_array[:, i])))
+            peak_to_peak_m.append(np.average(input_array[:, i]) - np.min(input_array[:, i]))
 
     average = np.asarray(average)
     stand_dev = np.asarray(stand_dev)
