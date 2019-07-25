@@ -388,13 +388,13 @@ class MolecularProfile:
         fig.savefig('dry_vs_moist_air_density'+self.data_server+'_'+self.epoch+'.png', bbox_inches='tight', dpi=300)
         fig.show()
 
-    def plot_density_at_altitude(self, altitude=15, fmt='pdf'):
+    def plot_density_at_altitude(self, altitude=15000., fmt='pdf'):
         """
         Function that produces a plot of the averaged density at 15 km
         :return: 
         """
 
-        print('plotting data at {} km in 1-day bins:'.format{altitude/1000.})
+        print('plotting data at {} km in 1-day bins:'.format(altitude/1000.))
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
