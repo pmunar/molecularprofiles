@@ -84,18 +84,18 @@ def plot_wind_rose(df, name_tag='my_wind_rose', fmt='png'):
     :param name_tag (optional):
     :return:
     """
-    data = []
-    counter = 0
-    for col in df.columns:
-        if col != 'wind_direction':
-            data.append(go.Area(t=df['wind_direction'], r=df[col],
-                                marker=dict(color=cl.scales['9']['seq']['YlGnBu'][counter]), name=col+' m/s'))
-            counter+=1
-    #print(data)
+data = []
+counter = 0
+for col in df.columns:
+    if col != 'wind_direction':
+        data.append(go.Area(t=df['wind_direction'], r=df[col],
+                            marker=dict(color=cl.scales['9']['seq']['YlGnBu'][counter]), name=col+' m/s'))
+        counter+=1
+#print(data)
 
-    fig = go.Figure(data=data, layout=go.Layout(orientation=270., barmode='stack'))
-    pio.write_image(fig, name_tag+'_wind_speed_rose.'+ fmt)
-    plotly.plotly.plot(fig)
+fig = go.Figure(data=data, layout=go.Layout(orientation=270., barmode='stack'))
+pio.write_image(fig, name_tag+'_wind_speed_rose.'+ fmt)
+plotly.plotly.plot(fig)
 
 
 def compute_averages_std_simple(input_array):

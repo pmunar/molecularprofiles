@@ -139,14 +139,14 @@ class MolecularProfile:
                 interpolated_param.append(func(height))
         pbar.close()
         interpolated_param = np.array(interpolated_param)
-        if len(interpolated_param.shape) == 1:
+        if isinstance(height, float) or isinstance(height,int):
             interpolated_param = np.array(interpolated_param)
-        if isinstance(height,list):
+            return interpolated_param
+        else:
             interpolated_param_avgs = compute_averages_std(interpolated_param)
             return interpolated_param, interpolated_param_avgs[0], interpolated_param_avgs[1], \
                    interpolated_param_avgs[2], interpolated_param_avgs[3]
-        elif isinstance(height, float) or isinstance(height,int):
-            return interpolated_param
+
 
     def _compute_mass_density(self, air='moist', interpolate=False):
         """
@@ -289,7 +289,7 @@ class MolecularProfile:
             self.dataframe = select_dataframe_by_hour(self.dataframe, hours)
 
         # Filtering by epoch
-        elif epoch != 'all' and not years and not months:
+        if epoch != 'all' and not years and not months:
             if self.observatory == 'north':
                 self.dataframe = select_new_epochs_dataframe_north(self.dataframe, epoch)
             elif self.observatory == 'south':
@@ -388,17 +388,17 @@ class MolecularProfile:
         fig.savefig('dry_vs_moist_air_density'+self.data_server+'_'+self.epoch+'.png', bbox_inches='tight', dpi=300)
         fig.show()
 
-    def plot_density_at_15km(self, fmt='pdf'):
+    def plot_density_at_altitude(self, altitude=15, fmt='pdf'):
         """
         Function that produces a plot of the averaged density at 15 km
         :return: 
         """
 
-        print('plotting data at 15 km in 1-day bins:')
+        print('plotting data at {} km in 1-day bins:'.format{altitude/1000.})
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        density_at_15km = self._interpolate_param_to_h('n_exp', 15000.)
+        density_at_15km = self._interpolate_param_to_h('n_exp', altitude)
         ax.plot(self.dataframe.MJD.unique(), density_at_15km, 'o', color='#99CCFF', markersize=1.2,
                 label=self.data_server + ' ' + self.observatory, alpha=0.8)
 
@@ -428,10 +428,10 @@ class MolecularProfile:
         ax.set_xlabel('MJD')
         ax.set_ylabel('$n_{\\rm day}/N_{\\rm s} \\cdot e^{(h/H_{\\rm s})}$')
         ax.set_ylim(np.min(density_at_15km) * 0.98, np.max(density_at_15km) * 1.02)
-        ax.set_title('Density over time at h = 15 km (for %s months)' % (self.epoch))
+        ax.set_title('Density over time at h = {} km (for {} months)'.format(altitude/1000., self.epoch))
 
-        fig.savefig(self.output_plot_name + '_at_15_km.'+ fmt, bbox_inches='tight')
-        fig.savefig(self.output_plot_name + '_at_15_km.png', bbox_inches='tight', dpi=300)
+        fig.savefig(self.output_plot_name + '_at_{}_km.'.format(altitude/1000.)+ fmt, bbox_inches='tight')
+        fig.savefig(self.output_plot_name + '_at_{}_km.png'.format(altitude/1000.), bbox_inches='tight', dpi=300)
 
     def plot_wind_by_altitude(self, altitude, epochs='all', name_tag='my_polar_plot', fmt='pdf'):
         """
